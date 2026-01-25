@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Shield,
   AlertCircle,
+  CheckCircle2,
   ExternalLink,
   Link as LinkIcon
 } from 'lucide-react'
