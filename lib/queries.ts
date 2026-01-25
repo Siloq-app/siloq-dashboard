@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from './api-client'
-import type { Site, ContentJob, Page, ReverseSilo, SystemEvent, BillingUsage } from './types'
+import type { Site, ContentJob, Page, ReverseSilo, SystemEvent, BillingUsage, Entity, RestorationJob, EntityCoverage } from './types'
 
 // Sites
 export const useSites = () => {
@@ -168,6 +168,66 @@ export const useBillingUsage = () => {
     queryFn: async () => {
       const { data } = await apiClient.get('/billing/usage')
       return data
+    },
+  })
+}
+
+// Entities
+export const useEntities = (siteId?: string) => {
+  return useQuery<Entity[]>({
+    queryKey: ['entities', siteId],
+    queryFn: async () => {
+      const url = siteId ? `/entities?siteId=${siteId}` : '/entities'
+      const { data } = await apiClient.get(url)
+      return data
+    },
+  })
+}
+
+export const useEntityCoverage = (siteId?: string) => {
+  return useQuery<EntityCoverage[]>({
+    queryKey: ['entity-coverage', siteId],
+    queryFn: async () => {
+      const url = siteId ? `/entities/coverage?siteId=${siteId}` : '/entities/coverage'
+      const { data } = await apiClient.get(url)
+      return data
+    },
+  })
+}
+
+// Restoration Queue
+export const useRestorationQueue = () => {
+  return useQuery<RestorationJob[]>({
+    queryKey: ['restoration-queue'],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/restoration-queue')
+      return data
+    },
+  })
+}
+
+export const useCreateRestorationJob = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (jobData: { siteId: string; priority?: 'low' | 'medium' | 'high' | 'critical' }) => {
+      const { data } = await apiClient.post('/restoration-queue', jobData)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['restoration-queue'] })
+    },
+  })
+}
+
+export const useCancelRestorationJob = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (jobId: string) => {
+      const { data } = await apiClient.delete(`/restoration-queue/${jobId}`)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['restoration-queue'] })
     },
   })
 }

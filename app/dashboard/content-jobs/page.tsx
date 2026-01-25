@@ -216,7 +216,7 @@ export default function ContentJobsPage() {
   const statusChartData = countToChartData(statusData)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Content Jobs</h1>
@@ -284,7 +284,7 @@ export default function ContentJobsPage() {
               {jobs.map((job) => (
                 <div
                   key={job.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover:shadow-sm active:scale-[0.98]"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
