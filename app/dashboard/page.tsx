@@ -23,7 +23,7 @@ import { countToChartData } from '@/lib/chart-utils'
 function SiteCard({ site }: { site: Site }) {
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -135,7 +135,7 @@ export default function DashboardPage() {
     .slice(0, 5) || []
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>

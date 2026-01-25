@@ -18,4 +18,23 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
+// Add response interceptor for authentication errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Unauthorized - clear token and redirect to login
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token')
+        const currentPath = window.location.pathname
+        // Don't redirect if already on login page
+        if (currentPath !== '/auth/login') {
+          window.location.href = `/auth/login?returnUrl=${encodeURIComponent(currentPath)}`
+        }
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
 export default apiClient

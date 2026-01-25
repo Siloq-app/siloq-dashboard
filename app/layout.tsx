@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Siloq Dashboard",
   description: "Governance-first SEO platform interface",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
 }
 
 export default function RootLayout({

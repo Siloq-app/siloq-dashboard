@@ -15,7 +15,15 @@ A governance-first SEO platform interface that enforces structural doctrine, man
 ### Prerequisites
 
 - Node.js 18+ and npm/yarn/pnpm
-- Backend API running (default: `http://localhost:3001`)
+- Backend API (siloq-app) running (default: `http://localhost:3001`)
+- PostgreSQL database with pgvector extension
+- WordPress installation(s) with siloq-wordpress plugin
+
+### Quick Start
+
+For a quick setup, see [QUICK_START.md](./QUICK_START.md)
+
+For detailed integration with siloq-app and siloq-wordpress, see [INTEGRATION.md](./INTEGRATION.md)
 
 ### Installation
 
@@ -96,19 +104,19 @@ pnpm dev
 4. **Content Jobs** - Track AI content generation status
 5. **Page Governance** - View compliance status and cannibalization detection
 
-### Phase 2 - 🚧 In Progress
+### Phase 2 - ✅ Complete
 
 6. **Entity Coverage Map** - Visualize entity distribution
 7. **Restoration Queue** - Manage site restoration workflow
 8. **System Events** - Audit log viewer
 9. **Billing & Usage** - Manage API keys and track costs
 
-### Phase 3 - 📋 Planned
+### Phase 3 - ✅ Complete
 
 10. **Settings** - User and workspace configuration
-11. Polish & animations
-12. Advanced visualizations
-13. Mobile optimization
+11. **Polish & Animations** - Loading states, transitions, micro-interactions
+12. **Advanced Visualizations** - Interactive charts, filters, drill-downs
+13. **Mobile Optimization** - Responsive design, touch interactions, mobile menu
 
 ## Core Principles
 
@@ -148,9 +156,35 @@ npm start
 npm run lint
 ```
 
+## Deployment
+
+### DigitalOcean
+
+See [DEPLOYMENT_DIGITALOCEAN.md](./DEPLOYMENT_DIGITALOCEAN.md) for complete deployment guide covering:
+- DigitalOcean App Platform (recommended)
+- DigitalOcean Droplet deployment
+- Custom domain setup
+- SSL configuration
+- Monitoring and troubleshooting
+
 ## Authentication
 
-The dashboard uses JWT-based authentication. Tokens are stored in `localStorage` and automatically included in API requests via the axios interceptor in `lib/api-client.ts`.
+The dashboard uses JWT-based authentication with the following features:
+
+- **Login Page** (`/auth/login`) - User authentication interface
+- **Token Management** - JWT tokens stored in `localStorage` as `auth_token`
+- **Auto-injection** - Tokens automatically included in API requests via axios interceptor
+- **Error Handling** - 401 responses automatically redirect to login page
+- **Route Protection** - Dashboard routes require authentication
+- **Logout** - Available in sidebar and mobile header
+
+### Authentication Flow
+
+1. User visits the app → Redirected to `/auth/login` if not authenticated
+2. User enters credentials → POST to `/api/v1/auth/login`
+3. Token received → Stored in `localStorage` and user redirected to dashboard
+4. All API requests → Include `Authorization: Bearer <token>` header
+5. Token expires/invalid → Auto-redirect to login with return URL
 
 ## License
 

@@ -130,3 +130,27 @@ export interface BillingUsage {
     byJobType: Record<string, number>
   }
 }
+
+export interface RestorationJob {
+  id: string
+  siteId: string
+  siteName: string
+  status: 'pending' | 'in_progress' | 'completed' | 'failed'
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  createdAt: string
+  startedAt?: string
+  completedAt?: string
+  progress: number // 0-100
+  pagesToRestore: number
+  pagesRestored: number
+  error?: string
+  estimatedCompletion?: string
+}
+
+export interface EntityCoverage {
+  entity: Entity
+  sites: string[]
+  totalPages: number
+  coveragePercentage: number
+  gaps: string[] // Missing coverage areas
+}
