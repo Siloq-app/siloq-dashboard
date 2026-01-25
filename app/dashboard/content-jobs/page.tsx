@@ -259,7 +259,7 @@ export default function ContentJobsPage() {
               index="name"
               colors={['emerald', 'amber', 'blue', 'violet', 'rose', 'red', 'slate']}
               className="h-64"
-              valueFormatter={(value) => `${value} jobs`}
+              valueFormatter={(value: number) => `${value} jobs`}
             />
           </CardContent>
         </Card>

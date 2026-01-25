@@ -70,7 +70,7 @@ export default function EventsPage() {
                 index="name"
                 colors={['blue', 'cyan', 'indigo', 'violet', 'fuchsia', 'rose', 'orange', 'amber']}
                 className="h-64"
-                valueFormatter={(value) => `${value} events`}
+                valueFormatter={(value: number) => `${value} events`}
               />
             </CardContent>
           </Card>
@@ -91,7 +91,7 @@ export default function EventsPage() {
                   colors={['blue']}
                   yAxisWidth={40}
                   className="h-64"
-                  valueFormatter={(value) => `${value}`}
+                  valueFormatter={(value: number) => `${value}`}
                 />
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-8">No timeline data available</p>

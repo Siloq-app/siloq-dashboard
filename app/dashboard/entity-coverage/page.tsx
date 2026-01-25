@@ -197,7 +197,7 @@ export default function EntityCoveragePage() {
                   index="name"
                   colors={['blue', 'cyan', 'indigo', 'violet']}
                   className="h-64"
-                  valueFormatter={(value) => `${value} entities`}
+                  valueFormatter={(value: number) => `${value} entities`}
                 />
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-8">No data available</p>
@@ -219,7 +219,7 @@ export default function EntityCoveragePage() {
                   colors={['blue']}
                   yAxisWidth={60}
                   className="h-64"
-                  valueFormatter={(value) => `${value}%`}
+                  valueFormatter={(value: number) => `${value}%`}
                 />
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-8">No coverage data available</p>
