@@ -375,7 +375,7 @@ export default function RestorationQueuePage() {
                 index="name"
                 colors={['blue', 'green', 'red', 'gray']}
                 className="h-64"
-                valueFormatter={(value) => `${value} jobs`}
+                valueFormatter={(value: number) => `${value} jobs`}
               />
             </CardContent>
           </Card>
@@ -393,7 +393,7 @@ export default function RestorationQueuePage() {
                 colors={['blue']}
                 yAxisWidth={60}
                 className="h-64"
-                valueFormatter={(value) => `${value} jobs`}
+                valueFormatter={(value: number) => `${value} jobs`}
               />
             </CardContent>
           </Card>

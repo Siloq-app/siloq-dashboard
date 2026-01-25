@@ -162,7 +162,7 @@ export default function BillingPage() {
                     index="name"
                     colors={['blue', 'cyan', 'indigo', 'violet', 'fuchsia', 'rose', 'orange']}
                     className="h-64"
-                    valueFormatter={(value) => `$${value.toFixed(2)}`}
+                    valueFormatter={(value: number) => `$${value.toFixed(2)}`}
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-8">No cost data available</p>
@@ -189,7 +189,7 @@ export default function BillingPage() {
                     colors={['blue']}
                     yAxisWidth={60}
                     className="h-64"
-                    valueFormatter={(value) => `$${value.toFixed(2)}`}
+                    valueFormatter={(value: number) => `$${value.toFixed(2)}`}
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-8">No cost data available</p>

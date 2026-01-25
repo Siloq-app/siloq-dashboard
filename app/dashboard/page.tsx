@@ -208,7 +208,7 @@ export default function DashboardPage() {
                 index="name"
                 colors={['emerald', 'amber', 'red', 'slate']}
                 className="h-64"
-                valueFormatter={(value) => `${value} sites`}
+                valueFormatter={(value: number) => `${value} sites`}
               />
             </CardContent>
           </Card>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
                 colors={['emerald']}
                 yAxisWidth={60}
                 className="h-64"
-                valueFormatter={(value) => `${value}%`}
+                valueFormatter={(value: number) => `${value}%`}
               />
             </CardContent>
           </Card>
@@ -244,7 +244,7 @@ export default function DashboardPage() {
             <BarList
               data={topSitesByJobs}
               className="mt-2"
-              valueFormatter={(value) => `${value} jobs`}
+              valueFormatter={(value: number) => `${value} jobs`}
             />
           </CardContent>
         </Card>
