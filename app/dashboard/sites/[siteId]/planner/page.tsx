@@ -29,7 +29,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
-import { ReverseSilo, SupportingPage, ValidationRule } from '@/lib/types'
+import { ReverseSilo, SupportingPage, ValidationRule, ValidationStatus } from '@/lib/types'
 import { useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/api-client'
 
@@ -188,7 +188,7 @@ export default function ReverseSiloPlannerPage() {
   const finalizeSilo = useFinalizeSilo()
 
   // Mock validation - in real app, this would come from API
-  const validationStatus = {
+  const validationStatus: ValidationStatus = {
     rules: [
       {
         name: 'Minimum 3 supporting pages',
