@@ -272,7 +272,6 @@ export default function ReverseSiloPlannerPage() {
         entities,
         supportingPages,
         status: 'draft',
-        is_valid: false,
         validationStatus
       })
       alert('Draft saved successfully!')
