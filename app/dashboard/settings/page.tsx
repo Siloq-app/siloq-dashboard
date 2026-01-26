@@ -5,9 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Settings, User, Users, Key, Bell, Save, CheckCircle2 } from 'lucide-react'
+import { Settings, User, Users, Key, Bell, Save, CheckCircle2, Copy, Eye, EyeOff, RefreshCw, Trash2 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import apiClient from '@/lib/api-client'
+
+interface ApiKey {
+  id: string
+  name: string
+  key: string
+  createdAt: string
+  lastUsed?: string
+}
 
 export default function SettingsPage() {
   const [profileData, setProfileData] = useState({ name: '', email: '' })
@@ -22,6 +30,72 @@ export default function SettingsPage() {
   })
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([
+    {
+      id: '1',
+      name: 'Production Site',
+      key: 'sk_live_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+    }
+  ])
+  const [newKeyName, setNewKeyName] = useState('')
+  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({})
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  const generateApiKey = async () => {
+    if (!newKeyName.trim()) return
+    
+    setIsGenerating(true)
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      const newKey: ApiKey = {
+        id: Date.now().toString(),
+        name: newKeyName.trim(),
+        key: 'sk_live_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+        createdAt: new Date().toISOString()
+      }
+      
+      setApiKeys([...apiKeys, newKey])
+      setNewKeyName('')
+      setShowKeys({ ...showKeys, [newKey.id]: true }) // Show the new key
+    } catch (error) {
+      console.error('Failed to generate API key:', error)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const deleteApiKey = (id: string) => {
+    setApiKeys(apiKeys.filter(k => k.id !== id))
+  }
+
+  const copyToClipboard = async (key: string, id: string) => {
+    await navigator.clipboard.writeText(key)
+    setCopiedKey(id)
+    setTimeout(() => setCopiedKey(null), 2000)
+  }
+
+  const toggleKeyVisibility = (id: string) => {
+    setShowKeys({ ...showKeys, [id]: !showKeys[id] })
+  }
+
+  const maskKey = (key: string) => {
+    return key.substring(0, 10) + '••••••••••••••••'
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
 
   const handleSaveProfile = async () => {
     setIsSaving(true)
@@ -75,8 +149,9 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="agent">Agent Permissions</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
@@ -130,6 +205,120 @@ export default function SettingsPage() {
                   </>
                 )}
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="api-keys" className="space-y-4 animate-in fade-in duration-200">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                API Keys for WordPress
+              </CardTitle>
+              <CardDescription>
+                Generate API keys to connect your WordPress sites to Siloq
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Generate New Key */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Key name (e.g., My WordPress Site)"
+                  value={newKeyName}
+                  onChange={(e) => setNewKeyName(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      generateApiKey()
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={generateApiKey}
+                  disabled={!newKeyName.trim() || isGenerating}
+                >
+                  {isGenerating ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Key className="h-4 w-4 mr-2" />
+                  )}
+                  Generate Key
+                </Button>
+              </div>
+
+              {/* API Keys List */}
+              <div className="space-y-3">
+                {apiKeys.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Key className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No API keys yet. Generate one to connect WordPress.</p>
+                  </div>
+                ) : (
+                  apiKeys.map((apiKey) => (
+                    <div
+                      key={apiKey.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium">{apiKey.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <code className="text-sm bg-muted px-2 py-1 rounded font-mono">
+                            {showKeys[apiKey.id] ? apiKey.key : maskKey(apiKey.key)}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleKeyVisibility(apiKey.id)}
+                          >
+                            {showKeys[apiKey.id] ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyToClipboard(apiKey.key, apiKey.id)}
+                          >
+                            {copiedKey === apiKey.id ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                          <span>Created: {formatDate(apiKey.createdAt)}</span>
+                          {apiKey.lastUsed && (
+                            <span>Last used: {formatDate(apiKey.lastUsed)}</span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => deleteApiKey(apiKey.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Instructions */}
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-2">How to use:</p>
+                <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                  <li>Install the Siloq WordPress plugin on your site</li>
+                  <li>Go to WordPress Admin &gt; Settings &gt; Siloq</li>
+                  <li>Enter your API key and save</li>
+                  <li>Click "Test Connection" to verify</li>
+                </ol>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
