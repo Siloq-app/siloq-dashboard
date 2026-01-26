@@ -10,9 +10,9 @@ import {
   ArrowLeft,
   Shield,
   AlertCircle,
+  CheckCircle2,
   ExternalLink,
-  Link as LinkIcon,
-  CheckCircle2
+  Link as LinkIcon
 } from 'lucide-react'
 import Link from 'next/link'
 import { ComplianceBadge } from '@/components/dashboard/compliance-badge'
