@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertCircle, UserPlus, Loader2, CheckCircle2 } from 'lucide-react'
+import Image from 'next/image'
 import apiClient from '@/lib/api-client'
 
 export default function RegisterPage() {
@@ -97,9 +98,13 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md animate-in zoom-in-95 duration-200">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
-              <UserPlus className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <Image
+              src="/assets/img/logo-siloq.svg"
+              alt="Siloq Logo"
+              width={160}
+              height={67}
+              priority
+            />
           </div>
           <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
           <CardDescription>
