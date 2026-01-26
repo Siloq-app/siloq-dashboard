@@ -12,7 +12,8 @@ import {
   AlertCircle,
   CheckCircle2,
   ExternalLink,
-  Link as LinkIcon
+  Link as LinkIcon,
+  CheckCircle2
 } from 'lucide-react'
 import Link from 'next/link'
 import { ComplianceBadge } from '@/components/dashboard/compliance-badge'
