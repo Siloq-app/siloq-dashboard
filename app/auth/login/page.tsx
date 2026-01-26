@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertCircle, LogIn, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import apiClient from '@/lib/api-client'
 
 export default function LoginPage() {
@@ -125,16 +126,12 @@ export default function LoginPage() {
           <div className="mt-6 text-center text-sm text-muted-foreground">
             <p>
               Don't have an account?{' '}
-              <a
-                href="#"
+              <Link
+                href="/auth/register"
                 className="text-primary hover:underline transition-colors"
-                onClick={(e) => {
-                  e.preventDefault()
-                  // TODO: Implement registration
-                }}
               >
-                Contact your administrator
-              </a>
+                Create an account
+              </Link>
             </p>
           </div>
         </CardContent>
