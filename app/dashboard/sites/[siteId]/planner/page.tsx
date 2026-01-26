@@ -224,10 +224,12 @@ export default function ReverseSiloPlannerPage() {
         message: targetPageId === '' ? 'Target page required' : undefined
       }
     ],
-    blockReason: undefined
+    blockReason: undefined,
+    isValid: false
   }
 
-  const isValid = validationStatus.rules.every(r => r.passed)
+  validationStatus.isValid = validationStatus.rules.every(r => r.passed)
+  const isValid = validationStatus.isValid
 
   const handleAddEntity = () => {
     if (entityInput.trim() && !entities.includes(entityInput.trim())) {
