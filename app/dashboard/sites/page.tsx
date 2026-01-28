@@ -165,11 +165,18 @@ function SiteRow({ site }: { site: Site }) {
   const queryClient = useQueryClient()
   const [isGeneratingKey, setIsGeneratingKey] = useState(false)
   const [isRevokingKey, setIsRevokingKey] = useState(false)
+  const [showKeyDialog, setShowKeyDialog] = useState(false)
+  const [generatedKey, setGeneratedKey] = useState<string | null>(null)
 
   const handleGenerateKey = async () => {
     setIsGeneratingKey(true)
     try {
-      await apiClient.post(`/sites/${site.id}/api-key`)
+      const { data } = await apiClient.post(`/sites/${site.id}/api-key`)
+      // Show full key once for copy-paste, then rely on masked prefix from list endpoint
+      if (data?.apiKey) {
+        setGeneratedKey(data.apiKey)
+        setShowKeyDialog(true)
+      }
       queryClient.invalidateQueries({ queryKey: ['sites', site.id] })
     } catch (error) {
       console.error('Failed to generate API key:', error)
@@ -262,6 +269,60 @@ function SiteRow({ site }: { site: Site }) {
             </Button>
           </Link>
         </div>
+
+        {/* One-time token reveal dialog (GitHub-style) */}
+        <Dialog
+          open={showKeyDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowKeyDialog(false)
+              setGeneratedKey(null)
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>New API Key</DialogTitle>
+              <DialogDescription>
+                This key will only be shown once. Copy it now and store it securely
+                (e.g., in a password manager). You won&apos;t be able to see it again.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <code className="flex-1 break-all rounded-md bg-muted px-3 py-2 text-sm">
+                  {generatedKey}
+                </code>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (!generatedKey) return
+                    navigator.clipboard.writeText(generatedKey).catch(() => {})
+                  }}
+                >
+                  Copy
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                After closing this dialog, only a shortened prefix will be visible in the dashboard.
+                If you lose this key, you&apos;ll need to generate a new one and update your WordPress plugin.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowKeyDialog(false)
+                  setGeneratedKey(null)
+                }}
+              >
+                I&apos;ve copied the key
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </td>
     </tr>
   )
