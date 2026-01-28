@@ -25,9 +25,12 @@ export default function LoginPage() {
 
     try {
       const { data } = await apiClient.post('/auth/login', { email, password })
-      
-      if (data.token) {
-        localStorage.setItem('auth_token', data.token)
+
+      // Support both internal mock API (`token`) and real backend (`access_token`)
+      const token = data.token || data.access_token
+
+      if (token) {
+        localStorage.setItem('auth_token', token)
         // Redirect to dashboard or return URL
         const returnUrl = new URLSearchParams(window.location.search).get('returnUrl') || '/dashboard'
         router.push(returnUrl)
