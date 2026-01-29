@@ -177,7 +177,8 @@ function SiteRow({ site }: { site: Site }) {
         setGeneratedKey(data.apiKey)
         setShowKeyDialog(true)
       }
-      queryClient.invalidateQueries({ queryKey: ['sites', site.id] })
+      // Refetch sites list so this row shows key badge instead of "Generate Key"
+      await queryClient.invalidateQueries({ queryKey: ['sites'] })
     } catch (error) {
       console.error('Failed to generate API key:', error)
     } finally {
@@ -186,10 +187,12 @@ function SiteRow({ site }: { site: Site }) {
   }
 
   const handleRevokeKey = async () => {
+    if (!confirm('Revoke this API key? The WordPress plugin will stop working until you generate a new key.')) return
     setIsRevokingKey(true)
     try {
       await apiClient.delete(`/sites/${site.id}/api-key`)
-      queryClient.invalidateQueries({ queryKey: ['sites', site.id] })
+      // Refetch sites list so this row shows "Generate Key" again
+      await queryClient.invalidateQueries({ queryKey: ['sites'] })
     } catch (error) {
       console.error('Failed to revoke API key:', error)
     } finally {
@@ -232,15 +235,26 @@ function SiteRow({ site }: { site: Site }) {
           {site.apiKey ? (
             <>
               <Badge variant="outline" className="font-mono text-xs">
-                {site.apiKey.substring(0, 8)}...
+                {site.apiKey.length >= 8 ? `${site.apiKey.substring(0, 8)}...` : site.apiKey}
               </Badge>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={handleRevokeKey}
                 disabled={isRevokingKey}
+                title="Revoke API key"
               >
-                <Key className="h-4 w-4" />
+                {isRevokingKey ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Revoking...
+                  </>
+                ) : (
+                  <>
+                    <Key className="h-4 w-4 mr-2" />
+                    Revoke
+                  </>
+                )}
               </Button>
             </>
           ) : (
@@ -277,6 +291,8 @@ function SiteRow({ site }: { site: Site }) {
             if (!open) {
               setShowKeyDialog(false)
               setGeneratedKey(null)
+              // Ensure list is fresh so row shows key badge after dialog closes
+              queryClient.invalidateQueries({ queryKey: ['sites'] })
             }
           }}
         >
@@ -316,6 +332,7 @@ function SiteRow({ site }: { site: Site }) {
                 onClick={() => {
                   setShowKeyDialog(false)
                   setGeneratedKey(null)
+                  queryClient.invalidateQueries({ queryKey: ['sites'] })
                 }}
               >
                 I&apos;ve copied the key
