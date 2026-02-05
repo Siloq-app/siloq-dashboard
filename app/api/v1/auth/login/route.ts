@@ -1,23 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
-// Simple in-memory storage for demo purposes
-// In production, this would connect to a real database
+// In-memory storage for demo (use database in production)
 const users: Map<string, { id: string; name: string; email: string; password: string }> = new Map()
 
-// Add a demo user for testing
+// Demo user
 users.set('demo@siloq.com', {
-  id: 'user_demo',
+  id: 'user_001',
   name: 'Demo User',
   email: 'demo@siloq.com',
-  password: 'password123',
+  password: bcrypt.hashSync('password123', 10)
 })
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, password } = body
 
-    // Validate required fields
     if (!email || !password) {
       return NextResponse.json(
         { message: 'Email and password are required' },
@@ -25,18 +27,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find user
     const user = users.get(email)
     
-    if (!user || user.password !== password) {
+    if (!user) {
       return NextResponse.json(
         { message: 'Invalid email or password' },
         { status: 401 }
       )
     }
 
-    // Generate a simple token (in production, use JWT)
-    const token = Buffer.from(`${user.id}:${Date.now()}`).toString('base64')
+    const isValidPassword = await bcrypt.compare(password, user.password)
+    
+    if (!isValidPassword) {
+      return NextResponse.json(
+        { message: 'Invalid email or password' },
+        { status: 401 }
+      )
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    )
 
     return NextResponse.json({
       message: 'Login successful',
@@ -44,8 +57,8 @@ export async function POST(request: NextRequest) {
       user: {
         id: user.id,
         name: user.name,
-        email: user.email,
-      },
+        email: user.email
+      }
     })
   } catch (error) {
     console.error('Login error:', error)
