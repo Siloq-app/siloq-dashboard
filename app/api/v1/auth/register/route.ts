@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
-// Simple in-memory storage for demo purposes
-// In production, this would connect to a real database
 const users: Map<string, { id: string; name: string; email: string; password: string }> = new Map()
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { name, email, password } = body
 
-    // Validate required fields
     if (!name || !email || !password) {
       return NextResponse.json(
         { message: 'Name, email, and password are required' },
@@ -17,42 +17,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { message: 'Invalid email format' },
-        { status: 400 }
-      )
-    }
-
-    // Validate password length
     if (password.length < 8) {
       return NextResponse.json(
-        { message: 'Password must be at least 8 characters long' },
+        { message: 'Password must be at least 8 characters' },
         { status: 400 }
       )
     }
 
-    // Check if user already exists
     if (users.has(email)) {
       return NextResponse.json(
-        { message: 'An account with this email already exists' },
+        { message: 'Email already registered' },
         { status: 409 }
       )
     }
 
-    // Create new user
     const userId = `user_${Date.now()}`
+    const hashedPassword = await bcrypt.hash(password, 10)
+
     users.set(email, {
       id: userId,
       name,
       email,
-      password, // In production, this should be hashed
+      password: hashedPassword
     })
 
-    // Generate a simple token (in production, use JWT)
-    const token = Buffer.from(`${userId}:${Date.now()}`).toString('base64')
+    const token = jwt.sign(
+      { userId, email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    )
 
     return NextResponse.json({
       message: 'Registration successful',
@@ -60,9 +53,9 @@ export async function POST(request: NextRequest) {
       user: {
         id: userId,
         name,
-        email,
-      },
-    })
+        email
+      }
+    }, { status: 201 })
   } catch (error) {
     console.error('Registration error:', error)
     return NextResponse.json(

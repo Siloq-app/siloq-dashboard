@@ -1,14 +1,14 @@
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { Providers } from "./providers"
-
-const inter = Inter({ subsets: ["latin"] })
+import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: "Siloq Dashboard",
-  description: "Governance-first SEO platform interface",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
+  title: 'Siloq Dashboard',
+  description: 'SEO Governance Platform',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
 }
 
 export default function RootLayout({
@@ -18,8 +18,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Providers>{children}</Providers>
+      <body className="font-sans text-slate-200 antialiased">
+        {children}
       </body>
     </html>
   )
