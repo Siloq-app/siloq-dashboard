@@ -178,7 +178,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111827]">
+    <div className="min-h-screen bg-[#ffffff]">
       <Header 
         automationMode={automationMode} 
         onAutomationChange={setAutomationMode}
@@ -193,7 +193,7 @@ export default function Dashboard() {
           onToggle={() => setSidebarOpen(!sidebarOpen)}
         />
         
-        <main className={`flex-1 p-8 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <main className={`flex-1 p-8 transition-all duration-300 bg-[#EBF2FD] ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
           {renderScreen()}
         </main>
       </div>

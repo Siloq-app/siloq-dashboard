@@ -9,7 +9,7 @@ interface Props {
 
 export default function HealthScore({ score, change }: Props) {
   return (
-    <div className="card p-7 text-center">
+    <div className="bg-[#ffffff] card p-7 text-center border-0">
       <div className="relative w-16 h-16 mx-auto mb-5">
         <svg viewBox="0 0 100 100" className="-rotate-90">
           <circle
