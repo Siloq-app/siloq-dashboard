@@ -39,23 +39,23 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
       {!isOpen && (
         <button
           onClick={() => onToggle ? onToggle() : setIsOpen(true)}
-          className="fixed left-4 top-24 z-50 p-2 rounded-lg hover:bg-slate-800 transition-colors"
+          className="fixed left-4 top-24 z-50 p-2 rounded-lg hover:bg-muted transition-colors"
         >
-          <Menu size={24} className="text-slate-400" />
+          <Menu size={24} className="text-muted-foreground" />
         </button>
       )}
 
       <aside
-        className={`fixed left-0 top-0 h-screen shrink-0 border-r border-slate-800 bg-slate-950 transition-all duration-300 ease-in-out flex flex-col z-40 ${
+        className={`fixed left-0 top-0 h-screen shrink-0 border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-in-out flex flex-col z-40 ${
           isOpen ? 'w-64' : 'w-0 overflow-hidden'
         }`}
       >
         {/* Header with Team Switcher */}
-        <div className="flex items-center gap-2 p-2">
+        <div className="flex items-center gap-2 p-2 border-b border-sidebar-border">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
-                className="flex flex-1 items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-slate-800 h-12"
+                className="flex flex-1 items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-[#f2f4f3] h-12"
                 type="button"
               >
                 <svg width="32" height="32" viewBox="0 0 249 234" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -95,28 +95,28 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
                   </defs>
                 </svg>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-extrabold text-slate-200">Siloq</span>
-                  <span className="truncate text-xs text-slate-500">Enterprise</span>
+                  <span className="truncate font-extrabold text-sidebar-foreground">Siloq</span>
+                  <span className="truncate text-xs text-sidebar-foreground/70">Enterprise</span>
                 </div>
-                <ChevronUp className="ml-auto size-4 text-slate-400" />
+                <ChevronUp className="ml-auto size-4 text-sidebar-foreground/70" />
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
               <DropdownMenu.Content
-                className="z-50 min-w-[200px] rounded-lg border border-slate-700 bg-slate-900 p-1 shadow-lg"
+                className="z-50 min-w-[200px] rounded-lg border border-sidebar-border bg-sidebar p-1 shadow-lg"
                 sideOffset={4}
                 align="start"
               >
-                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-300 outline-none hover:bg-slate-800 hover:text-slate-100">
+                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground outline-none hover:bg-sidebar-hover hover:text-sidebar-foreground">
                   <Target className="size-4" />
                   <span>Siloq Inc</span>
                 </DropdownMenu.Item>
-                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-300 outline-none hover:bg-slate-800 hover:text-slate-100">
+                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground outline-none hover:bg-sidebar-hover hover:text-sidebar-foreground">
                   <GitBranch className="size-4" />
                   <span>Acme Corp</span>
                 </DropdownMenu.Item>
-                <DropdownMenu.Separator className="my-1 h-px bg-slate-700" />
-                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-300 outline-none hover:bg-slate-800 hover:text-slate-100">
+                <DropdownMenu.Separator className="my-1 h-px bg-sidebar-border" />
+                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground outline-none hover:bg-sidebar-hover hover:text-sidebar-foreground">
                   <span>+ Add Team</span>
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
@@ -128,10 +128,10 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
         <div className="flex-1 overflow-y-auto">
           {/* Platform Group */}
           <div className="relative flex w-full min-w-0 flex-col p-2">
-            <div className="flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-slate-500">
+            <div className="flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/60">
               Platform
             </div>
-            <ul className="flex w-full min-w-0 flex-col gap-0">
+            <ul className="flex w-full min-w-0 flex-col gap-2">
               {navItems.map((item) => {
                 const Icon = item.icon
                 const isActive = activeTab === item.id
@@ -141,15 +141,15 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
                   <li key={item.id} className="group/menu-item relative">
                     <button
                       onClick={() => onTabChange(item.id)}
-                      className={`flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors h-8 text-sm ${
+                      className={`flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors h-8 text-sm ${
                         isActive
-                          ? 'bg-blue-600 text-white'
-                          : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                          ? 'bg-sidebar-active text-white font-medium'
+                          : 'text-sidebar-foreground/80 hover:bg-sidebar-hover hover:text-sidebar-foreground'
                       }`}
                       type="button"
                     >
                       <Icon className="size-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
+                      <span>{item.label}</span>
                       {showBadge && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
                           {pendingCount}
@@ -163,13 +163,13 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 p-2 border-t border-slate-800">
+        <div className="flex flex-col gap-1 p-2 border-t border-sidebar-border">
           {/* Help, Search */}
-          <button className="flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-slate-800 h-9 text-sm text-slate-400 hover:text-slate-100">
+          <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-hover h-9 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground">
             <HelpCircle className="size-4 shrink-0" />
             <span>Get Help</span>
           </button>
-          <button className="flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-slate-800 h-9 text-sm text-slate-400 hover:text-slate-100">
+          <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-hover h-9 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground">
             <Search className="size-4 shrink-0" />
             <span>Search</span>
           </button>
@@ -178,37 +178,37 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
-                className="flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-slate-800 h-12 mt-1"
+                className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-hover h-12 mt-1"
                 type="button"
               >
-                <span className="relative flex size-8 shrink-0 select-none rounded-full bg-slate-800 items-center justify-center text-xs font-medium text-slate-300 overflow-hidden">
-                  <svg viewBox="0 0 24 24" className="size-5 text-slate-400" fill="currentColor">
+                <span className="relative flex size-8 shrink-0 select-none rounded-full bg-sidebar-hover items-center justify-center text-xs font-medium text-sidebar-foreground overflow-hidden">
+                  <svg viewBox="0 0 24 24" className="size-5 text-sidebar-foreground/70" fill="currentColor">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                   </svg>
                 </span>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium text-slate-200">shadcn</span>
-                  <span className="truncate text-xs text-slate-500">m@example.com</span>
+                  <span className="truncate font-medium text-sidebar-foreground">shadcn</span>
+                  <span className="truncate text-xs text-sidebar-foreground/70">m@example.com</span>
                 </div>
-                <MoreVertical className="ml-auto size-4 text-slate-400" />
+                <MoreVertical className="ml-auto size-4 text-sidebar-foreground/70" />
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
               <DropdownMenu.Content
-                className="z-50 min-w-[200px] rounded-lg border border-slate-700 bg-slate-900 p-1 shadow-lg"
+                className="z-50 min-w-[200px] rounded-lg border border-sidebar-border bg-sidebar p-1 shadow-lg"
                 sideOffset={4}
                 align="start"
               >
-                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-300 outline-none hover:bg-slate-800 hover:text-slate-100">
+                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground outline-none hover:bg-sidebar-hover hover:text-sidebar-foreground">
                   <User className="size-4" />
                   <span>Profile</span>
                 </DropdownMenu.Item>
-                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-300 outline-none hover:bg-slate-800 hover:text-slate-100">
+                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground outline-none hover:bg-sidebar-hover hover:text-sidebar-foreground">
                   <Settings className="size-4" />
                   <span>Settings</span>
                 </DropdownMenu.Item>
-                <DropdownMenu.Separator className="my-1 h-px bg-slate-700" />
-                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-red-400 outline-none hover:bg-slate-800 hover:text-red-300">
+                <DropdownMenu.Separator className="my-1 h-px bg-sidebar-border" />
+                <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-red-400 outline-none hover:bg-sidebar-hover hover:text-red-300">
                   <LogOut className="size-4" />
                   <span>Log out</span>
                 </DropdownMenu.Item>
