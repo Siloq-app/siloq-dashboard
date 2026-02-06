@@ -4,97 +4,131 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #0f172a;
-  --foreground: #e2e8f0;
+@layer base {
+  :root {
+    --background: 0 0% 96%;           /* #f5f5f5 - Light Gray Background */
+    --foreground: 220 20% 10%;        /* #1a1a2e - Dark Navy Text */
+
+    --card: 0 0% 100%;               /* #ffffff - White Cards */
+    --card-foreground: 220 20% 10%;  /* #1a1a2e - Dark Navy Text */
+
+    --popover: 0 0% 100%;            /* #ffffff - White Popover */
+    --popover-foreground: 220 20% 10%; /* #1a1a2e - Dark Navy Text */
+
+    --primary: 220 60% 30%;           /* #1e3a5f - Navy Blue Primary */
+    --primary-foreground: 0 0% 100%; /* #ffffff - White text on primary */
+
+    --secondary: 220 20% 90%;        /* #e8ecf1 - Light Gray Secondary */
+    --secondary-foreground: 220 20% 20%; /* #2d3748 - Darker Navy Text */
+
+    --muted: 220 15% 95%;            /* #f1f3f5 - Very Light Gray */
+    --muted-foreground: 220 15% 45%; /* #6b7280 - Gray Text */
+
+    --accent: 220 60% 35%;           /* #2563eb - Blue Accent */
+    --accent-foreground: 0 0% 100%;  /* #ffffff - White text */
+
+    --destructive: 0 72% 51%;        /* #ef4444 - Error Red */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 90%;           /* #e5e7eb - Light Border */
+    --input: 220 15% 90%;           /* #e5e7eb - Light Input */
+    --ring: 220 60% 30%;           /* #1e3a5f - Navy Ring */
+
+    --radius: 0.625rem;
+  }
 }
 
-body {
-  background: #020618;
-  min-height: 100vh;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
 }
 
 @layer components {
   .card {
-    @apply bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl;
+    @apply bg-white border border-border rounded-xl shadow-sm;
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-500/30 hover:shadow-2xl hover:shadow-black/30;
+    @apply transition-all duration-300 hover:shadow-md hover:border-primary/30;
   }
 
   .btn-primary {
-    @apply bg-white text-slate-900 px-5 py-2.5 rounded-lg font-semibold 
-           transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-white/20
+    @apply bg-primary text-white px-5 py-2.5 rounded-lg font-medium 
+           transition-all duration-200 hover:bg-primary/90 hover:shadow-lg
            flex items-center gap-2;
   }
 
   .btn-secondary {
-    @apply bg-white/10 border border-white/20 text-white px-4 py-2 rounded-lg font-medium
-           transition-all duration-200 hover:bg-white/20 flex items-center gap-2;
+    @apply bg-white border border-border text-foreground px-5 py-2.5 rounded-lg font-medium
+           transition-all duration-200 hover:bg-muted hover:shadow-sm
+           flex items-center gap-2;
   }
 
   .btn-approve {
-    @apply w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-xl text-sm font-medium transition-all relative bg-gradient-to-r from-[#2563eb] to-indigo-500 text-white;
+    @apply w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-sm font-medium transition-all relative bg-primary text-white;
   }
 
   .btn-deny {
-    @apply bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-2 rounded-lg font-medium
-           transition-all duration-200 hover:bg-red-500/20;
+    @apply bg-white border border-red-200 text-red-500 px-4 py-2 rounded-lg font-medium
+           transition-all duration-200 hover:bg-red-50;
   }
 
   .severity-high {
-    @apply bg-gradient-to-r from-red-500 to-red-600 text-white px-2.5 py-1 rounded text-xs font-semibold uppercase;
+    @apply bg-red-50 text-red-600 border border-red-200 px-2.5 py-1 rounded-full text-xs font-medium;
   }
 
   .severity-medium {
-    @apply bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-1 rounded text-xs font-semibold uppercase;
+    @apply bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1 rounded-full text-xs font-medium;
   }
 
   .severity-low {
-    @apply bg-gradient-to-r from-emerald-500 to-green-500 text-white px-2.5 py-1 rounded text-xs font-semibold uppercase;
+    @apply bg-emerald-50 text-emerald-600 border border-emerald-200 px-2.5 py-1 rounded-full text-xs font-medium;
   }
 
   .risk-safe {
-    @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded text-xs font-semibold uppercase;
+    @apply bg-emerald-50 text-emerald-600 border border-emerald-200 px-2.5 py-1 rounded-full text-xs font-medium;
   }
 
   .risk-destructive {
-    @apply bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded text-xs font-semibold uppercase;
+    @apply bg-red-50 text-red-600 border border-red-200 px-2.5 py-1 rounded-full text-xs font-medium;
   }
 
   .entity-tag {
-    @apply text-[10px] px-2 py-0.5 bg-indigo-500/15 rounded text-indigo-300 inline-block mr-1.5 mb-1;
+    @apply text-[10px] px-2 py-0.5 bg-muted rounded text-muted-foreground inline-block mr-1.5 mb-1;
   }
 
   .automation-manual {
-    @apply bg-slate-500/20 text-slate-400;
+    @apply bg-gray-100 text-gray-500;
   }
 
   .automation-semi {
-    @apply bg-amber-500/20 text-amber-400;
+    @apply bg-amber-50 text-amber-600;
   }
 
   .automation-full {
-    @apply bg-emerald-500/20 text-emerald-400;
+    @apply bg-emerald-50 text-emerald-600;
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - light */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(30, 41, 59, 0.5);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.5);
+  background: rgba(0, 0, 0, 0.2);
 }
