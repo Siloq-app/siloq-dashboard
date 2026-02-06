@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { 
-  Target, GitBranch, Clock, FileText, Link2, Settings, Menu, ChevronUp, LogOut, User, HelpCircle, Search, MoreVertical
+  Target, GitBranch, Clock, FileText, Link2, Settings, Menu, ChevronUp, LogOut, User, HelpCircle, Search, MoreVertical, Globe
 } from 'lucide-react'
 import { TabType } from './Dashboard'
 
@@ -19,6 +19,7 @@ const navItems = [
   { id: 'dashboard' as const, icon: Target, label: 'Dashboard' },
   { id: 'silos' as const, icon: GitBranch, label: 'Silos' },
   { id: 'approvals' as const, icon: Clock, label: 'Approvals' },
+  { id: 'sites' as const, icon: Globe, label: 'Sites' },
   { id: 'content' as const, icon: FileText, label: 'Content' },
   { id: 'links' as const, icon: Link2, label: 'Internal Links' },
   { id: 'settings' as const, icon: Settings, label: 'Settings' },

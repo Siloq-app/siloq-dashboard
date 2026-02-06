@@ -6,12 +6,13 @@ import Sidebar from './Sidebar'
 import GovernanceDashboard from './screens/GovernanceDashboard'
 import SiloPlanner from './screens/SiloPlanner'
 import ApprovalQueue from './screens/ApprovalQueue'
+import SitesScreen from './screens/SitesScreen'
 import ContentHub from './screens/ContentHub'
 import Settings from './screens/Settings'
 import GenerateModal from './modals/GenerateModal'
 import ApprovalModal from './modals/ApprovalModal'
 
-export type TabType = 'dashboard' | 'silos' | 'approvals' | 'content' | 'links' | 'settings'
+export type TabType = 'dashboard' | 'silos' | 'approvals' | 'sites' | 'content' | 'links' | 'settings'
 export type AutomationMode = 'manual' | 'semi' | 'full'
 
 export interface CannibalizationIssue {
@@ -161,6 +162,8 @@ export default function Dashboard() {
             onShowApprovalModal={() => setShowApprovalModal(true)}
           />
         )
+      case 'sites':
+        return <SitesScreen />
       case 'content':
         return <ContentHub />
       case 'links':
@@ -171,7 +174,7 @@ export default function Dashboard() {
           </div>
         )
       case 'settings':
-        return <Settings />
+        return <Settings onNavigateToSites={() => setActiveTab('sites')} />
       default:
         return null
     }

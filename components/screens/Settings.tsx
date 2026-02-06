@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
 interface Props {
-  automationMode: AutomationMode
-  onAutomationChange: (mode: AutomationMode) => void
+  automationMode?: AutomationMode
+  onAutomationChange?: (mode: AutomationMode) => void
+  onNavigateToSites?: () => void
 }
 
 const automationModes = [
@@ -39,7 +40,7 @@ const tabs = [
   { id: 'notifications' as const, label: 'Notifications', icon: Bell },
 ]
 
-export default function Settings({ automationMode, onAutomationChange }: Props) {
+export default function Settings({ automationMode, onAutomationChange, onNavigateToSites }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('profile')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
@@ -217,75 +218,31 @@ export default function Settings({ automationMode, onAutomationChange }: Props) 
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-foreground mb-1">API Keys for WordPress</h3>
-        <p className="text-sm text-muted-foreground">Generate API keys to connect your WordPress sites to Siloq</p>
+        <p className="text-sm text-muted-foreground">
+          Manage sites and generate API keys per site (like GitHub tokens). Use the Siloq plugin with each key.
+        </p>
       </div>
 
-      {/* Generate New Key */}
-      <div className="flex gap-3">
-        <input
-          type="text"
-          value={newKeyName}
-          onChange={(e) => setNewKeyName(e.target.value)}
-          placeholder="Key name (e.g., My WordPress Site)"
-          className="flex-1 px-4 py-2.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-colors"
-        />
-        <Button
-          onClick={handleGenerateKey}
-          disabled={isGenerating || !newKeyName.trim()}
-          className="flex items-center gap-2 whitespace-nowrap"
-        >
-          {isGenerating ? (
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
+      <Card className="p-6 bg-white">
+        <p className="text-sm text-muted-foreground mb-4">
+          Add WordPress sites in <strong>Sites</strong>, then create a token for each site. Paste the token and API URL in your WordPress plugin (Settings → Siloq).
+        </p>
+        {onNavigateToSites ? (
+          <Button onClick={onNavigateToSites} className="flex items-center gap-2">
             <LinkIcon size={16} />
-          )}
-          Generate Key
-        </Button>
-      </div>
-
-      {/* API Keys List */}
-      <div className="space-y-3">
-        {apiKeys.map((apiKey) => (
-          <Card key={apiKey.id} className="p-4 bg-white">
-            <div className="flex items-center justify-between mb-3">
-              <div className="font-medium text-foreground">{apiKey.name}</div>
-              <button
-                onClick={() => handleDeleteKey(apiKey.id)}
-                className="text-red-500 hover:text-red-600 transition-colors"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <code className="px-3 py-1.5 bg-muted rounded text-sm font-mono text-foreground">
-                {visibleKeys.has(apiKey.id) ? apiKey.key : maskKey(apiKey.key)}
-              </code>
-              <button
-                onClick={() => toggleKeyVisibility(apiKey.id)}
-                className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                title={visibleKeys.has(apiKey.id) ? 'Hide key' : 'Show key'}
-              >
-                {visibleKeys.has(apiKey.id) ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-              <button
-                onClick={() => handleCopy(apiKey.key)}
-                className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                title="Copy to clipboard"
-              >
-                {copiedKey === apiKey.key ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
-              </button>
-            </div>
-            <div className="mt-3 text-xs text-muted-foreground">
-              Created: {apiKey.created} &nbsp;&nbsp; Last used: {apiKey.lastUsed}
-            </div>
-          </Card>
-        ))}
-      </div>
+            Manage sites & API keys
+          </Button>
+        ) : (
+          <p className="text-sm text-muted-foreground">Go to <strong>Sites</strong> in the sidebar to manage sites and API keys.</p>
+        )}
+      </Card>
 
       {/* How to use */}
       <div className="pt-4 border-t border-border">
         <h4 className="text-sm font-semibold text-foreground mb-3">How to use:</h4>
         <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+          <li>Go to <strong>Sites</strong> and add your WordPress site</li>
+          <li>Generate a token for that site and copy it</li>
           <li>Install the Siloq WordPress plugin on your site</li>
           <li>Go to WordPress Admin &gt; Settings &gt; Siloq</li>
           <li>Enter your API key and save</li>
