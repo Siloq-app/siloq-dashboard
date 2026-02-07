@@ -52,7 +52,7 @@ export default function ContentHub({ onGenerateClick }: Props) {
 
   return (
     <div className="card p-7">
-      <h2 className="text-2xl font-bold mb-2">Content Generation</h2>
+      <h2 className="text-2xl font-semibold mb-2">Content Generation</h2>
       <p className="text-sm text-slate-400 mb-8">Generate content that fits your Reverse Silo architecture</p>
 
       <div className="grid grid-cols-2 gap-5">
