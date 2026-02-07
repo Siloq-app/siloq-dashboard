@@ -37,3 +37,10 @@ export const PAGES_ENDPOINTS = {
   detail: (id: number | string) => `${getBackendApiUrl()}/api/v1/pages/${id}/`,
   seo: (id: number | string) => `${getBackendApiUrl()}/api/v1/pages/${id}/seo/`,
 }
+
+export const SCAN_ENDPOINTS = {
+  list: () => `${getBackendApiUrl()}/api/v1/scans/`,
+  create: () => `${getBackendApiUrl()}/api/v1/scans/`,
+  detail: (id: number | string) => `${getBackendApiUrl()}/api/v1/scans/${id}/`,
+  report: (id: number | string) => `${getBackendApiUrl()}/api/v1/scans/${id}/report/`,
+}

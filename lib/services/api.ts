@@ -66,6 +66,41 @@ export interface ApiKey {
   usage_count: number
 }
 
+export interface Scan {
+  id: number
+  url: string
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  scan_type: 'full' | 'quick' | 'seo' | 'technical'
+  score: number
+  pages_analyzed: number
+  scan_duration_seconds: number
+  results?: {
+    technical_score: number
+    content_score: number
+    seo_score: number
+    issues: Array<{
+      type: string
+      severity: 'high' | 'medium' | 'low'
+      message: string
+    }>
+    recommendations: string[]
+  }
+  created_at: string
+  completed_at: string | null
+}
+
+export interface ScanReport extends Scan {
+  keyword_cannibalization?: {
+    issues_found: number
+    recommendations: string[]
+  }
+}
+
+export type CreateScanInput = {
+  url: string
+  scan_type?: 'full' | 'quick' | 'seo' | 'technical'
+}
+
 class SitesService {
   async list(): Promise<Site[]> {
     const res = await fetchWithAuth('/api/v1/sites')
@@ -155,6 +190,41 @@ class ApiKeysService {
   }
 }
 
+class ScansService {
+  async list(): Promise<Scan[]> {
+    const res = await fetchWithAuth('/api/v1/scans')
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load scans')
+    return Array.isArray(data) ? data : data.results || []
+  }
+
+  async getById(id: number | string): Promise<Scan> {
+    const res = await fetchWithAuth(`/api/v1/scans/${id}`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load scan')
+    return data
+  }
+
+  async create(scan: CreateScanInput): Promise<Scan> {
+    const res = await fetchWithAuth('/api/v1/scans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(scan),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to create scan')
+    return data
+  }
+
+  async getReport(id: number | string): Promise<ScanReport> {
+    const res = await fetchWithAuth(`/api/v1/scans/${id}/report`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load scan report')
+    return data
+  }
+}
+
 export const sitesService = new SitesService()
 export const pagesService = new PagesService()
 export const apiKeysService = new ApiKeysService()
+export const scansService = new ScansService()
