@@ -307,7 +307,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
           {automationModes.map((mode) => (
             <Card
               key={mode.id}
-              onClick={() => onAutomationChange(mode.id)}
+              onClick={() => onAutomationChange?.(mode.id)}
               className={`p-5 cursor-pointer transition-all ${
                 automationMode === mode.id
                   ? 'border-[#2563eb] bg-[#2563eb]/5'
