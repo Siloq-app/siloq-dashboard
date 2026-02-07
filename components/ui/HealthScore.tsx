@@ -9,7 +9,7 @@ interface Props {
 
 export default function HealthScore({ score, change }: Props) {
   return (
-    <div className="card p-7 text-center">
+    <div className="bg-[#ffffff] card p-7 text-center border-0">
       <div className="relative w-16 h-16 mx-auto mb-5">
         <svg viewBox="0 0 100 100" className="-rotate-90">
           <circle
@@ -38,8 +38,8 @@ export default function HealthScore({ score, change }: Props) {
           </defs>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-bold">{score}</span>
-          <span className="text-xs text-slate-400">/ 100</span>
+          <span className="text-xl font-bold tabular-nums">{score}</span>
+          <span className="text-xs text-slate-400 tabular-nums">/ 100</span>
         </div>
       </div>
       <div className="flex items-center justify-center gap-1.5 text-emerald-400">

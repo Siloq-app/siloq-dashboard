@@ -36,7 +36,7 @@ export default function LoginPage() {
       }
 
       localStorage.setItem('token', data.token)
-      router.push('/dashboard')
+      router.push('/')
     } catch (err: any) {
       setError(err.message)
     } finally {

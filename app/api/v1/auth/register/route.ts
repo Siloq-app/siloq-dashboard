@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-
-const users: Map<string, { id: string; name: string; email: string; password: string }> = new Map()
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+import { AUTH_ENDPOINTS } from '@/lib/backend-api'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { name, email, password } = body
 
-    if (!name || !email || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { message: 'Name, email, and password are required' },
+        { message: 'Email and password are required' },
         { status: 400 }
       )
     }
@@ -24,43 +20,44 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (users.has(email)) {
+    const res = await fetch(AUTH_ENDPOINTS.register(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+        name: name || '',
+      }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      const message =
+        data.email?.[0] ||
+        data.password?.[0] ||
+        data.detail ||
+        data.message ||
+        'Registration failed'
       return NextResponse.json(
-        { message: 'Email already registered' },
-        { status: 409 }
+        { message: typeof message === 'string' ? message : 'Registration failed' },
+        { status: res.status >= 500 ? 500 : res.status }
       )
     }
 
-    const userId = `user_${Date.now()}`
-    const hashedPassword = await bcrypt.hash(password, 10)
-
-    users.set(email, {
-      id: userId,
-      name,
-      email,
-      password: hashedPassword
-    })
-
-    const token = jwt.sign(
-      { userId, email },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    )
-
-    return NextResponse.json({
-      message: 'Registration successful',
-      token,
-      user: {
-        id: userId,
-        name,
-        email
-      }
-    }, { status: 201 })
-  } catch (error) {
-    console.error('Registration error:', error)
     return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
+      {
+        message: data.message,
+        token: data.token,
+        user: data.user,
+      },
+      { status: 201 }
+    )
+  } catch (error) {
+    console.error('Register proxy error:', error)
+    return NextResponse.json(
+      { message: 'Unable to reach auth service. Please try again.' },
+      { status: 502 }
     )
   }
 }
