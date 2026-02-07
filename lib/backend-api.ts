@@ -17,6 +17,7 @@ export const AUTH_ENDPOINTS = {
 export const SITES_ENDPOINTS = {
   list: () => `${getBackendApiUrl()}/api/v1/sites/`,
   detail: (id: number | string) => `${getBackendApiUrl()}/api/v1/sites/${id}/`,
+  overview: (id: number | string) => `${getBackendApiUrl()}/api/v1/sites/${id}/overview/`,
 }
 
 export const API_KEYS_ENDPOINTS = {
@@ -26,4 +27,13 @@ export const API_KEYS_ENDPOINTS = {
       : `${getBackendApiUrl()}/api/v1/api-keys/`,
   create: () => `${getBackendApiUrl()}/api/v1/api-keys/`,
   delete: (id: number | string) => `${getBackendApiUrl()}/api/v1/api-keys/${id}/`,
+}
+
+export const PAGES_ENDPOINTS = {
+  list: (siteId?: number | string) =>
+    siteId
+      ? `${getBackendApiUrl()}/api/v1/pages/?site_id=${siteId}`
+      : `${getBackendApiUrl()}/api/v1/pages/`,
+  detail: (id: number | string) => `${getBackendApiUrl()}/api/v1/pages/${id}/`,
+  seo: (id: number | string) => `${getBackendApiUrl()}/api/v1/pages/${id}/seo/`,
 }

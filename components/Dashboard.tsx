@@ -11,6 +11,7 @@ import ContentHub from './screens/ContentHub'
 import Settings from './screens/Settings'
 import GenerateModal from './modals/GenerateModal'
 import ApprovalModal from './modals/ApprovalModal'
+import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
 
 export type TabType = 'dashboard' | 'silos' | 'approvals' | 'sites' | 'content' | 'links' | 'settings'
 export type AutomationMode = 'manual' | 'semi' | 'full'
@@ -132,7 +133,11 @@ export default function Dashboard() {
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
-  const healthScore = 72
+  const { sites, selectedSite, siteOverview, pages, isLoading, error, refresh } = useDashboardData()
+
+  const healthScore = siteOverview?.health_score ?? selectedSite?.page_count ? Math.round((1 - (siteOverview?.total_issues ?? 0) / (selectedSite?.page_count || 1)) * 100) : 72
+  const totalIssues = siteOverview?.total_issues ?? 0
+  const totalPages = siteOverview?.total_pages ?? selectedSite?.page_count ?? 0
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -143,29 +148,29 @@ export default function Dashboard() {
             cannibalizationIssues={cannibalizationIssues}
             silos={silos}
             pendingChanges={pendingChanges}
+            onViewSilo={() => setActiveTab('silos')}
             onViewApprovals={() => setActiveTab('approvals')}
             onShowApprovalModal={() => setShowApprovalModal(true)}
-            onGenerate={() => setShowGenerateModal(true)}
           />
         )
       case 'silos':
         return (
           <SiloPlanner
             silos={silos}
-            onGenerate={() => setShowGenerateModal(true)}
+            selectedSilo={null}
+            onGenerateClick={() => setShowGenerateModal(true)}
           />
         )
       case 'approvals':
         return (
           <ApprovalQueue
             pendingChanges={pendingChanges}
-            onShowApprovalModal={() => setShowApprovalModal(true)}
           />
         )
       case 'sites':
         return <SitesScreen />
       case 'content':
-        return <ContentHub />
+        return <ContentHub onGenerateClick={() => setShowGenerateModal(true)} />
       case 'links':
         return (
           <div className="text-slate-300">
@@ -185,6 +190,8 @@ export default function Dashboard() {
       <Header 
         automationMode={automationMode} 
         onAutomationChange={setAutomationMode}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        isSidebarOpen={sidebarOpen}
       />
       
       <div className="flex">
