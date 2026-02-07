@@ -37,18 +37,25 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
 
   return (
     <>
-      {!isOpen && (
-        <button
-          onClick={() => onToggle ? onToggle() : setIsOpen(true)}
-          className="fixed left-4 top-24 z-50 p-2 rounded-lg hover:bg-muted transition-colors"
-        >
-          <Menu size={24} className="text-muted-foreground" />
-        </button>
+      {/* Mobile Menu Button - Always visible on small screens */}
+      <button
+        onClick={() => onToggle ? onToggle() : setIsOpen(true)}
+        className="fixed left-4 top-20 z-50 p-2 rounded-lg hover:bg-muted transition-colors lg:hidden"
+      >
+        <Menu size={24} className="text-muted-foreground" />
+      </button>
+
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => onToggle ? onToggle() : setIsOpen(false)}
+        />
       )}
 
       <aside
-        className={`fixed left-0 top-0 h-screen shrink-0 border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-in-out flex flex-col z-40 ${
-          isOpen ? 'w-64' : 'w-0 overflow-hidden'
+        className={`fixed left-0 top-0 h-screen shrink-0 border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-in-out flex flex-col z-40 lg:translate-x-0 ${
+          isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full lg:w-64 lg:translate-x-0 overflow-hidden'
         }`}
       >
         {/* Header with Team Switcher */}
@@ -99,7 +106,7 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
                   <span className="truncate font-extrabold text-sidebar-foreground">Siloq</span>
                   <span className="truncate text-xs text-sidebar-foreground/70">Enterprise</span>
                 </div>
-                <ChevronUp className="ml-auto size-4 text-sidebar-foreground/70" />
+                <ChevronUp className="ml-auto size-3 text-sidebar-foreground/70" />
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
@@ -109,11 +116,11 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
                 align="start"
               >
                 <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground outline-none hover:bg-sidebar-hover hover:text-sidebar-foreground">
-                  <Target className="size-4" />
+                  <Target className="size-3" />
                   <span>Siloq Inc</span>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground outline-none hover:bg-sidebar-hover hover:text-sidebar-foreground">
-                  <GitBranch className="size-4" />
+                  <GitBranch className="size-3" />
                   <span>Acme Corp</span>
                 </DropdownMenu.Item>
                 <DropdownMenu.Separator className="my-1 h-px bg-sidebar-border" />
@@ -149,7 +156,7 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
                       }`}
                       type="button"
                     >
-                      <Icon className="size-4 shrink-0" />
+                      <Icon className="size-3 shrink-0" />
                       <span>{item.label}</span>
                       {showBadge && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
@@ -167,11 +174,11 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
         <div className="flex flex-col gap-1 p-2 border-t border-sidebar-border">
           {/* Help, Search */}
           <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-hover h-9 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground">
-            <HelpCircle className="size-4 shrink-0" />
+            <HelpCircle className="size-3 shrink-0" />
             <span>Get Help</span>
           </button>
           <button className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-hover h-9 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground">
-            <Search className="size-4 shrink-0" />
+            <Search className="size-3 shrink-0" />
             <span>Search</span>
           </button>
 
@@ -191,7 +198,7 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
                   <span className="truncate font-medium text-sidebar-foreground">shadcn</span>
                   <span className="truncate text-xs text-sidebar-foreground/70">m@example.com</span>
                 </div>
-                <MoreVertical className="ml-auto size-4 text-sidebar-foreground/70" />
+                <MoreVertical className="ml-auto size-3 text-sidebar-foreground/70" />
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
@@ -201,16 +208,16 @@ export default function Sidebar({ activeTab, onTabChange, pendingCount, isOpen: 
                 align="start"
               >
                 <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground outline-none hover:bg-sidebar-hover hover:text-sidebar-foreground">
-                  <User className="size-4" />
+                  <User className="size-3" />
                   <span>Profile</span>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-sidebar-foreground outline-none hover:bg-sidebar-hover hover:text-sidebar-foreground">
-                  <Settings className="size-4" />
+                  <Settings className="size-3" />
                   <span>Settings</span>
                 </DropdownMenu.Item>
                 <DropdownMenu.Separator className="my-1 h-px bg-sidebar-border" />
                 <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm text-red-400 outline-none hover:bg-sidebar-hover hover:text-red-300">
-                  <LogOut className="size-4" />
+                  <LogOut className="size-3" />
                   <span>Log out</span>
                 </DropdownMenu.Item>
               </DropdownMenu.Content>

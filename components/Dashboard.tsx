@@ -196,7 +196,7 @@ export default function Dashboard() {
           onToggle={() => setSidebarOpen(!sidebarOpen)}
         />
         
-        <main className={`flex-1 p-8 transition-all duration-300 bg-[#EBF2FD] ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <main className={`flex-1 p-4 lg:p-8 transition-all duration-300 bg-[#EBF2FD] ${sidebarOpen ? 'lg:ml-64' : ''}`}>
           {renderScreen()}
         </main>
       </div>

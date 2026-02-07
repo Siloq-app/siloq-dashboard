@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;            /* #ffffff - White Popover */
     --popover-foreground: 220 20% 10%; /* #1a1a2e - Dark Navy Text */
 
-    --primary: 220 60% 30%;           /* #1e3a5f - Navy Blue Primary */
+    --primary: 0 0% 0%;           /* #000000 - Black Primary */
     --primary-foreground: 0 0% 100%; /* #ffffff - White text on primary */
 
     --secondary: 220 20% 90%;        /* #e8ecf1 - Light Gray Secondary */

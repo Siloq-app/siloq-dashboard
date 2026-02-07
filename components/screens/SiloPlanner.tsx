@@ -15,7 +15,7 @@ export default function SiloPlanner({ silos, selectedSilo, onGenerateClick }: Pr
   return (
     <div className="card p-7">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold">
+        <h2 className="text-2xl font-semibold">
           {selectedSilo ? selectedSilo.name : 'All Silos'}
         </h2>
         <button className="btn-primary" onClick={onGenerateClick}>

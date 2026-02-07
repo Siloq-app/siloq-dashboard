@@ -38,8 +38,8 @@ export default function HealthScore({ score, change }: Props) {
           </defs>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-bold">{score}</span>
-          <span className="text-xs text-slate-400">/ 100</span>
+          <span className="text-xl font-bold tabular-nums">{score}</span>
+          <span className="text-xs text-slate-400 tabular-nums">/ 100</span>
         </div>
       </div>
       <div className="flex items-center justify-center gap-1.5 text-emerald-400">

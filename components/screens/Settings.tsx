@@ -470,7 +470,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Settings</h2>
+      <h2 className="text-2xl font-semibold">Settings</h2>
 
       <div className="border-b border-border">
         <div className="flex gap-1">

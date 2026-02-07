@@ -182,8 +182,8 @@ export default function SitesScreen() {
 
   if (selectedSite) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -198,18 +198,18 @@ export default function SitesScreen() {
             Back to sites
           </Button>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
+        <Card className="bg-card border border-border rounded-lg">
+          <CardHeader className="p-4">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Globe className="h-4 w-4" />
               {selectedSite.name}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm text-muted-foreground">
               <a
                 href={selectedSite.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:underline inline-flex items-center gap-1"
+                className="text-primary hover:underline inline-flex items-center gap-1 font-mono"
               >
                 {selectedSite.url}
                 <ExternalLink className="h-3 w-3" />
@@ -218,43 +218,44 @@ export default function SitesScreen() {
           </CardHeader>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="bg-card border border-border rounded-lg">
+          <CardHeader className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Key className="h-5 w-5" />
+              <div className="space-y-1.5">
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                  <Key className="h-4 w-4" />
                   API keys for this site
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm text-muted-foreground">
                   Tokens are per site. Use one token per WordPress site in the plugin (Settings → Siloq). API URL: {BACKEND_API_URL}/api/v1
                 </CardDescription>
               </div>
               <Button
+                size="sm"
                 onClick={() => {
                   setShowGenerateToken(true)
                   setNewlyCreatedKey(null)
                   setError('')
                 }}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-1" />
                 Generate new token
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-4 space-y-3">
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="rounded-lg">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertTitle className="text-sm font-semibold">Error</AlertTitle>
+                <AlertDescription className="text-sm">{error}</AlertDescription>
               </Alert>
             )}
 
             {newlyCreatedKey && (
-              <Alert className="border-amber-500/50 bg-amber-500/5">
+              <Alert className="border-amber-500/50 bg-amber-500/5 rounded-lg">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Copy your token now — it won&apos;t be shown again</AlertTitle>
+                <AlertTitle className="text-sm font-semibold">Copy your token now — it won&apos;t be shown again</AlertTitle>
                 <AlertDescription>
                   <div className="flex items-center gap-2 mt-2">
                     <code className="flex-1 text-sm font-mono break-all bg-muted px-2 py-1 rounded">
@@ -273,9 +274,9 @@ export default function SitesScreen() {
             )}
 
             {showGenerateToken && (
-              <form onSubmit={handleGenerateToken} className="flex gap-2 items-end p-4 bg-muted/50 rounded-lg">
+              <form onSubmit={handleGenerateToken} className="flex items-end gap-2 p-3 bg-muted/50 rounded-lg">
                 <div className="flex-1">
-                  <Label htmlFor="token-name">Token name</Label>
+                  <Label htmlFor="token-name" className="text-sm">Token name</Label>
                   <Input
                     id="token-name"
                     placeholder="e.g. WordPress production"
@@ -284,10 +285,10 @@ export default function SitesScreen() {
                     className="mt-1"
                   />
                 </div>
-                <Button type="submit" disabled={isGeneratingToken}>
+                <Button type="submit" disabled={isGeneratingToken} size="sm">
                   {isGeneratingToken ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Generate'}
                 </Button>
-                <Button type="button" variant="ghost" onClick={() => setShowGenerateToken(false)}>
+                <Button type="button" variant="ghost" onClick={() => setShowGenerateToken(false)} size="sm">
                   Cancel
                 </Button>
               </form>
@@ -306,12 +307,14 @@ export default function SitesScreen() {
                 {apiKeys.map((key) => (
                   <li
                     key={key.id}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                    className="flex items-center justify-between p-3 rounded-lg border border-border bg-card"
                   >
-                    <div>
-                      <span className="font-medium">{key.name}</span>
-                      <span className="text-muted-foreground text-sm ml-2 font-mono">{key.key_prefix}</span>
-                      <div className="text-xs text-muted-foreground mt-1">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{key.name}</span>
+                        <span className="text-muted-foreground text-sm font-mono">{key.key_prefix}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
                         Created {new Date(key.created_at).toLocaleDateString()}
                         {key.last_used_at && ` • Last used ${new Date(key.last_used_at).toLocaleDateString()}`}
                       </div>
@@ -336,64 +339,62 @@ export default function SitesScreen() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Sites</h2>
-          <p className="text-muted-foreground text-sm mt-1">
+        <div className="space-y-1.5">
+          <h2 className="text-2xl font-semibold text-foreground">Sites</h2>
+          <p className="text-muted-foreground text-sm">
             Connect multiple WordPress sites. Each site has its own tokens — generate keys per site (like GitHub).
           </p>
         </div>
-        <Button onClick={() => setShowAddSite(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button size="sm" onClick={() => setShowAddSite(true)}>
+          <Plus className="h-4 w-4 mr-1" />
           Add site
         </Button>
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="rounded-lg">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertTitle className="text-sm font-semibold">Error</AlertTitle>
+          <AlertDescription className="text-sm">{error}</AlertDescription>
         </Alert>
       )}
 
       {showAddSite && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Add WordPress site</CardTitle>
-            <CardDescription>
+        <Card className="bg-card border border-border rounded-lg">
+          <CardHeader className="p-4">
+            <CardTitle className="text-sm font-semibold">Add WordPress site</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
               You can connect multiple sites. Each site gets its own API keys — add as many sites as you need.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAddSite} className="space-y-4">
-              <div>
-                <Label htmlFor="site-name">Site name</Label>
+          <CardContent className="p-4">
+            <form onSubmit={handleAddSite} className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="site-name" className="text-sm">Site name</Label>
                 <Input
                   id="site-name"
                   placeholder="e.g. My Blog"
                   value={newSiteName}
                   onChange={(e) => setNewSiteName(e.target.value)}
-                  className="mt-1"
                 />
               </div>
-              <div>
-                <Label htmlFor="site-url">Site URL</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="site-url" className="text-sm">Site URL</Label>
                 <Input
                   id="site-url"
                   type="url"
                   placeholder="https://example.com"
                   value={newSiteUrl}
                   onChange={(e) => setNewSiteUrl(e.target.value)}
-                  className="mt-1"
                 />
               </div>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={isCreatingSite}>
+              <div className="flex items-center gap-2">
+                <Button type="submit" disabled={isCreatingSite} size="sm">
                   {isCreatingSite ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add site'}
                 </Button>
-                <Button type="button" variant="ghost" onClick={() => setShowAddSite(false)}>
+                <Button type="button" variant="ghost" onClick={() => setShowAddSite(false)} size="sm">
                   Cancel
                 </Button>
               </div>
@@ -402,37 +403,37 @@ export default function SitesScreen() {
         </Card>
       )}
 
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="bg-card border border-border rounded-lg">
+        <CardContent className="p-4">
           {isLoadingSites ? (
-            <div className="flex justify-center py-12">
+            <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : sites.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-8 text-muted-foreground">
               <Globe className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No sites yet. Add a site to get site-specific API keys for the WordPress plugin.</p>
+              <p className="text-sm">No sites yet. Add a site to get site-specific API keys for the WordPress plugin.</p>
             </div>
           ) : (
-            <ul className="divide-y">
+            <ul className="space-y-2">
               {sites.map((site) => (
                 <li key={site.id}>
                   <button
                     type="button"
                     onClick={() => setSelectedSite(site)}
-                    className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/50 rounded-lg transition-colors border border-border bg-card"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Globe className="h-5 w-5 text-primary" />
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Globe className="h-4 w-4 text-primary" />
                       </div>
-                      <div>
-                        <span className="font-medium">{site.name}</span>
-                        <p className="text-sm text-muted-foreground">{site.url}</p>
+                      <div className="space-y-1">
+                        <span className="text-sm font-medium text-foreground">{site.name}</span>
+                        <p className="text-sm text-muted-foreground font-mono">{site.url}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground tabular-nums">
                         {site.api_key_count} key{site.api_key_count !== 1 ? 's' : ''}
                       </span>
                       <Key className="h-4 w-4 text-muted-foreground" />
