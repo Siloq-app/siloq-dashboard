@@ -174,7 +174,9 @@ export default function ApiKeysPage() {
             {/* Newly Created Key Alert */}
             {newlyCreatedKey && (
               <Alert variant="warning" className="mt-6">
-                <AlertCircle className="h-4 w-4" />
+                <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true" className="h-4 w-4">
+                  <path d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" fillRule="evenodd"></path>
+                </svg>
                 <AlertTitle>Copy your API key now!</AlertTitle>
                 <AlertDescription>
                   <p className="mb-2">It won&apos;t be shown again.</p>
@@ -277,7 +279,7 @@ export default function ApiKeysPage() {
               <li>Go to <strong>Settings → Siloq</strong> in your WordPress admin</li>
               <li>Paste your API key in the "Siloq API Key" field</li>
               <li>Click "Connect to Siloq"</li>
-              <li>Your WordPress site will now sync with your Siloq dashboard</li>
+              <li>Your WordPress site will now sync with your Siloq — The SEO Architect</li>
             </ol>
             <Alert variant="info" className="mt-4">
               <AlertTitle>Tip</AlertTitle>
