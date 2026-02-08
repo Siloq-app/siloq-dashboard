@@ -2,14 +2,14 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4",
   {
     variants: {
       variant: {
         default: "bg-slate-900/80 text-slate-200 border-slate-700",
-        destructive: "border-red-500/50 text-red-400 bg-red-500/10",
-        warning: "border-amber-500/50 text-amber-400 bg-amber-500/10",
-        success: "border-emerald-500/50 text-emerald-400 bg-emerald-500/10",
+        destructive: "border-red-200 text-red-500 bg-red-50",
+        warning: "border-amber-200 text-amber-500 bg-amber-50",
+        success: "border-emerald-200 text-emerald-500 bg-emerald-50",
         info: "border-indigo-500/50 text-indigo-400 bg-indigo-500/10",
       },
     },

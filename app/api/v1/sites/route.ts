@@ -7,15 +7,20 @@ function getAuthHeader(request: NextRequest): string | null {
 
 export async function GET(request: NextRequest) {
   const auth = getAuthHeader(request)
+  console.log('Sites API - Auth header received:', auth ? 'Present' : 'Missing')
   if (!auth) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ message: 'Unauthorized - No auth header' }, { status: 401 })
   }
   try {
-    const res = await fetch(SITES_ENDPOINTS.list(), {
+    const backendUrl = SITES_ENDPOINTS.list()
+    console.log('Sites API - Forwarding to backend:', backendUrl)
+    const res = await fetch(backendUrl, {
       headers: { Authorization: auth, Accept: 'application/json' },
     })
     const data = await res.json()
+    console.log('Sites API - Backend response status:', res.status)
     if (!res.ok) {
+      console.log('Sites API - Backend error:', data)
       return NextResponse.json(data, { status: res.status })
     }
     return NextResponse.json(data)

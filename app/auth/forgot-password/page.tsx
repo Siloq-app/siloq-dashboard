@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Mail, ArrowLeft, AlertCircle, Loader2, Check, Send } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,10 +15,30 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSent, setIsSent] = useState(false)
+  const [fieldError, setFieldError] = useState<string>('')
+
+  const validateEmail = (value: string): boolean => {
+    if (!value) {
+      setFieldError('Email is required')
+      return false
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      setFieldError('Please enter a valid email address')
+      return false
+    }
+    setFieldError('')
+    return true
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    
+    // Validate before submission
+    if (!validateEmail(email)) {
+      return
+    }
+    
     setIsLoading(true)
 
     try {
@@ -45,28 +67,27 @@ export default function ForgotPasswordPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-4">
         <Card className="w-full max-w-md bg-slate-900/80 border-slate-700/50">
           <CardContent className="pt-6">
-            <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Send className="h-8 w-8 text-indigo-400" />
+            <Alert variant="success">
+              <Send className="h-4 w-4" />
+              <AlertDescription>
+                <span className="font-medium">Check your email.</span> We&apos;ve sent a password reset link to {email}.
+                Didn&apos;t receive it? Check your spam folder or{' '}
+                <button
+                  onClick={() => setIsSent(false)}
+                  className="underline"
+                >
+                  try again
+                </button>
+              </AlertDescription>
+            </Alert>
+            <div className="mt-4">
+              <Link href="/auth/login">
+                <Button variant="outline" className="w-full border-slate-700 text-slate-300 hover:bg-slate-800">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to login
+                </Button>
+              </Link>
             </div>
-            <h2 className="text-xl font-bold text-slate-100 text-center mb-2">Check your email</h2>
-            <p className="text-slate-400 text-center mb-6">
-              We've sent a password reset link to <span className="text-slate-200">{email}</span>
-            </p>
-            <p className="text-sm text-slate-500 text-center mb-4">
-              Didn't receive it? Check your spam folder or{' '}
-              <button 
-                onClick={() => setIsSent(false)} 
-                className="text-indigo-400 hover:text-indigo-300"
-              >
-                try again
-              </button>
-            </p>
-            <Link href="/auth/login">
-              <Button variant="outline" className="w-full border-slate-700 text-slate-300 hover:bg-slate-800">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to login
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       </div>
@@ -76,7 +97,18 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-4">
       <Card className="w-full max-w-md bg-slate-900/80 border-slate-700/50">
-        <CardHeader className="space-y-1">
+        <CardHeader className="text-center space-y-1">
+          <div className="flex justify-center mb-2">
+            <Image
+              src="/logo-dark.png"
+              alt="Siloq"
+              width={150}
+              height={150}
+              className="rounded-xl"
+              style={{ width: 'auto', height: 'auto' }}
+              priority
+            />
+          </div>
           <Link 
             href="/auth/login" 
             className="text-sm text-slate-400 hover:text-slate-300 flex items-center gap-1 mb-2"
@@ -92,10 +124,10 @@ export default function ForgotPasswordPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="flex items-start gap-2 rounded-md bg-red-500/10 p-3 text-sm text-red-400 border border-red-500/20">
-                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
             <div className="space-y-2">
@@ -108,11 +140,15 @@ export default function ForgotPasswordPage() {
                   placeholder="you@company.com"
                   value={email}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                  onBlur={() => validateEmail(email)}
                   required
                   disabled={isLoading}
-                  className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 pl-10"
+                  className={`bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 pl-10 ${fieldError ? "border-red-500" : ""}`}
                 />
               </div>
+              {fieldError && (
+                <p className="text-xs text-red-500">{fieldError}</p>
+              )}
             </div>
 
             <Button

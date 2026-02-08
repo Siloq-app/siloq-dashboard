@@ -140,7 +140,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-foreground mb-1">Profile Settings</h3>
-        <p className="text-sm text-muted-foreground">Update your personal information</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Update your personal information</p>
       </div>
 
       <div className="space-y-4">
@@ -156,7 +156,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
               if (errors.name) setErrors({...errors, name: undefined})
             }}
             placeholder="Your name"
-            className={`w-full px-4 py-2.5 rounded-lg border bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-colors ${
+            className={`w-full px-4 py-2.5 rounded-lg border bg-white text-foreground placeholder:text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-colors ${
               errors.name ? 'border-red-500' : 'border-border'
             }`}
           />
@@ -177,7 +177,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
               if (errors.email) setErrors({...errors, email: undefined})
             }}
             placeholder="your@email.com"
-            className={`w-full px-4 py-2.5 rounded-lg border bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-colors ${
+            className={`w-full px-4 py-2.5 rounded-lg border bg-white text-foreground placeholder:text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-colors ${
               errors.email ? 'border-red-500' : 'border-border'
             }`}
           />
@@ -218,13 +218,13 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-foreground mb-1">API Keys for WordPress</h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
           Manage sites and generate API keys per site (like GitHub tokens). Use the Siloq plugin with each key.
         </p>
       </div>
 
       <Card className="p-6 bg-white">
-        <p className="text-sm text-muted-foreground mb-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-4">
           Add WordPress sites in <strong>Sites</strong>, then create a token for each site. Paste the token and API URL in your WordPress plugin (Settings → Siloq).
         </p>
         {onNavigateToSites ? (
@@ -233,14 +233,14 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
             Manage sites & API keys
           </Button>
         ) : (
-          <p className="text-sm text-muted-foreground">Go to <strong>Sites</strong> in the sidebar to manage sites and API keys.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Go to <strong>Sites</strong> in the sidebar to manage sites and API keys.</p>
         )}
       </Card>
 
       {/* How to use */}
       <div className="pt-4 border-t border-border">
         <h4 className="text-sm font-semibold text-foreground mb-3">How to use:</h4>
-        <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+        <ol className="text-sm text-gray-600 dark:text-gray-400 font-medium space-y-2 list-decimal list-inside">
           <li>Go to <strong>Sites</strong> and add your WordPress site</li>
           <li>Generate a token for that site and copy it</li>
           <li>Install the Siloq WordPress plugin on your site</li>
@@ -257,7 +257,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Team Members</h3>
-          <p className="text-sm text-muted-foreground">Manage team access and permissions</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Manage team access and permissions</p>
         </div>
         <Button><Plus size={16} /> Invite Member</Button>
       </div>
@@ -281,11 +281,11 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
                     <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">Pending</span>
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground">{member.email}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{member.email}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">{member.role}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{member.role}</span>
               <Button variant="ghost" size="sm">Edit</Button>
             </div>
           </Card>
@@ -298,7 +298,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold">Agent Permissions</h3>
-        <p className="text-sm text-muted-foreground">Configure what automated agents can and cannot do</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Configure what automated agents can and cannot do</p>
       </div>
 
       <div>
@@ -317,7 +317,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-base font-semibold mb-1">{mode.label}</div>
-                  <div className="text-sm text-muted-foreground">{mode.desc}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{mode.desc}</div>
                 </div>
                 {automationMode === mode.id && (
                   <div className="w-6 h-6 bg-[#2563eb] rounded-full flex items-center justify-center">
@@ -347,7 +347,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
             >
               <div>
                 <div className="font-medium">{perm.label}</div>
-                <div className="text-sm text-muted-foreground">{perm.desc}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{perm.desc}</div>
               </div>
               <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${
                 perm.enabled ? 'bg-[#2563eb]' : 'bg-slate-300'
@@ -366,7 +366,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
         <div className="grid grid-cols-2 gap-6">
           <div>
             <div className="text-xs text-emerald-600 font-semibold mb-2">✓ SAFE (can auto-approve)</div>
-            <div className="text-sm text-muted-foreground space-y-1">
+            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium space-y-1">
               <div>• Internal link additions</div>
               <div>• Entity assignments</div>
               <div>• New content generation</div>
@@ -376,7 +376,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
           </div>
           <div>
             <div className="text-xs text-red-600 font-semibold mb-2">⚠ DESTRUCTIVE (approval required)</div>
-            <div className="text-sm text-muted-foreground space-y-1">
+            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium space-y-1">
               <div>• URL redirects (301s)</div>
               <div>• Page deletions/archival</div>
               <div>• Content merges</div>
@@ -393,7 +393,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold">Notification Preferences</h3>
-        <p className="text-sm text-muted-foreground">Choose how and when you want to be notified</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Choose how and when you want to be notified</p>
       </div>
 
       <div className="space-y-4">
@@ -411,7 +411,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
           >
             <div>
               <div className="font-medium">{pref.label}</div>
-              <div className="text-sm text-muted-foreground">{pref.desc}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{pref.desc}</div>
             </div>
             <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${
               pref.checked ? 'bg-[#2563eb]' : 'bg-slate-300'
@@ -437,7 +437,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
           >
             <div>
               <div className="font-medium">{pref.label}</div>
-              <div className="text-sm text-muted-foreground">{pref.desc}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{pref.desc}</div>
             </div>
             <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${
               pref.checked ? 'bg-[#2563eb]' : 'bg-slate-300'
@@ -483,7 +483,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
                   activeTab === tab.id
                     ? 'border-[#2563eb] text-[#2563eb]'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-foreground'
                 }`}
               >
                 <Icon size={16} />

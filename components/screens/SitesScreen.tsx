@@ -192,7 +192,7 @@ export default function SitesScreen() {
               setNewlyCreatedKey(null)
               setShowGenerateToken(false)
             }}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-gray-600 dark:text-gray-400 hover:text-foreground"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to sites
@@ -204,7 +204,7 @@ export default function SitesScreen() {
               <Globe className="h-4 w-4" />
               {selectedSite.name}
             </CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">
+            <CardDescription className="text-sm text-gray-600 dark:text-gray-400 font-medium">
               <a
                 href={selectedSite.url}
                 target="_blank"
@@ -226,7 +226,7 @@ export default function SitesScreen() {
                   <Key className="h-4 w-4" />
                   API keys for this site
                 </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground">
+                <CardDescription className="text-sm text-gray-600 dark:text-gray-400 font-medium">
                   Tokens are per site. Use one token per WordPress site in the plugin (Settings → Siloq). API URL: {BACKEND_API_URL}/api/v1
                 </CardDescription>
               </div>
@@ -296,10 +296,10 @@ export default function SitesScreen() {
 
             {isLoadingKeys ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin text-gray-600 dark:text-gray-400" />
               </div>
             ) : apiKeys.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4">
+              <p className="text-gray-600 dark:text-gray-400 text-sm py-4">
                 No tokens for this site yet. Generate one and use it only in this site&apos;s WordPress plugin.
               </p>
             ) : (
@@ -312,9 +312,9 @@ export default function SitesScreen() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{key.name}</span>
-                        <span className="text-muted-foreground text-sm font-mono">{key.key_prefix}</span>
+                        <span className="text-gray-600 dark:text-gray-400 text-sm font-mono">{key.key_prefix}</span>
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
                         Created {new Date(key.created_at).toLocaleDateString()}
                         {key.last_used_at && ` • Last used ${new Date(key.last_used_at).toLocaleDateString()}`}
                       </div>
@@ -343,7 +343,7 @@ export default function SitesScreen() {
       <div className="flex items-center justify-between">
         <div className="space-y-1.5">
           <h2 className="text-2xl font-semibold text-foreground">Sites</h2>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
             Connect multiple WordPress sites. Each site has its own tokens — generate keys per site (like GitHub).
           </p>
         </div>
@@ -365,7 +365,7 @@ export default function SitesScreen() {
         <Card className="bg-card border border-border rounded-lg">
           <CardHeader className="p-4">
             <CardTitle className="text-sm font-semibold">Add WordPress site</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">
+            <CardDescription className="text-sm text-gray-600 dark:text-gray-400 font-medium">
               You can connect multiple sites. Each site gets its own API keys — add as many sites as you need.
             </CardDescription>
           </CardHeader>
@@ -407,10 +407,10 @@ export default function SitesScreen() {
         <CardContent className="p-4">
           {isLoadingSites ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className="h-6 w-6 animate-spin text-gray-600 dark:text-gray-400" />
             </div>
           ) : sites.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-gray-600 dark:text-gray-400">
               <Globe className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-sm">No sites yet. Add a site to get site-specific API keys for the WordPress plugin.</p>
             </div>
@@ -429,14 +429,14 @@ export default function SitesScreen() {
                       </div>
                       <div className="space-y-1">
                         <span className="text-sm font-medium text-foreground">{site.name}</span>
-                        <p className="text-sm text-muted-foreground font-mono">{site.url}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium font-mono">{site.url}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground tabular-nums">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 font-medium tabular-nums">
                         {site.api_key_count} key{site.api_key_count !== 1 ? 's' : ''}
                       </span>
-                      <Key className="h-4 w-4 text-muted-foreground" />
+                      <Key className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                     </div>
                   </button>
                 </li>

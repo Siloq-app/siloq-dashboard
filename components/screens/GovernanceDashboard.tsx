@@ -65,10 +65,10 @@ export default function GovernanceDashboard({
               color: 'text-amber-400'
             },
           ].map((stat, i) => (
-            <Card key={i} className="p-4 hover:border-primary/20 transition-colors bg-card border border-border rounded-lg">
+            <Card key={i} className="p-4">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{stat.title}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{stat.title}</span>
                   <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold text-white rounded uppercase ${
                     stat.trend === 'up' ? 'bg-emerald-500' : 'bg-red-600'
                   }`}>
@@ -80,7 +80,7 @@ export default function GovernanceDashboard({
                   {stat.trend === 'up' ? <TrendingUp size={14} className="text-primary" /> : <TrendingDown size={14} className="text-red-500" />}
                   {stat.description}
                 </div>
-                <div className="text-sm text-muted-foreground">{stat.subtext}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{stat.subtext}</div>
               </div>
             </Card>
           ))}
@@ -88,7 +88,7 @@ export default function GovernanceDashboard({
       </div>
 
       {/* Siloq Remediation Banner */}
-      <Card className="p-3 sm:p-4 mb-4 sm:mb-6 border border-border bg-card rounded-lg">
+      <Card className="p-3 sm:p-4 mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 justify-between">
           <div className="flex items-start sm:items-center gap-3">
             <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center shrink-0">
@@ -96,7 +96,7 @@ export default function GovernanceDashboard({
             </div>
             <div className="space-y-1 min-w-0">
               <h3 className="text-sm font-semibold text-foreground">Siloq has analyzed your site</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
                 Found {cannibalizationIssues.length} cannibalization issues. Generated {pendingChanges.length} recommended actions 
                 ({safeCount} safe, {destructiveCount} destructive).
               </p>
@@ -113,7 +113,7 @@ export default function GovernanceDashboard({
         {cannibalizationIssues.map((issue) => (
           <Card
             key={issue.id}
-            className="p-4 hover:border-primary/20 transition-colors cursor-pointer bg-card border border-border rounded-lg"
+            className="p-4 cursor-pointer"
           >
             {/* Top Alert Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2 bg-amber-50 border border-amber-200 rounded-lg mb-3">
@@ -152,7 +152,7 @@ export default function GovernanceDashboard({
               </div>
               
               {/* Metrics Line */}
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
+              <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 font-medium flex-wrap">
                 <span className="text-red-600 font-medium">{issue.pages.length} pages</span>
                 <span>competing •</span>
                 <span>{issue.impressions.toLocaleString()} monthly impressions</span>
@@ -174,7 +174,7 @@ export default function GovernanceDashboard({
                 <Zap className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-foreground">
                   <span className="font-medium">Siloq recommendation:</span>
-                  <span className="text-muted-foreground"> {issue.recommendation}</span>
+                  <span className="text-gray-600 dark:text-gray-400"> {issue.recommendation}</span>
                 </p>
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function GovernanceDashboard({
       <div className="my-6 space-y-3">
         {/* Header */}
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">
             <span className="grid h-6 w-6 place-items-center rounded-md bg-slate-900 text-xs font-semibold text-white">
               ↩︎
             </span>
@@ -203,7 +203,7 @@ export default function GovernanceDashboard({
             <article
               key={silo.id}
               onClick={() => onViewSilo(silo)}
-              className="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md cursor-pointer"
+              className="group rounded-2xl bg-white p-5 ring-1 ring-slate-200 transition cursor-pointer"
             >
               {/* Card header */}
               <header className="flex items-start justify-between gap-3">
