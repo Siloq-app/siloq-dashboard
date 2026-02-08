@@ -1,60 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import GovernanceDashboard from './screens/GovernanceDashboard'
-import SiloPlanner from './screens/SiloPlanner'
-import ApprovalQueue from './screens/ApprovalQueue'
-import SitesScreen from './screens/SitesScreen'
-import ContentHub from './screens/ContentHub'
-import Settings from './screens/Settings'
-import GenerateModal from './modals/GenerateModal'
-import ApprovalModal from './modals/ApprovalModal'
+import GovernanceDashboard from '@/components/screens/GovernanceDashboard'
+import SiloPlanner from '@/components/screens/SiloPlanner'
+import ApprovalQueue from '@/components/screens/ApprovalQueue'
+import SitesScreen from '@/components/screens/SitesScreen'
+import ContentHub from '@/components/screens/ContentHub'
+import Settings from '@/components/screens/Settings'
+import GenerateModal from '@/components/modals/GenerateModal'
+import ApprovalModal from '@/components/modals/ApprovalModal'
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
-import { AutomationMode, TabType } from '@/app/dashboard/page'
+import { TabType, AutomationMode, CannibalizationIssue, Silo, PendingChange } from './types'
 
-export { type TabType, type AutomationMode }
-
-export interface CannibalizationIssue {
-  id: number
-  keyword: string
-  pages: string[]
-  severity: 'high' | 'medium' | 'low'
-  impressions: number
-  splitClicks: string
-  recommendation: string
-}
-
-export interface SupportingPage {
-  title: string
-  url: string
-  status: 'published' | 'draft' | 'suggested'
-  linked: boolean
-  entities: string[]
-}
-
-export interface Silo {
-  id: number
-  name: string
-  targetPage: {
-    title: string
-    url: string
-    status: string
-    entities: string[]
-  }
-  supportingPages: SupportingPage[]
-}
-
-export interface PendingChange {
-  id: number
-  type: string
-  description: string
-  risk: 'safe' | 'destructive'
-  impact: string
-  doctrine?: string
-}
-
-// Sample data
-export const cannibalizationIssues: CannibalizationIssue[] = [
+const cannibalizationIssues: CannibalizationIssue[] = [
   { 
     id: 1, 
     keyword: 'kitchen remodeling', 
@@ -84,7 +42,7 @@ export const cannibalizationIssues: CannibalizationIssue[] = [
   },
 ]
 
-export const silos: Silo[] = [
+const silos: Silo[] = [
   {
     id: 1,
     name: 'Kitchen Remodeling',
@@ -116,7 +74,7 @@ export const silos: Silo[] = [
   },
 ]
 
-export const pendingChanges: PendingChange[] = [
+const pendingChanges: PendingChange[] = [
   { id: 1, type: '301_redirect', description: 'Redirect /old-kitchen-page to /kitchen-remodel-guide', risk: 'safe', impact: 'Consolidates link equity' },
   { id: 2, type: 'internal_link', description: 'Add links from 3 supporting pages to Target', risk: 'safe', impact: 'Strengthens entity relationships' },
   { id: 3, type: 'content_update', description: 'Update /bathroom-vanity with new 2024 trends', risk: 'safe', impact: 'Refreshes entity coverage' },
@@ -149,6 +107,7 @@ export default function Dashboard({
   const renderScreen = () => {
     switch (activeTab) {
       case 'dashboard':
+      case 'overview':
         return (
           <GovernanceDashboard
             healthScore={healthScore}
@@ -209,3 +168,5 @@ export default function Dashboard({
     </div>
   )
 }
+
+export type { TabType, AutomationMode, CannibalizationIssue, Silo, PendingChange } from './types'

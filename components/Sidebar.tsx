@@ -5,7 +5,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { 
   Target, GitBranch, Clock, FileText, Link2, Settings, Menu, ChevronUp, LogOut, User, HelpCircle, Search, MoreVertical, Globe
 } from 'lucide-react'
-import { TabType } from './Dashboard'
+import { TabType } from '@/app/dashboard/types'
 
 interface SidebarProps {
   activeTab: TabType

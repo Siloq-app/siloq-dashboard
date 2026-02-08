@@ -44,16 +44,16 @@ const data = {
       items: [
         {
           title: "Overview",
-          url: "/dashboard/overview",
+          url: "/dashboard?tab=overview",
           isActive: true,
         },
         {
           title: "Silos",
-          url: "/dashboard/silos",
+          url: "/dashboard?tab=silos",
         },
         {
           title: "Approvals",
-          url: "/dashboard/approvals",
+          url: "/dashboard?tab=approvals",
         },
       ],
     },
@@ -64,11 +64,11 @@ const data = {
       items: [
         {
           title: "Content Hub",
-          url: "/content/content-hub",
+          url: "/dashboard?tab=content",
         },
         {
           title: "Internal Links",
-          url: "/content/internal-links",
+          url: "/dashboard?tab=links",
         },
       ],
     },
@@ -79,7 +79,7 @@ const data = {
       items: [
         {
           title: "All Sites",
-          url: "/sites/all-sites",
+          url: "/dashboard?tab=sites",
         },
       ],
     },
@@ -87,7 +87,7 @@ const data = {
   navSecondary: [
     {
       title: "Settings",
-      url: "/dashboard/settings",
+      url: "/dashboard?tab=settings",
       icon: Settings,
     },
     {
