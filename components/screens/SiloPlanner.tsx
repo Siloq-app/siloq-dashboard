@@ -1,7 +1,7 @@
 'use client'
 
 import { Plus, Eye, Link2, CheckCircle, Zap, FileText } from 'lucide-react'
-import { Silo } from '../Dashboard'
+import { Silo } from '@/app/dashboard/types'
 
 interface Props {
   silos: Silo[]

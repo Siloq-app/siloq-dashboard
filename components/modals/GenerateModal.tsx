@@ -1,7 +1,7 @@
 'use client'
 
 import { X, Zap } from 'lucide-react'
-import { Silo } from '../Dashboard'
+import { CannibalizationIssue, Silo, PendingChange } from '@/app/dashboard/types'
 
 interface Props {
   silos: Silo[]

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Check, Copy, Plus, Trash2, User, Key, Users, Shield, Bell, Mail, UserCircle, Link as LinkIcon, Eye, EyeOff } from 'lucide-react'
-import { AutomationMode } from '../Dashboard'
+import { AutomationMode } from '@/app/dashboard/Dashboard'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
