@@ -3,7 +3,7 @@
  * Used by Next.js API routes to proxy auth and other requests.
  */
 export function getBackendApiUrl(): string {
-  const url = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000'
+  const url = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:8000'
   return url.replace(/\/+$/, '')
 }
 

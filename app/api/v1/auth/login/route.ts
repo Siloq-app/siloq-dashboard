@@ -34,8 +34,18 @@ export async function POST(request: NextRequest) {
       token: data.token,
       user: data.user,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login proxy error:', error)
+    console.error('Backend URL attempted:', AUTH_ENDPOINTS.login())
+    
+    // Check if it's a connection error
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.message?.includes('fetch failed')) {
+      return NextResponse.json(
+        { message: 'Cannot connect to backend server. Please ensure the Django backend is running on port 8000.' },
+        { status: 502 }
+      )
+    }
+    
     return NextResponse.json(
       { message: 'Unable to reach auth service. Please try again.' },
       { status: 502 }

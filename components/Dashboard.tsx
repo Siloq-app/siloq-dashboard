@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Header from './Header'
-import Sidebar from './Sidebar'
 import GovernanceDashboard from './screens/GovernanceDashboard'
 import SiloPlanner from './screens/SiloPlanner'
 import ApprovalQueue from './screens/ApprovalQueue'
@@ -12,9 +10,9 @@ import Settings from './screens/Settings'
 import GenerateModal from './modals/GenerateModal'
 import ApprovalModal from './modals/ApprovalModal'
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
+import { AutomationMode, TabType } from '@/app/dashboard/page'
 
-export type TabType = 'dashboard' | 'silos' | 'approvals' | 'sites' | 'content' | 'links' | 'settings'
-export type AutomationMode = 'manual' | 'semi' | 'full'
+export { type TabType, type AutomationMode }
 
 export interface CannibalizationIssue {
   id: number
@@ -126,12 +124,21 @@ export const pendingChanges: PendingChange[] = [
   { id: 5, type: 'content_merge', description: 'Merge /remodel-your-kitchen into /kitchen-remodel-guide', risk: 'destructive', impact: 'Eliminates cannibalization, consolidates 4,100 impressions', doctrine: 'CANN_RESTORE_002' },
 ]
 
-export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard')
-  const [automationMode, setAutomationMode] = useState<AutomationMode>('manual')
+interface DashboardProps {
+  activeTab?: TabType
+  onTabChange?: (tab: TabType) => void
+  automationMode?: AutomationMode
+  onAutomationChange?: (mode: AutomationMode) => void
+}
+
+export default function Dashboard({ 
+  activeTab = 'dashboard',
+  onTabChange,
+  automationMode = 'manual',
+  onAutomationChange
+}: DashboardProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [showApprovalModal, setShowApprovalModal] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const { sites, selectedSite, siteOverview, pages, isLoading, error, refresh } = useDashboardData()
 
@@ -148,8 +155,8 @@ export default function Dashboard() {
             cannibalizationIssues={cannibalizationIssues}
             silos={silos}
             pendingChanges={pendingChanges}
-            onViewSilo={() => setActiveTab('silos')}
-            onViewApprovals={() => setActiveTab('approvals')}
+            onViewSilo={() => onTabChange?.('silos')}
+            onViewApprovals={() => onTabChange?.('approvals')}
             onShowApprovalModal={() => setShowApprovalModal(true)}
           />
         )
@@ -179,34 +186,15 @@ export default function Dashboard() {
           </div>
         )
       case 'settings':
-        return <Settings onNavigateToSites={() => setActiveTab('sites')} />
+        return <Settings onNavigateToSites={() => onTabChange?.('sites')} />
       default:
         return null
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#ffffff]">
-      <Header 
-        automationMode={automationMode} 
-        onAutomationChange={setAutomationMode}
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        isSidebarOpen={sidebarOpen}
-      />
-      
-      <div className="flex">
-        <Sidebar 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-          pendingCount={pendingChanges.length}
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
-        
-        <main className={`flex-1 p-4 lg:p-8 transition-all duration-300 bg-[#EBF2FD] ${sidebarOpen ? 'lg:ml-64' : ''}`}>
-          {renderScreen()}
-        </main>
-      </div>
+    <div className="flex-1 p-4 lg:p-8">
+      {renderScreen()}
 
       {showGenerateModal && (
         <GenerateModal 
