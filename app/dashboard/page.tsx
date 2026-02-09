@@ -6,6 +6,7 @@ import { Shield, ChevronDown, Check, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Dashboard, { TabType, AutomationMode } from './Dashboard'
 import { AppSidebar } from '@/components/app-sidebar'
+import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -34,6 +35,12 @@ function DashboardContent() {
   const [automationMode, setAutomationMode] = useState<AutomationMode>('manual')
   const [showDropdown, setShowDropdown] = useState(false)
   const router = useRouter()
+  const { selectedSite } = useDashboardData()
+  
+  // Extract domain from site URL for display
+  const siteDomain = selectedSite?.url 
+    ? new URL(selectedSite.url).hostname.replace('www.', '')
+    : null
 
   useEffect(() => {
     if (!tabFromUrl) {
@@ -132,11 +139,13 @@ function DashboardContent() {
           </div>
 
           {/* Site Status */}
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium hidden md:inline">yoursite.com</span>
-            <span className="text-xs text-gray-600 dark:text-gray-400 md:hidden">yoursite</span>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-          </div>
+          {siteDomain && (
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium hidden md:inline">{siteDomain}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400 md:hidden">{siteDomain.split('.')[0]}</span>
+              <div className="w-2 h-2 bg-emerald-500 rounded-full" title="Connected" />
+            </div>
+          )}
 
           {/* Logout */}
           <button
