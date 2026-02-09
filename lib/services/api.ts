@@ -224,7 +224,150 @@ class ScansService {
   }
 }
 
+// ============================================================
+// Dashboard Data Types (Silos, Cannibalization, Approvals)
+// ============================================================
+
+export interface SupportingPage {
+  id: number
+  url: string
+  title: string
+  status: string
+  order: number
+}
+
+export interface TargetPage {
+  id: number
+  url: string
+  title: string
+  slug: string
+  status: string
+}
+
+export interface TopicCluster {
+  id: number
+  name: string
+  created_at: string
+}
+
+export interface ReverseSilo {
+  id: number
+  name: string
+  target_page: TargetPage
+  topic_cluster: TopicCluster | null
+  supporting_pages: SupportingPage[]
+  supporting_count: number
+  linked_count: number
+  created_at: string
+}
+
+export interface CompetingPage {
+  id: number
+  url: string
+  title: string
+  impression_share: number | null
+}
+
+export interface CannibalizationIssue {
+  id: number
+  keyword: string
+  severity: 'high' | 'medium' | 'low'
+  recommendation_type: 'consolidate' | 'differentiate' | 'redirect' | null
+  total_impressions: number | null
+  competing_pages: CompetingPage[]
+  suggested_king: TargetPage | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PendingAction {
+  id: number
+  action_type: string
+  description: string
+  risk: 'safe' | 'moderate' | 'high'
+  status: 'pending' | 'approved' | 'denied' | 'executed' | 'rolled_back'
+  impact: string
+  doctrine: string
+  is_destructive: boolean
+  related_issue: CannibalizationIssue | null
+  related_silo: number | null
+  created_at: string
+  rollback_expires_at: string | null
+}
+
+export interface HealthSummary {
+  health_score: number
+  health_score_delta: number
+  cannibalization_count: number
+  silo_count: number
+  page_count: number
+  missing_links_count: number
+  last_scan_at: string | null
+}
+
+// ============================================================
+// Dashboard Services
+// ============================================================
+
+class DashboardService {
+  async getHealthSummary(siteId: number | string): Promise<HealthSummary> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/health-summary`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load health summary')
+    return data
+  }
+
+  async getSilos(siteId: number | string): Promise<{ silos: ReverseSilo[]; total: number }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/silos`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load silos')
+    return data
+  }
+
+  async getCannibalizationIssues(siteId: number | string): Promise<{ issues: CannibalizationIssue[]; total: number }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/cannibalization-issues`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load cannibalization issues')
+    return data
+  }
+
+  async getPendingApprovals(siteId: number | string): Promise<{ pending_approvals: PendingAction[]; total: number }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/pending-approvals`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load pending approvals')
+    return data
+  }
+
+  async approveAction(siteId: number | string, actionId: number | string): Promise<{ message: string; action_id: number; status: string }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/approve`, {
+      method: 'POST',
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to approve action')
+    return data
+  }
+
+  async denyAction(siteId: number | string, actionId: number | string): Promise<{ message: string; action_id: number; status: string }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/deny`, {
+      method: 'POST',
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to deny action')
+    return data
+  }
+
+  async rollbackAction(siteId: number | string, actionId: number | string): Promise<{ message: string; action_id: number; status: string }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/rollback`, {
+      method: 'POST',
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to rollback action')
+    return data
+  }
+}
+
 export const sitesService = new SitesService()
 export const pagesService = new PagesService()
 export const apiKeysService = new ApiKeysService()
 export const scansService = new ScansService()
+export const dashboardService = new DashboardService()
