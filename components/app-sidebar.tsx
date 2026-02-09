@@ -1,3 +1,5 @@
+'use client'
+
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -14,6 +16,7 @@ import {
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
+import { useUser } from "@/lib/hooks/use-user"
 import {
   Sidebar,
   SidebarContent,
@@ -29,13 +32,8 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
+// Navigation data (user is fetched dynamically)
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "",
-  },
   navMain: [
     {
       title: "Dashboard",
@@ -110,6 +108,19 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user, isLoading } = useUser()
+  
+  // Build user display data from real user
+  const userData = {
+    name: user 
+      ? (user.first_name && user.last_name 
+          ? `${user.first_name} ${user.last_name}` 
+          : user.first_name || user.username || user.email.split('@')[0])
+      : isLoading ? 'Loading...' : 'Guest',
+    email: user?.email || '',
+    avatar: '', // Could add avatar URL support later
+  }
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -172,7 +183,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
