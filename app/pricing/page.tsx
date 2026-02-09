@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Check } from "lucide-react"
+import Link from "next/link"
+import { Check, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { BILLING_ENDPOINTS } from "@/lib/backend-api"
+import { BILLING_ENDPOINTS, AUTH_ENDPOINTS } from "@/lib/backend-api"
 
 const tiers = [
   {
@@ -75,8 +76,33 @@ const tiers = [
 export default function PricingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  useEffect(() => {
+    checkAuthentication()
+  }, [])
+
+  const checkAuthentication = async () => {
+    try {
+      const response = await fetch(AUTH_ENDPOINTS.me(), {
+        credentials: "include",
+      })
+      setIsAuthenticated(response.ok)
+    } catch {
+      setIsAuthenticated(false)
+    } finally {
+      setCheckingAuth(false)
+    }
+  }
 
   const handleCheckout = async (tierId: string) => {
+    if (!isAuthenticated) {
+      // Redirect to login with return URL
+      router.push(`/login?redirect=/pricing&plan=${tierId}`)
+      return
+    }
+
     setLoading(tierId)
     try {
       const response = await fetch(BILLING_ENDPOINTS.checkout(), {
@@ -95,7 +121,6 @@ export default function PricingPage() {
 
       const data = await response.json()
       
-      // Redirect to Stripe checkout
       if (data.checkout_url) {
         window.location.href = data.checkout_url
       }
@@ -110,6 +135,30 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-12 px-4">
       <div className="max-w-7xl mx-auto">
+        {/* Auth Banner */}
+        {!checkingAuth && !isAuthenticated && (
+          <div className="mb-8 bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <LogIn className="h-5 w-5 text-indigo-400" />
+              <span className="text-slate-300">
+                Sign in or create an account to start your free trial
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <Link href="/login">
+                <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="bg-indigo-500 hover:bg-indigo-600">
+                  Create Account
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">
             Choose Your Plan
@@ -164,9 +213,10 @@ export default function PricingPage() {
                       : "bg-slate-700 hover:bg-slate-600"
                   }`}
                   onClick={() => handleCheckout(tier.id)}
-                  disabled={loading !== null}
+                  disabled={loading !== null || checkingAuth}
                 >
-                  {loading === tier.id ? "Loading..." : tier.cta}
+                  {loading === tier.id ? "Loading..." : 
+                   !isAuthenticated ? `Sign up for ${tier.name}` : tier.cta}
                 </Button>
               </CardFooter>
             </Card>
