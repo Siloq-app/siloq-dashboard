@@ -44,3 +44,9 @@ export const SCAN_ENDPOINTS = {
   detail: (id: number | string) => `${getBackendApiUrl()}/api/v1/scans/${id}/`,
   report: (id: number | string) => `${getBackendApiUrl()}/api/v1/scans/${id}/report/`,
 }
+
+export const BILLING_ENDPOINTS = {
+  checkout: () => `${getBackendApiUrl()}/api/v1/billing/checkout/`,
+  portal: () => `${getBackendApiUrl()}/api/v1/billing/portal/`,
+  status: () => `${getBackendApiUrl()}/api/v1/billing/status/`,
+}
