@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import GovernanceDashboard from '@/components/screens/GovernanceDashboard'
 import SiloPlanner from '@/components/screens/SiloPlanner'
 import ApprovalQueue from '@/components/screens/ApprovalQueue'
@@ -10,77 +10,12 @@ import Settings from '@/components/screens/Settings'
 import GenerateModal from '@/components/modals/GenerateModal'
 import ApprovalModal from '@/components/modals/ApprovalModal'
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
+import { useSilos } from '@/lib/hooks/use-silos'
+import { useCannibalization } from '@/lib/hooks/use-cannibalization'
+import { usePendingActions } from '@/lib/hooks/use-pending-actions'
+import { useHealthSummary } from '@/lib/hooks/use-health-summary'
 import { TabType, AutomationMode, CannibalizationIssue, Silo, PendingChange } from './types'
-
-const cannibalizationIssues: CannibalizationIssue[] = [
-  { 
-    id: 1, 
-    keyword: 'kitchen remodeling', 
-    pages: ['/kitchen-remodel-cost', '/kitchen-renovation-guide', '/remodel-your-kitchen'], 
-    severity: 'high', 
-    impressions: 12400, 
-    splitClicks: '34% / 41% / 25%', 
-    recommendation: 'Consolidate into single Target Page' 
-  },
-  { 
-    id: 2, 
-    keyword: 'bathroom vanity ideas', 
-    pages: ['/bathroom-vanity-styles', '/vanity-buying-guide'], 
-    severity: 'medium', 
-    impressions: 8200, 
-    splitClicks: '52% / 48%', 
-    recommendation: 'Differentiate entity targeting' 
-  },
-  { 
-    id: 3, 
-    keyword: 'hardwood floor installation', 
-    pages: ['/hardwood-installation', '/flooring-installation-cost'], 
-    severity: 'low', 
-    impressions: 3100, 
-    splitClicks: '78% / 22%', 
-    recommendation: 'Add internal links to strengthen Target' 
-  },
-]
-
-const silos: Silo[] = [
-  {
-    id: 1,
-    name: 'Kitchen Remodeling',
-    targetPage: { 
-      title: 'Complete Kitchen Remodeling Guide', 
-      url: '/kitchen-remodel-guide', 
-      status: 'published', 
-      entities: ['kitchen remodel', 'renovation cost', 'kitchen design'] 
-    },
-    supportingPages: [
-      { title: 'Kitchen Cabinet Styles 2024', url: '/kitchen-cabinets', status: 'published', linked: true, entities: ['cabinet styles', 'shaker cabinets'] },
-      { title: 'Countertop Materials Compared', url: '/countertop-materials', status: 'published', linked: true, entities: ['granite', 'quartz', 'marble'] },
-      { title: 'Kitchen Layout Ideas', url: '/kitchen-layouts', status: 'draft', linked: false, entities: ['galley kitchen', 'L-shaped'] },
-    ]
-  },
-  {
-    id: 2,
-    name: 'Bathroom Renovation',
-    targetPage: { 
-      title: 'Bathroom Renovation Guide', 
-      url: '/bathroom-renovation', 
-      status: 'published', 
-      entities: ['bathroom remodel', 'renovation cost'] 
-    },
-    supportingPages: [
-      { title: 'Shower Tile Ideas', url: '/shower-tiles', status: 'published', linked: true, entities: ['tile patterns', 'mosaic tiles'] },
-      { title: 'Vanity Buying Guide', url: '/vanity-guide', status: 'draft', linked: false, entities: ['vanity styles', 'storage'] },
-    ]
-  },
-]
-
-const pendingChanges: PendingChange[] = [
-  { id: 1, type: '301_redirect', description: 'Redirect /old-kitchen-page to /kitchen-remodel-guide', risk: 'safe', impact: 'Consolidates link equity' },
-  { id: 2, type: 'internal_link', description: 'Add links from 3 supporting pages to Target', risk: 'safe', impact: 'Strengthens entity relationships' },
-  { id: 3, type: 'content_update', description: 'Update /bathroom-vanity with new 2024 trends', risk: 'safe', impact: 'Refreshes entity coverage' },
-  { id: 4, type: 'entity_assign', description: 'Assign entities [pendant lights, task lighting] to /kitchen-lighting', risk: 'safe', impact: 'Improves semantic targeting', doctrine: 'ENTITY_001' },
-  { id: 5, type: 'content_merge', description: 'Merge /remodel-your-kitchen into /kitchen-remodel-guide', risk: 'destructive', impact: 'Eliminates cannibalization, consolidates 4,100 impressions', doctrine: 'CANN_RESTORE_002' },
-]
+import { Loader2 } from 'lucide-react'
 
 interface DashboardProps {
   activeTab?: TabType
@@ -98,16 +33,117 @@ export default function Dashboard({
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [showApprovalModal, setShowApprovalModal] = useState(false)
 
-  const { sites, selectedSite, siteOverview, pages, isLoading, error, refresh } = useDashboardData()
+  // Fetch real data from backend
+  const { sites, selectedSite, siteOverview, pages, isLoading: isLoadingSites } = useDashboardData()
+  const { silos: rawSilos, isLoading: isLoadingSilos } = useSilos(selectedSite?.id)
+  const { issues: rawIssues, isLoading: isLoadingIssues } = useCannibalization(selectedSite?.id)
+  const { pendingActions: rawPendingActions, isLoading: isLoadingActions, approveAction, denyAction } = usePendingActions(selectedSite?.id)
+  const { healthSummary, isLoading: isLoadingHealth } = useHealthSummary(selectedSite?.id)
 
-  const healthScore = siteOverview?.health_score ?? selectedSite?.page_count ? Math.round((1 - (siteOverview?.total_issues ?? 0) / (selectedSite?.page_count || 1)) * 100) : 72
-  const totalIssues = siteOverview?.total_issues ?? 0
-  const totalPages = siteOverview?.total_pages ?? selectedSite?.page_count ?? 0
+  // Transform API data to match component types
+  const cannibalizationIssues: CannibalizationIssue[] = useMemo(() => {
+    return rawIssues.map(issue => ({
+      id: issue.id,
+      keyword: issue.keyword,
+      pages: issue.competing_pages.map(p => p.url),
+      severity: issue.severity,
+      impressions: issue.total_impressions || 0,
+      splitClicks: issue.competing_pages
+        .map(p => p.impression_share ? `${p.impression_share}%` : '?')
+        .join(' / '),
+      recommendation: issue.recommendation_type 
+        ? `${issue.recommendation_type.charAt(0).toUpperCase()}${issue.recommendation_type.slice(1)} pages`
+        : 'Review and decide'
+    }))
+  }, [rawIssues])
+
+  const silos: Silo[] = useMemo(() => {
+    return rawSilos.map(silo => ({
+      id: silo.id,
+      name: silo.name,
+      targetPage: {
+        title: silo.target_page.title,
+        url: silo.target_page.url,
+        status: silo.target_page.status === 'publish' ? 'published' : silo.target_page.status,
+        entities: silo.topic_cluster ? [silo.topic_cluster.name] : []
+      },
+      supportingPages: silo.supporting_pages.map(sp => ({
+        title: sp.title,
+        url: sp.url,
+        status: sp.status === 'publish' ? 'published' : sp.status as 'published' | 'draft' | 'suggested',
+        linked: true, // Assume linked if in the silo
+        entities: []
+      }))
+    }))
+  }, [rawSilos])
+
+  const pendingChanges: PendingChange[] = useMemo(() => {
+    return rawPendingActions.map(action => ({
+      id: action.id,
+      type: action.action_type,
+      description: action.description,
+      risk: action.risk === 'high' || action.is_destructive ? 'destructive' : 'safe',
+      impact: action.impact,
+      doctrine: action.doctrine || undefined
+    }))
+  }, [rawPendingActions])
+
+  // Calculate health score from real data
+  const healthScore = healthSummary?.health_score ?? siteOverview?.health_score ?? 0
+
+  const isLoading = isLoadingSites || isLoadingSilos || isLoadingIssues || isLoadingActions || isLoadingHealth
+
+  // Loading component
+  const LoadingState = () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        <p className="text-slate-400">Loading dashboard data...</p>
+      </div>
+    </div>
+  )
+
+  // Empty state when no site is selected
+  const NoSiteSelected = () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <h3 className="text-xl font-semibold text-slate-300 mb-2">No Site Selected</h3>
+        <p className="text-slate-400 mb-4">Add a site to start analyzing your SEO architecture.</p>
+        <button 
+          onClick={() => onTabChange?.('sites')}
+          className="px-4 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 transition-colors"
+        >
+          Go to Sites
+        </button>
+      </div>
+    </div>
+  )
+
+  // Empty data state
+  const EmptyDataState = ({ title, description }: { title: string; description: string }) => (
+    <div className="flex items-center justify-center h-64 border-2 border-dashed border-slate-700 rounded-lg">
+      <div className="text-center p-8">
+        <h3 className="text-xl font-semibold text-slate-300 mb-2">{title}</h3>
+        <p className="text-slate-400">{description}</p>
+      </div>
+    </div>
+  )
 
   const renderScreen = () => {
+    // Show loading state while fetching initial data
+    if (isLoadingSites && !selectedSite) {
+      return <LoadingState />
+    }
+
+    // If no site is selected/exists, prompt to add one
+    if (!selectedSite && activeTab !== 'sites' && activeTab !== 'settings') {
+      return <NoSiteSelected />
+    }
+
     switch (activeTab) {
       case 'dashboard':
       case 'overview':
+        if (isLoading) return <LoadingState />
         return (
           <GovernanceDashboard
             healthScore={healthScore}
@@ -120,6 +156,20 @@ export default function Dashboard({
           />
         )
       case 'silos':
+        if (isLoadingSilos) return <LoadingState />
+        if (silos.length === 0) {
+          return (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-slate-100">All Silos</h2>
+              </div>
+              <EmptyDataState 
+                title="No Silos Yet" 
+                description="Sync your WordPress pages and Siloq will help you organize them into SEO-optimized silos."
+              />
+            </div>
+          )
+        }
         return (
           <SiloPlanner
             silos={silos}
@@ -128,6 +178,20 @@ export default function Dashboard({
           />
         )
       case 'approvals':
+        if (isLoadingActions) return <LoadingState />
+        if (pendingChanges.length === 0) {
+          return (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-slate-100">Approval Queue</h2>
+              </div>
+              <EmptyDataState 
+                title="No Pending Approvals" 
+                description="When Siloq detects issues or recommends changes, they'll appear here for your approval."
+              />
+            </div>
+          )
+        }
         return (
           <ApprovalQueue
             pendingChanges={pendingChanges}
