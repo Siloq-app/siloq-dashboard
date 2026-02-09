@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Shield, ChevronDown, Check, LogOut, PanelLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { AutomationMode } from './Dashboard'
+import { AutomationMode } from './types'
 
 interface HeaderProps {
   automationMode: AutomationMode
   onAutomationChange: (mode: AutomationMode) => void
-  onToggleSidebar: () => void
-  isSidebarOpen: boolean
+  onToggleSidebar?: () => void
+  isSidebarOpen?: boolean
 }
 
 const automationModes = [

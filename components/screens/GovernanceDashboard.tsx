@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertTriangle, TrendingUp, GitBranch, ChevronRight, Zap, ArrowRight, TrendingDown, Activity } from 'lucide-react'
-import { CannibalizationIssue, Silo, PendingChange } from '../Dashboard'
+import { CannibalizationIssue, Silo, PendingChange } from '@/app/dashboard/Dashboard'
 import HealthScore from '../ui/HealthScore'
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card'
 import { Button } from '../ui/button'

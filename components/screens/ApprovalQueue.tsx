@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, RotateCcw, TrendingUp } from 'lucide-react'
-import { PendingChange } from '../Dashboard'
+import { PendingChange } from '@/app/dashboard/Dashboard'
 
 interface Props {
   pendingChanges: PendingChange[]
