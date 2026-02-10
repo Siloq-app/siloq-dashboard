@@ -462,6 +462,141 @@ class DashboardService {
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load recommendations')
     return data
   }
+
+  // Internal Links Analysis
+  async getInternalLinks(siteId: number | string): Promise<InternalLinksAnalysis> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/internal-links/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load internal links analysis')
+    return data
+  }
+
+  async getLinkStructure(siteId: number | string): Promise<LinkStructure> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/link-structure/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load link structure')
+    return data
+  }
+
+  async getAnchorConflicts(siteId: number | string): Promise<{ conflicts: AnchorConflict[]; total: number }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/anchor-conflicts/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load anchor conflicts')
+    return data
+  }
+
+  async syncLinks(siteId: number | string): Promise<{ message: string; pages_processed: number; total_links_found: number }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/sync-links/`, {
+      method: 'POST',
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to sync links')
+    return data
+  }
+
+  async assignSilo(siteId: number | string, pageId: number, targetPageId: number | null): Promise<{ message: string; page_id: number; parent_silo_id: number | null }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/assign-silo/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page_id: pageId, target_page_id: targetPageId })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to assign silo')
+    return data
+  }
+
+  async setHomepage(siteId: number | string, pageId: number): Promise<{ message: string; page_id: number }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/set-homepage/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page_id: pageId })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to set homepage')
+    return data
+  }
+}
+
+// Internal Links Types
+export interface SiloPage {
+  id: number
+  url: string
+  title: string
+  slug?: string
+}
+
+export interface SiloLink {
+  source_id: number
+  target_id: number
+  anchor_text: string
+}
+
+export interface Silo {
+  target: SiloPage
+  supporting_pages: SiloPage[]
+  supporting_count: number
+  links: SiloLink[]
+}
+
+export interface LinkStructure {
+  homepage: SiloPage | null
+  silos: Silo[]
+  total_target_pages: number
+  total_supporting_pages: number
+}
+
+export interface AnchorConflict {
+  anchor_text: string
+  target_pages: {
+    id: number
+    url: string
+    title: string
+    is_money_page: boolean
+  }[]
+  occurrence_count: number
+  severity: 'high' | 'medium' | 'low'
+}
+
+export interface LinkIssue {
+  type: string
+  page?: SiloPage
+  target_page?: SiloPage
+  supporting_page?: SiloPage
+  missing_links_to?: SiloPage[]
+  anchor_text?: string
+  severity: 'high' | 'medium' | 'low'
+  recommendation?: string
+}
+
+export interface HealthBreakdown {
+  score: number
+  issues: number
+  weight: number
+}
+
+export interface InternalLinksAnalysis {
+  health_score: number
+  health_breakdown: {
+    anchor_conflicts: HealthBreakdown
+    homepage_protection: HealthBreakdown
+    target_links: HealthBreakdown
+    orphan_pages: HealthBreakdown
+  }
+  total_issues: number
+  issues: {
+    anchor_conflicts: AnchorConflict[]
+    homepage_theft: LinkIssue[]
+    missing_target_links: LinkIssue[]
+    missing_sibling_links: LinkIssue[]
+    orphan_pages: LinkIssue[]
+    silo_size_issues: LinkIssue[]
+  }
+  structure: LinkStructure
+  recommendations: {
+    type: string
+    priority: 'high' | 'medium' | 'low'
+    message: string
+  }[]
 }
 
 export const sitesService = new SitesService()

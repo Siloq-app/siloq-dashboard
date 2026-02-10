@@ -8,6 +8,7 @@ import SitesScreen from '@/components/screens/SitesScreen'
 import ContentHub from '@/components/screens/ContentHub'
 import Settings from '@/components/screens/Settings'
 import PagesScreen from '@/components/screens/PagesScreen'
+import InternalLinksScreen from '@/components/screens/InternalLinksScreen'
 import GenerateModal from '@/components/modals/GenerateModal'
 import ApprovalModal from '@/components/modals/ApprovalModal'
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
@@ -279,12 +280,8 @@ export default function Dashboard({
       case 'content':
         return <ContentHub onGenerateClick={() => setShowGenerateModal(true)} />
       case 'links':
-        return (
-          <div className="text-slate-300">
-            <h2 className="text-2xl font-bold mb-4">Internal Links</h2>
-            <p>Internal linking visualization coming soon...</p>
-          </div>
-        )
+        if (!selectedSite) return <NoSiteSelected />
+        return <InternalLinksScreen siteId={selectedSite.id} />
       case 'settings':
         return <Settings onNavigateToSites={() => onTabChange?.('sites')} />
       default:
