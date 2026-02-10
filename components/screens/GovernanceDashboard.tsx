@@ -13,7 +13,7 @@ interface Props {
   pendingChanges: PendingChange[]
   onViewSilo: (silo: Silo) => void
   onViewApprovals: () => void
-  onShowApprovalModal: () => void
+  onShowApprovalModal: (issueId: number) => void
 }
 
 export default function GovernanceDashboard({
@@ -131,7 +131,7 @@ export default function GovernanceDashboard({
               {/* Action Button */}
               <Button 
                 size="sm" 
-                onClick={onShowApprovalModal}
+                onClick={() => onShowApprovalModal(issue.id)}
                 className="flex items-center justify-center gap-1.5 w-full sm:w-auto flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 View Fix
