@@ -10,6 +10,12 @@ export interface Site {
   last_synced_at: string | null
   sync_requested_at: string | null
   created_at: string
+  // Business profile fields
+  business_type?: string | null
+  primary_services?: string[]
+  service_areas?: string[]
+  onboarding_complete?: boolean
+  needs_onboarding?: boolean
 }
 
 export interface SyncStatus {

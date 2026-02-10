@@ -11,6 +11,7 @@ import PagesScreen from '@/components/screens/PagesScreen'
 import InternalLinksScreen from '@/components/screens/InternalLinksScreen'
 import GenerateModal from '@/components/modals/GenerateModal'
 import ApprovalModal from '@/components/modals/ApprovalModal'
+import OnboardingWizard from '@/components/OnboardingWizard'
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
 import { pagesService, dashboardService, sitesService, AnalysisResult, SyncTriggerResponse } from '@/lib/services/api'
 import { useSilos } from '@/lib/hooks/use-silos'
@@ -43,6 +44,8 @@ export default function Dashboard({
 }: DashboardProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [showApprovalModal, setShowApprovalModal] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false)
   const [selectedIssue, setSelectedIssue] = useState<ModalCannibalizationIssue | null>(null)
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -126,6 +129,25 @@ export default function Dashboard({
 
   const isLoading = isLoadingSites || isLoadingSilos || isLoadingIssues || isLoadingActions || isLoadingHealth
 
+  // Check if site needs onboarding
+  const needsOnboarding = selectedSite && 
+    (selectedSite.needs_onboarding || selectedSite.onboarding_complete === false) && 
+    !onboardingDismissed
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false)
+    setOnboardingDismissed(true)
+    // Reload to get updated site data
+    window.location.reload()
+  }
+
+  // Handle onboarding skip
+  const handleOnboardingSkip = () => {
+    setShowOnboarding(false)
+    setOnboardingDismissed(true)
+  }
+
   // Analyze site function
   const handleAnalyzeSite = async (): Promise<AnalysisResult> => {
     if (!selectedSite) {
@@ -196,20 +218,64 @@ export default function Dashboard({
       return <NoSiteSelected />
     }
 
+    // Show onboarding wizard if site needs setup
+    if (showOnboarding && selectedSite) {
+      return (
+        <div className="py-8">
+          <OnboardingWizard
+            siteId={selectedSite.id}
+            onComplete={handleOnboardingComplete}
+            onSkip={handleOnboardingSkip}
+          />
+        </div>
+      )
+    }
+
+    // Show onboarding prompt banner if site needs onboarding
+    const OnboardingPrompt = needsOnboarding ? (
+      <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium text-amber-500">Complete Your Business Profile</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Tell Siloq about your business to get personalized content recommendations.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setOnboardingDismissed(true)}
+              className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Later
+            </button>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="px-4 py-1.5 text-sm bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 transition-colors"
+            >
+              Set Up Now
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : null
+
     switch (activeTab) {
       case 'dashboard':
       case 'overview':
         if (isLoading) return <LoadingState />
         return (
-          <GovernanceDashboard
-            healthScore={healthScore}
-            cannibalizationIssues={cannibalizationIssues}
-            silos={silos}
-            pendingChanges={pendingChanges}
-            onViewSilo={() => onTabChange?.('silos')}
-            onViewApprovals={() => onTabChange?.('approvals')}
-            onShowApprovalModal={handleShowApprovalModal}
-          />
+          <>
+            {OnboardingPrompt}
+            <GovernanceDashboard
+              healthScore={healthScore}
+              cannibalizationIssues={cannibalizationIssues}
+              silos={silos}
+              pendingChanges={pendingChanges}
+              onViewSilo={() => onTabChange?.('silos')}
+              onViewApprovals={() => onTabChange?.('approvals')}
+              onShowApprovalModal={handleShowApprovalModal}
+            />
+          </>
         )
       case 'pages':
         return (
