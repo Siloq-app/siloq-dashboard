@@ -1,93 +1,228 @@
-'use client'
+'use client';
 
-import { Check, RotateCcw, TrendingUp } from 'lucide-react'
-import { PendingChange } from '@/app/dashboard/Dashboard'
+import { useState } from 'react';
+import {
+  Check,
+  RotateCcw,
+  TrendingUp,
+  Shield,
+  AlertTriangle,
+  FileEdit,
+  Link2,
+  Tag,
+  Sparkles,
+} from 'lucide-react';
+import { PendingChange } from '@/app/dashboard/types';
+import { cn } from '@/lib/utils';
 
 interface Props {
-  pendingChanges: PendingChange[]
+  pendingChanges: PendingChange[];
 }
 
+const ITEMS_PER_PAGE = 3;
+
+const getChangeIcon = (type: string) => {
+  switch (type) {
+    case 'internal_link':
+      return <Link2 size={14} className="text-indigo-500" />;
+    case 'meta_update':
+      return <Tag size={14} className="text-amber-500" />;
+    case 'content_refresh':
+      return <FileEdit size={14} className="text-blue-500" />;
+    case 'canonical_fix':
+      return <Shield size={14} className="text-purple-500" />;
+    default:
+      return <Sparkles size={14} className="text-slate-400" />;
+  }
+};
+
+const getChangeColor = (type: string) => {
+  switch (type) {
+    case 'internal_link':
+      return 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800';
+    case 'meta_update':
+      return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800';
+    case 'content_refresh':
+      return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800';
+    case 'canonical_fix':
+      return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800';
+    default:
+      return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
+  }
+};
+
 export default function ApprovalQueue({ pendingChanges }: Props) {
-  const safeChanges = pendingChanges.filter(c => c.risk === 'safe')
-  const destructiveChanges = pendingChanges.filter(c => c.risk === 'destructive')
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const safeChanges = pendingChanges.filter((c) => c.risk === 'safe');
+  const destructiveChanges = pendingChanges.filter(
+    (c) => c.risk === 'destructive'
+  );
+
+  const displayedChanges = pendingChanges.slice(0, visibleCount);
+  const hasMore = visibleCount < pendingChanges.length;
+
+  const handleLoadMore = () => {
+    setVisibleCount((prev) =>
+      Math.min(prev + ITEMS_PER_PAGE, pendingChanges.length)
+    );
+  };
+
+  const handleApproveAll = () => {
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmApprove = () => {
+    setShowConfirmDialog(false);
+  };
 
   return (
-    <div className="card p-7">
-      <div className="flex items-center justify-between mb-8">
+    <div className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-semibold mb-2">Approval Queue</h2>
-          <p className="text-sm text-slate-400">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            Approval Queue
+          </h2>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             Siloq-generated remediation plan — review and approve
           </p>
         </div>
-        <div className="flex gap-3">
-          <button className="btn-secondary">
-            Approve All Safe ({safeChanges.length})
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
+            <Check size={14} /> Approve All Safe ({safeChanges.length})
           </button>
-          <button className="btn-primary">
+          <button
+            onClick={handleApproveAll}
+            className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+          >
             <Check size={14} /> Approve All
           </button>
         </div>
       </div>
 
       {/* Queue Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-slate-900/40 rounded-lg p-4 border border-slate-700/30">
-          <div className="text-xs text-slate-400 mb-1">Total Pending</div>
-          <div className="text-2xl font-semibold">{pendingChanges.length}</div>
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="bg-card text-card-foreground relative overflow-hidden rounded-xl border p-4 shadow">
+          <div className="absolute right-0 top-0 h-16 w-16 rounded-full bg-blue-400/10 blur-xl" />
+          <div className="relative">
+            <div className="mb-1 flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-blue-500" />
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                Total Pending
+              </div>
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              {pendingChanges.length}
+            </div>
+          </div>
         </div>
-        <div className="bg-emerald-500/5 rounded-lg p-4 border border-emerald-500/20">
-          <div className="text-xs text-emerald-400 mb-1">Safe Changes</div>
-          <div className="text-2xl font-semibold text-emerald-400">{safeChanges.length}</div>
+        <div className="bg-card text-card-foreground relative overflow-hidden rounded-xl border border-emerald-200 p-4 shadow dark:border-emerald-900/30">
+          <div className="absolute right-0 top-0 h-16 w-16 rounded-full bg-emerald-400/10 blur-xl" />
+          <div className="relative">
+            <div className="mb-1 flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+              <div className="text-xs text-emerald-600 dark:text-emerald-400">
+                Safe Changes
+              </div>
+            </div>
+            <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
+              {safeChanges.length}
+            </div>
+          </div>
         </div>
-        <div className="bg-red-500/5 rounded-lg p-4 border border-red-500/20">
-          <div className="text-xs text-red-400 mb-1">Destructive Changes</div>
-          <div className="text-2xl font-semibold text-red-400">{destructiveChanges.length}</div>
+        <div className="bg-card text-card-foreground relative overflow-hidden rounded-xl border border-red-200 p-4 shadow dark:border-red-900/30">
+          <div className="absolute right-0 top-0 h-16 w-16 rounded-full bg-red-400/10 blur-xl" />
+          <div className="relative">
+            <div className="mb-1 flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-red-500" />
+              <div className="text-xs text-red-600 dark:text-red-400">
+                Destructive Changes
+              </div>
+            </div>
+            <div className="text-2xl font-semibold text-red-600 dark:text-red-400">
+              {destructiveChanges.length}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Change Cards */}
       <div className="space-y-4">
-        {pendingChanges.map((change) => (
+        {displayedChanges.map((change, index) => (
           <div
             key={change.id}
-            className="bg-slate-900/60 rounded-xl p-6 border border-slate-700/30"
+            className={cn(
+              'bg-card text-card-foreground relative overflow-hidden rounded-xl border p-5 shadow',
+              change.risk === 'destructive' &&
+                'border-red-200 dark:border-red-900/30'
+            )}
           >
-            <div className="flex items-start justify-between">
+            {change.risk === 'destructive' && (
+              <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-red-400 to-orange-400" />
+            )}
+            {change.risk === 'safe' && (
+              <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-emerald-400 to-teal-400" />
+            )}
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className={change.risk === 'safe' ? 'risk-safe' : 'risk-destructive'}>
-                    {change.risk === 'safe' ? '✓ Safe' : '⚠ Destructive'}
+                <div className="mb-3 flex items-center gap-3">
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide',
+                      change.risk === 'safe'
+                        ? 'border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : 'border-red-200 bg-red-100 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400'
+                    )}
+                  >
+                    {change.risk === 'safe' ? (
+                      <Shield size={10} />
+                    ) : (
+                      <AlertTriangle size={10} />
+                    )}
+                    {change.risk === 'safe' ? 'Safe' : 'Destructive'}
                   </span>
-                  <span className="text-xs text-slate-500 uppercase">
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide',
+                      getChangeColor(change.type)
+                    )}
+                  >
+                    {getChangeIcon(change.type)}
                     {change.type.replace('_', ' ')}
                   </span>
                 </div>
 
-                <div className="text-base font-medium mb-2 text-slate-100">
+                <div className="mb-1 text-sm font-medium leading-relaxed text-slate-900 dark:text-slate-100">
                   {change.description}
                 </div>
 
-                <div className="text-sm text-slate-400 mb-2">
-                  <span className="text-slate-500">DOCTRINE:</span> {change.doctrine}
+                <div className="mb-1 text-sm text-slate-700 dark:text-slate-300">
+                  <span className="font-medium text-slate-500 dark:text-slate-400">
+                    DOCTRINE:
+                  </span>{' '}
+                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    {change.doctrine}
+                  </span>
                 </div>
 
-                <div className="text-sm text-emerald-400 flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
                   <TrendingUp size={14} />
                   Expected impact: {change.impact}
                 </div>
 
                 {change.risk === 'destructive' && (
-                  <div className="mt-3 p-3 bg-red-500/10 rounded-lg text-xs text-red-300 flex items-center gap-2">
+                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400">
                     <RotateCcw size={14} />
                     48-hour rollback available after execution
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-2 ml-6">
-                <button className="btn-deny">Deny</button>
-                <button className="btn-approve">
+              <div className="flex w-full gap-2 sm:ml-6 sm:w-auto">
+                <button className="focus-visible:ring-ring inline-flex h-9 flex-1 items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 sm:flex-initial dark:border-red-900/30 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-red-950/20">
+                  Deny
+                </button>
+                <button className="focus-visible:ring-ring inline-flex h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 sm:flex-initial [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
                   <Check size={14} /> Approve
                 </button>
               </div>
@@ -95,6 +230,49 @@ export default function ApprovalQueue({ pendingChanges }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Load More */}
+      {hasMore && (
+        <div className="flex justify-center pt-4">
+          <button
+            onClick={handleLoadMore}
+            className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+          >
+            Load More
+            <span className="text-xs text-slate-400">
+              ({displayedChanges.length} of {pendingChanges.length})
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card text-card-foreground mx-4 max-w-md rounded-xl border p-6 shadow-lg">
+            <h3 className="mb-2 text-lg font-semibold">Approve All Changes?</h3>
+            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+              This will approve all {pendingChanges.length} pending changes
+              including {destructiveChanges.length} destructive changes. This
+              action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="focus-visible:ring-ring inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmApprove}
+                className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              >
+                <Check size={14} /> Confirm Approve All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }
