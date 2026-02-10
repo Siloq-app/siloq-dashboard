@@ -39,8 +39,10 @@ export default function LoginPage() {
     setError("")
     setIsLoading(true)
 
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.siloq.ai'
+    
     try {
-      const res = await fetch("/api/v1/auth/login", {
+      const res = await fetch(`${API_URL}/api/v1/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -49,7 +51,7 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.message || "Login failed")
+        throw new Error(data.message || data.non_field_errors?.[0] || data.detail || "Login failed")
       }
 
       localStorage.setItem("token", data.token)
