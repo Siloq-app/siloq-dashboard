@@ -3,9 +3,8 @@
  * Token is read from localStorage (set after login).
  */
 
-const API_BASE_URL = typeof window !== 'undefined' 
-  ? (process.env.NEXT_PUBLIC_API_URL || 'https://api.siloq.ai')
-  : 'https://api.siloq.ai'
+// Always use the production API URL
+const API_BASE_URL = 'https://api.siloq.ai'
 
 export function getAuthHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {}

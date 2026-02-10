@@ -163,9 +163,13 @@ class SitesService {
   async triggerSync(id: number | string): Promise<SyncTriggerResponse> {
     const res = await fetchWithAuth(`/api/v1/sites/${id}/trigger-sync/`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
     })
     const data = await res.json()
-    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to trigger sync')
+    if (!res.ok) {
+      console.error('Sync trigger failed:', res.status, data)
+      throw new Error(data.message || data.detail || `Failed to trigger sync (${res.status})`)
+    }
     return data
   }
 }
