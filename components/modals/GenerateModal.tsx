@@ -12,7 +12,7 @@ interface Props {
 
 export default function GenerateModal({ silos, onClose }: Props) {
   const [selectedSiloId, setSelectedSiloId] = useState<number>(silos[0]?.id || 0);
-  const [contentType, setContentType] = useState('Supporting Article (Soldier)');
+  const [contentType, setContentType] = useState('Supporting Content');
   const [entityCluster, setEntityCluster] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -180,7 +180,7 @@ export default function GenerateModal({ silos, onClose }: Props) {
               onChange={(e) => setContentType(e.target.value)}
               className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-10 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             >
-              <option>Supporting Article (Soldier)</option>
+              <option>Supporting Content</option>
               <option>FAQ Page</option>
               <option>How-To Guide</option>
               <option>Comparison Article</option>

@@ -5,6 +5,7 @@ export type TabType =
   | 'approvals'
   | 'content'
   | 'links'
+  | 'pages'
   | 'settings'
   | 'sites';
 export type AutomationMode = 'manual' | 'semi' | 'full';

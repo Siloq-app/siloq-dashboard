@@ -61,7 +61,7 @@ export default function SiloPlanner({
 
       {displaySilos.map((silo) => (
         <div key={silo.id} className="space-y-4">
-          {/* Target Page (King) */}
+          {/* Money Page */}
           <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-900/30 dark:from-amber-950/20 dark:to-orange-950/20">
             <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-amber-400/10 blur-2xl" />
 
@@ -75,7 +75,7 @@ export default function SiloPlanner({
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                       <Crown size={10} />
-                      King
+                      Money Page
                     </span>
                   </div>
                   <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -105,14 +105,14 @@ export default function SiloPlanner({
             </div>
           </div>
 
-          {/* Supporting Pages (Soldiers) */}
+          {/* Supporting Content */}
           <div className="relative pl-4">
             <div className="absolute bottom-8 left-0 top-0 w-px bg-gradient-to-b from-indigo-300 via-indigo-200 to-transparent dark:from-indigo-800 dark:via-indigo-900" />
 
             <div className="mb-3 ml-2 flex items-center gap-2">
               <ArrowUp size={14} className="text-indigo-500" />
               <span className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-                Supporting Pages
+                Supporting Content
               </span>
               <span className="text-xs text-slate-400 dark:text-slate-500">
                 {silo.supportingPages.length} linking up
@@ -202,7 +202,7 @@ export default function SiloPlanner({
                 className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-indigo-200 p-4 text-indigo-600 transition-all hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:border-indigo-800 dark:hover:bg-indigo-950/20"
               >
                 <Plus size={14} />
-                <span className="text-sm font-medium">Add Supporting Page</span>
+                <span className="text-sm font-medium">Add Supporting Content</span>
               </button>
             </div>
           </div>

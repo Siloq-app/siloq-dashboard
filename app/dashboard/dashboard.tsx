@@ -7,8 +7,10 @@ import ApprovalQueue from '@/components/screens/ApprovalQueue';
 import SitesScreen from '@/components/screens/SitesScreen';
 import ContentHub from '@/components/screens/ContentHub';
 import Settings from '@/components/screens/Settings';
+import PagesScreen from '@/components/screens/PagesScreen';
 import GenerateModal from '@/components/modals/GenerateModal';
 import ApprovalModal from '@/components/modals/ApprovalModal';
+import CannibalizationModal from '@/components/modals/CannibalizationModal';
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data';
 import { TabType, AutomationMode } from './types';
 import { cannibalizationIssues, silos, pendingChanges, linkOpportunities } from './data';
@@ -29,6 +31,8 @@ export default function Dashboard({
 }: DashboardProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showCannibalizationModal, setShowCannibalizationModal] = useState(false);
+  const [selectedPageIds, setSelectedPageIds] = useState<number[]>([]);
 
   const { siteOverview, selectedSite } = useDashboardData();
 
@@ -77,6 +81,15 @@ export default function Dashboard({
         );
       case 'links':
         return <InternalLinks opportunities={linkOpportunities} />;
+      case 'pages':
+        return (
+          <PagesScreen
+            onAnalyze={(pageIds) => {
+              setSelectedPageIds(pageIds);
+              setShowCannibalizationModal(true);
+            }}
+          />
+        );
       case 'settings':
         return <Settings onNavigateToSites={() => onTabChange?.('sites')} />;
       default:
@@ -97,6 +110,13 @@ export default function Dashboard({
 
       {showApprovalModal && (
         <ApprovalModal onClose={() => setShowApprovalModal(false)} />
+      )}
+
+      {showCannibalizationModal && (
+        <CannibalizationModal
+          pageIds={selectedPageIds}
+          onClose={() => setShowCannibalizationModal(false)}
+        />
       )}
     </div>
   );

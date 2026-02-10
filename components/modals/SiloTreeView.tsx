@@ -100,7 +100,7 @@ function TreeNode({
           {isKing && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
               <Crown size={10} />
-              King
+              Money Page
             </span>
           )}
           {isLinked && !isKing && (
@@ -213,7 +213,7 @@ export function SiloTreeView({ silo, isOpen, onClose }: SiloTreeViewProps) {
                 {silo.name} Architecture
               </h2>
               <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-                <span>{silo.supportingPages.length} supporting pages</span>
+                <span>{silo.supportingPages.length} Supporting Content</span>
                 <span className="text-slate-300">|</span>
                 <span className="text-emerald-600 dark:text-emerald-400">
                   {linkedCount} linked
@@ -283,7 +283,7 @@ export function SiloTreeView({ silo, isOpen, onClose }: SiloTreeViewProps) {
               </div>
             </div>
 
-            {/* Supporting Pages */}
+            {/* Supporting Content */}
             <div className="space-y-3">
               {silo.supportingPages.map((page, index) => (
                 <div key={index} className="relative">
@@ -310,10 +310,10 @@ export function SiloTreeView({ silo, isOpen, onClose }: SiloTreeViewProps) {
                   <FileText size={20} className="text-slate-400" />
                 </div>
                 <h3 className="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">
-                  No supporting pages yet
+                  No Supporting Content yet
                 </h3>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  Add supporting pages to build your silo architecture.
+                  Add Supporting Content to build your Content Strategy architecture.
                 </p>
               </div>
             )}
@@ -326,7 +326,7 @@ export function SiloTreeView({ silo, isOpen, onClose }: SiloTreeViewProps) {
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-amber-500" />
               <span className="text-slate-600 dark:text-slate-400">
-                Target Page
+                Money Page
               </span>
             </div>
             <div className="flex items-center gap-2">

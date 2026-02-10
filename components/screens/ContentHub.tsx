@@ -9,14 +9,14 @@ interface Props {
 
 const contentActions = [
   {
-    title: 'Generate Target Page',
-    desc: 'Create a new pillar page (King) that will receive links from Supporting Pages',
+    title: 'Generate Money Page',
+    desc: 'Create a new pillar page (Money Page) that will receive links from Supporting Content',
     icon: Crown,
     color: 'amber' as const,
   },
   {
-    title: 'Generate Supporting Page',
-    desc: 'Create a Soldier page that links UP to a Target Page',
+    title: 'Generate Supporting Content',
+    desc: 'Create Supporting Content that links UP to a Money Page',
     icon: Shield,
     color: 'indigo' as const,
   },
@@ -77,7 +77,7 @@ export default function ContentHub({ onGenerateClick }: Props) {
             Content Generation
           </h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            Generate content that fits your Reverse Silo architecture
+            Generate content that fits your Content Strategy architecture
           </p>
         </div>
         <button

@@ -14,6 +14,7 @@ import {
   Settings,
   HelpCircle,
   Search,
+  CreditCard,
 } from 'lucide-react';
 
 import { NavUser } from '@/components/nav-user';
@@ -69,6 +70,10 @@ const data = {
           url: '/dashboard?tab=content',
         },
         {
+          title: 'Pages',
+          url: '/dashboard?tab=pages',
+        },
+        {
           title: 'Internal Links',
           url: '/dashboard?tab=links',
         },
@@ -88,8 +93,13 @@ const data = {
   ],
   navSecondary: [
     {
+      title: 'Subscription',
+      url: '/dashboard/settings/subscription',
+      icon: CreditCard,
+    },
+    {
       title: 'Settings',
-      url: '/dashboard?tab=settings',
+      url: '/dashboard/settings/api-keys',
       icon: Settings,
     },
     {
@@ -184,7 +194,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           {data.navSecondary.map((item) => {
-            const isActive = currentTab === item.url.split('?tab=')[1];
+            const isTabUrl = item.url.includes('?tab=');
+            const isActive = isTabUrl
+              ? currentTab === item.url.split('?tab=')[1]
+              : pathname === item.url || pathname.startsWith(item.url + '/');
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={isActive}>
