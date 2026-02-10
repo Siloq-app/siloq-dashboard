@@ -321,9 +321,41 @@ export interface HealthSummary {
 // Dashboard Services
 // ============================================================
 
+export interface ContentRecommendation {
+  type: 'supporting_content' | 'consolidation' | 'differentiation'
+  priority: 'high' | 'medium' | 'low'
+  title: string
+  description: string
+  action: 'generate' | 'review' | 'edit'
+  target_page_id?: number
+  target_page_url?: string
+  competing_pages?: Array<{ id: number; url: string; title: string }>
+}
+
+export interface AnalysisResult {
+  site_id: number
+  analyzed_at: string
+  health_score: number
+  health_score_delta: number
+  health_breakdown: {
+    base_score: number
+    cannibalization_penalty: number
+    seo_data_penalty: number
+    money_page_bonus: number
+  }
+  cannibalization_issues: CannibalizationIssue[]
+  cannibalization_count: number
+  recommendations: ContentRecommendation[]
+  recommendation_count: number
+  page_count: number
+  money_page_count: number
+  silo_count: number
+  missing_links_count: number
+}
+
 class DashboardService {
   async getHealthSummary(siteId: number | string): Promise<HealthSummary> {
-    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/health-summary`)
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/health-summary/`)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load health summary')
     return data
@@ -337,21 +369,21 @@ class DashboardService {
   }
 
   async getCannibalizationIssues(siteId: number | string): Promise<{ issues: CannibalizationIssue[]; total: number }> {
-    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/cannibalization-issues`)
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/cannibalization-issues/`)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load cannibalization issues')
     return data
   }
 
   async getPendingApprovals(siteId: number | string): Promise<{ pending_approvals: PendingAction[]; total: number }> {
-    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/pending-approvals`)
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/pending-approvals/`)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load pending approvals')
     return data
   }
 
   async approveAction(siteId: number | string, actionId: number | string): Promise<{ message: string; action_id: number; status: string }> {
-    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/approve`, {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/approve/`, {
       method: 'POST',
     })
     const data = await res.json()
@@ -360,7 +392,7 @@ class DashboardService {
   }
 
   async denyAction(siteId: number | string, actionId: number | string): Promise<{ message: string; action_id: number; status: string }> {
-    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/deny`, {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/deny/`, {
       method: 'POST',
     })
     const data = await res.json()
@@ -369,11 +401,27 @@ class DashboardService {
   }
 
   async rollbackAction(siteId: number | string, actionId: number | string): Promise<{ message: string; action_id: number; status: string }> {
-    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/rollback`, {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/rollback/`, {
       method: 'POST',
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to rollback action')
+    return data
+  }
+
+  async analyzeSite(siteId: number | string): Promise<AnalysisResult> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/analyze/`, {
+      method: 'POST',
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to analyze site')
+    return data
+  }
+
+  async getRecommendations(siteId: number | string): Promise<{ recommendations: ContentRecommendation[]; total: number }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/recommendations/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load recommendations')
     return data
   }
 }
