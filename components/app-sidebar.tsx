@@ -46,7 +46,11 @@ const data = {
           isActive: true,
         },
         {
-          title: "Silos",
+          title: "Pages",
+          url: "/dashboard?tab=pages",
+        },
+        {
+          title: "Content Strategy",
           url: "/dashboard?tab=silos",
         },
         {
@@ -133,7 +137,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">Siloq</span>
-                  <span className="text-xs">v1.0.0</span>
+                  <span className="text-xs">v1.1.0</span>
                 </div>
               </Link>
             </SidebarMenuButton>
