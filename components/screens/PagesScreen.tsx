@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, ExternalLink, Check, Search, Filter } from 'lucide-react'
+import { Star, ExternalLink, Check, Search, Filter, Sparkles, ArrowLeft } from 'lucide-react'
 
-import { Page as ApiPage } from '@/lib/services/api'
+import { Page as ApiPage, AnalysisResult } from '@/lib/services/api'
+import AnalysisResults from './AnalysisResults'
 
 interface Page extends ApiPage {}
 
@@ -11,11 +12,20 @@ interface Props {
   pages: Page[]
   isLoading: boolean
   onMarkMoneyPage: (pageId: number, isMoney: boolean) => void
+  onAnalyze: () => Promise<AnalysisResult>
+  analysisResults: AnalysisResult | null
+  isAnalyzing: boolean
 }
 
-export default function PagesScreen({ pages, isLoading, onMarkMoneyPage }: Props) {
+export default function PagesScreen({ pages, isLoading, onMarkMoneyPage, onAnalyze, analysisResults, isAnalyzing }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'money' | 'supporting'>('all')
+  const [showAnalysis, setShowAnalysis] = useState(false)
+
+  const handleAnalyze = async () => {
+    setShowAnalysis(true)
+    await onAnalyze()
+  }
 
   const filteredPages = pages.filter(page => {
     const matchesSearch = page.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -37,6 +47,47 @@ export default function PagesScreen({ pages, isLoading, onMarkMoneyPage }: Props
     )
   }
 
+  // Show analysis results view
+  if (showAnalysis) {
+    return (
+      <div className="space-y-6">
+        {/* Back button */}
+        <button
+          onClick={() => setShowAnalysis(false)}
+          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Pages
+        </button>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">Site Analysis</h2>
+            <p className="text-slate-400 text-sm mt-1">
+              {analysisResults ? `Analyzed ${analysisResults.page_count} pages` : 'Analyzing your site...'}
+            </p>
+          </div>
+          {analysisResults && (
+            <button
+              onClick={onAnalyze}
+              disabled={isAnalyzing}
+              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              {isAnalyzing ? 'Analyzing...' : 'Re-analyze'}
+            </button>
+          )}
+        </div>
+
+        <AnalysisResults 
+          results={analysisResults}
+          isLoading={isAnalyzing}
+          onAnalyze={onAnalyze}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -48,6 +99,16 @@ export default function PagesScreen({ pages, isLoading, onMarkMoneyPage }: Props
               {pages.length} pages synced • {moneyPageCount} marked as money pages
             </p>
           </div>
+          {moneyPageCount > 0 && (
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              {isAnalyzing ? 'Analyzing...' : 'Analyze Site'}
+            </button>
+          )}
         </div>
 
         {/* Instructions */}
@@ -166,7 +227,7 @@ export default function PagesScreen({ pages, isLoading, onMarkMoneyPage }: Props
       </div>
 
       {/* Next Steps Card */}
-      {moneyPageCount > 0 && (
+      {moneyPageCount > 0 && !showAnalysis && (
         <div className="card p-6 bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 border-emerald-500/20">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
@@ -179,8 +240,12 @@ export default function PagesScreen({ pages, isLoading, onMarkMoneyPage }: Props
                 Siloq can now analyze your site for cannibalization and content opportunities.
               </p>
             </div>
-            <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors">
-              Analyze Site
+            <button 
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors"
+            >
+              {isAnalyzing ? 'Analyzing...' : 'Analyze Site'}
             </button>
           </div>
         </div>

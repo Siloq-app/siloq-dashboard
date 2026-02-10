@@ -11,7 +11,7 @@ import PagesScreen from '@/components/screens/PagesScreen'
 import GenerateModal from '@/components/modals/GenerateModal'
 import ApprovalModal from '@/components/modals/ApprovalModal'
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
-import { pagesService } from '@/lib/services/api'
+import { pagesService, dashboardService, AnalysisResult } from '@/lib/services/api'
 import { useSilos } from '@/lib/hooks/use-silos'
 import { useCannibalization } from '@/lib/hooks/use-cannibalization'
 import { usePendingActions } from '@/lib/hooks/use-pending-actions'
@@ -34,6 +34,8 @@ export default function Dashboard({
 }: DashboardProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [showApprovalModal, setShowApprovalModal] = useState(false)
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   // Fetch real data from backend
   const { sites, selectedSite, siteOverview, pages, isLoading: isLoadingSites } = useDashboardData()
@@ -94,6 +96,21 @@ export default function Dashboard({
   const healthScore = healthSummary?.health_score ?? siteOverview?.health_score ?? 0
 
   const isLoading = isLoadingSites || isLoadingSilos || isLoadingIssues || isLoadingActions || isLoadingHealth
+
+  // Analyze site function
+  const handleAnalyzeSite = async (): Promise<AnalysisResult> => {
+    if (!selectedSite) {
+      throw new Error('No site selected')
+    }
+    setIsAnalyzing(true)
+    try {
+      const results = await dashboardService.analyzeSite(selectedSite.id)
+      setAnalysisResults(results)
+      return results
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
 
   // Loading component
   const LoadingState = () => (
@@ -171,6 +188,9 @@ export default function Dashboard({
                 console.error('Failed to update money page:', err)
               }
             }}
+            onAnalyze={handleAnalyzeSite}
+            analysisResults={analysisResults}
+            isAnalyzing={isAnalyzing}
           />
         )
       case 'silos':
