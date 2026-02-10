@@ -172,6 +172,34 @@ class SitesService {
     }
     return data
   }
+
+  async getProfile(id: number | string): Promise<BusinessProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${id}/profile/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load business profile')
+    return data
+  }
+
+  async updateProfile(id: number | string, profile: Partial<BusinessProfile>): Promise<BusinessProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${id}/profile/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to update business profile')
+    return data
+  }
+
+  async generateSilos(id: number | string): Promise<GeneratedSilos> {
+    const res = await fetchWithAuth(`/api/v1/sites/${id}/generate-silos/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to generate silo suggestions')
+    return data
+  }
 }
 
 class PagesService {
@@ -597,6 +625,42 @@ export interface InternalLinksAnalysis {
     priority: 'high' | 'medium' | 'low'
     message: string
   }[]
+}
+
+// Business Profile Types
+export interface BusinessProfile {
+  business_type: string | null
+  primary_services: string[]
+  service_areas: string[]
+  target_audience: string
+  business_description: string
+  onboarding_complete: boolean
+  business_type_choices?: { value: string; label: string }[]
+}
+
+export interface SiloSuggestion {
+  service: string
+  suggested_target_page: {
+    title: string
+    slug: string
+    description: string
+  }
+  suggested_supporting_topics: string[]
+}
+
+export interface LocationSilo {
+  area: string
+  suggested_page: {
+    title: string
+    slug: string
+  }
+  can_create_per_service: boolean
+}
+
+export interface GeneratedSilos {
+  service_silos: SiloSuggestion[]
+  location_silos: LocationSilo[]
+  total_suggested_pages: number
 }
 
 export const sitesService = new SitesService()
