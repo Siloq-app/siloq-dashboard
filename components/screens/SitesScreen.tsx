@@ -218,6 +218,7 @@ export default function SitesScreen() {
                 {selectedSite.url}
                 <ExternalLink className="h-3 w-3" />
               </a>
+              <span className="ml-3 text-xs text-gray-500">(Site ID: {selectedSite.id})</span>
             </CardDescription>
           </CardHeader>
         </Card>
