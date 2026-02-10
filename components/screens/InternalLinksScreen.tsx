@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { 
   Home, Target, FileText, AlertTriangle, Link2, RefreshCw, 
   ChevronDown, ChevronRight, ExternalLink, ArrowUp, ArrowLeftRight,
-  CheckCircle, XCircle, Loader2
+  CheckCircle, XCircle, Loader2, Lightbulb, Sparkles, BookOpen,
+  Scale, DollarSign, MapPin, HelpCircle, Plus
 } from 'lucide-react'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
@@ -14,7 +15,10 @@ import {
   LinkStructure, 
   Silo, 
   SiloPage,
-  AnchorConflict 
+  AnchorConflict,
+  ContentSuggestionsResponse,
+  TargetSuggestion,
+  ContentSuggestion
 } from '@/lib/services/api'
 
 interface Props {
@@ -23,15 +27,35 @@ interface Props {
 
 export default function InternalLinksScreen({ siteId }: Props) {
   const [analysis, setAnalysis] = useState<InternalLinksAnalysis | null>(null)
+  const [contentSuggestions, setContentSuggestions] = useState<ContentSuggestionsResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingContent, setIsLoadingContent] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedSilos, setExpandedSilos] = useState<Set<number>>(new Set())
-  const [activeTab, setActiveTab] = useState<'structure' | 'issues'>('structure')
+  const [activeTab, setActiveTab] = useState<'structure' | 'content' | 'issues'>('structure')
 
   useEffect(() => {
     loadAnalysis()
   }, [siteId])
+
+  useEffect(() => {
+    if (activeTab === 'content' && !contentSuggestions && !isLoadingContent) {
+      loadContentSuggestions()
+    }
+  }, [activeTab])
+
+  const loadContentSuggestions = async () => {
+    setIsLoadingContent(true)
+    try {
+      const data = await dashboardService.getContentSuggestions(siteId)
+      setContentSuggestions(data)
+    } catch (e) {
+      console.error('Failed to load content suggestions:', e)
+    } finally {
+      setIsLoadingContent(false)
+    }
+  }
 
   const loadAnalysis = async () => {
     setIsLoading(true)
@@ -190,6 +214,17 @@ export default function InternalLinksScreen({ siteId }: Props) {
           Silo Structure
         </button>
         <button
+          onClick={() => setActiveTab('content')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === 'content' 
+              ? 'border-primary text-primary' 
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Lightbulb className="w-4 h-4" />
+          Content Ideas
+        </button>
+        <button
           onClick={() => setActiveTab('issues')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'issues' 
@@ -207,6 +242,12 @@ export default function InternalLinksScreen({ siteId }: Props) {
           structure={analysis.structure} 
           expandedSilos={expandedSilos}
           onToggleSilo={toggleSilo}
+        />
+      ) : activeTab === 'content' ? (
+        <ContentIdeasView 
+          suggestions={contentSuggestions}
+          isLoading={isLoadingContent}
+          onRefresh={loadContentSuggestions}
         />
       ) : (
         <IssuesView analysis={analysis} />
@@ -599,6 +640,220 @@ function IssueSection({
         <div className="space-y-2 pl-5">
           {children}
         </div>
+      )}
+    </div>
+  )
+}
+
+// Content Ideas View
+function ContentIdeasView({ 
+  suggestions, 
+  isLoading,
+  onRefresh
+}: { 
+  suggestions: ContentSuggestionsResponse | null
+  isLoading: boolean
+  onRefresh: () => void
+}) {
+  const [expandedTarget, setExpandedTarget] = useState<number | null>(null)
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+          <p className="text-slate-400">Generating content suggestions...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!suggestions) {
+    return (
+      <div className="text-center py-12">
+        <Lightbulb className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground mb-4">No content suggestions yet</p>
+        <Button onClick={onRefresh} variant="outline">
+          <Sparkles className="w-4 h-4 mr-2" />
+          Generate Ideas
+        </Button>
+      </div>
+    )
+  }
+
+  if (suggestions.suggestions.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-medium mb-2">No Target Pages Found</h3>
+        <p className="text-muted-foreground">
+          Mark some pages as money pages first to get content suggestions.
+        </p>
+      </Card>
+    )
+  }
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'how-to': return <BookOpen className="w-4 h-4" />
+      case 'comparison': return <Scale className="w-4 h-4" />
+      case 'commercial': return <DollarSign className="w-4 h-4" />
+      case 'local': return <MapPin className="w-4 h-4" />
+      case 'educational': return <HelpCircle className="w-4 h-4" />
+      default: return <FileText className="w-4 h-4" />
+    }
+  }
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'how-to': return 'bg-blue-500/10 text-blue-500'
+      case 'comparison': return 'bg-purple-500/10 text-purple-500'
+      case 'commercial': return 'bg-green-500/10 text-green-500'
+      case 'local': return 'bg-orange-500/10 text-orange-500'
+      case 'educational': return 'bg-cyan-500/10 text-cyan-500'
+      case 'tips': return 'bg-amber-500/10 text-amber-500'
+      default: return 'bg-slate-500/10 text-slate-500'
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <Target className="w-5 h-5 text-amber-500" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{suggestions.total_targets}</div>
+              <div className="text-sm text-muted-foreground">Target Pages</div>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <Lightbulb className="w-5 h-5 text-emerald-500" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{suggestions.total_suggested_topics}</div>
+              <div className="text-sm text-muted-foreground">Content Ideas</div>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 col-span-2 md:col-span-1">
+          <Button onClick={onRefresh} variant="outline" className="w-full h-full">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh Ideas
+          </Button>
+        </Card>
+      </div>
+
+      {/* Suggestions by Target */}
+      <div className="space-y-4">
+        {suggestions.suggestions.map((targetSuggestion) => (
+          <Card key={targetSuggestion.target_page.id} className="overflow-hidden">
+            <button
+              onClick={() => setExpandedTarget(
+                expandedTarget === targetSuggestion.target_page.id 
+                  ? null 
+                  : targetSuggestion.target_page.id
+              )}
+              className="w-full p-4 text-left hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center">
+                    <Target className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-medium">{targetSuggestion.target_page.title}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {targetSuggestion.existing_supporting_count} existing • {targetSuggestion.suggested_topics.length} suggestions
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <GapBadges gaps={targetSuggestion.gap_analysis} />
+                  {expandedTarget === targetSuggestion.target_page.id ? (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+            </button>
+
+            {expandedTarget === targetSuggestion.target_page.id && (
+              <div className="px-4 pb-4 border-t border-border pt-4 space-y-3">
+                {targetSuggestion.suggested_topics.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                    Good coverage! No gaps detected.
+                  </div>
+                ) : (
+                  targetSuggestion.suggested_topics.map((topic, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <div className={`p-2 rounded-lg ${getTypeColor(topic.type)}`}>
+                        {getTypeIcon(topic.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium">{topic.title}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs px-2 py-0.5 rounded ${getTypeColor(topic.type)}`}>
+                            {topic.type}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Priority: {topic.priority}
+                          </span>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="ghost" className="shrink-0">
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Gap Analysis Badges
+function GapBadges({ gaps }: { gaps: { has_how_to: boolean; has_comparison: boolean; has_guide: boolean; has_faq: boolean } }) {
+  const missing = []
+  if (!gaps.has_how_to) missing.push('How-to')
+  if (!gaps.has_comparison) missing.push('Comparison')
+  if (!gaps.has_guide) missing.push('Guide')
+  if (!gaps.has_faq) missing.push('FAQ')
+
+  if (missing.length === 0) {
+    return (
+      <span className="text-xs px-2 py-1 bg-green-500/10 text-green-500 rounded">
+        ✓ Complete
+      </span>
+    )
+  }
+
+  return (
+    <div className="flex gap-1">
+      {missing.slice(0, 2).map((gap) => (
+        <span key={gap} className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 rounded">
+          Missing: {gap}
+        </span>
+      ))}
+      {missing.length > 2 && (
+        <span className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 rounded">
+          +{missing.length - 2}
+        </span>
       )}
     </div>
   )

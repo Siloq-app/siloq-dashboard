@@ -515,6 +515,13 @@ class DashboardService {
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to set homepage')
     return data
   }
+
+  async getContentSuggestions(siteId: number | string): Promise<ContentSuggestionsResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content-suggestions/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load content suggestions')
+    return data
+  }
 }
 
 // Internal Links Types
@@ -597,6 +604,38 @@ export interface InternalLinksAnalysis {
     priority: 'high' | 'medium' | 'low'
     message: string
   }[]
+}
+
+// Content Suggestions Types
+export interface ContentSuggestion {
+  title: string
+  type: 'educational' | 'how-to' | 'comparison' | 'tips' | 'commercial' | 'local' | 'general'
+  target_keyword: string
+  priority: number
+}
+
+export interface GapAnalysis {
+  has_how_to: boolean
+  has_comparison: boolean
+  has_guide: boolean
+  has_faq: boolean
+}
+
+export interface TargetSuggestion {
+  target_page: {
+    id: number
+    title: string
+    url: string
+  }
+  existing_supporting_count: number
+  suggested_topics: ContentSuggestion[]
+  gap_analysis: GapAnalysis
+}
+
+export interface ContentSuggestionsResponse {
+  suggestions: TargetSuggestion[]
+  total_targets: number
+  total_suggested_topics: number
 }
 
 export const sitesService = new SitesService()
