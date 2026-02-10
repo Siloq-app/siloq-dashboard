@@ -8,7 +8,25 @@ export interface Site {
   page_count: number
   api_key_count: number
   last_synced_at: string | null
+  sync_requested_at: string | null
   created_at: string
+}
+
+export interface SyncStatus {
+  site_id: number
+  site_name: string
+  page_count: number
+  last_synced_at: string | null
+  sync_requested_at: string | null
+  is_synced: boolean
+}
+
+export interface SyncTriggerResponse {
+  message: string
+  site_id: number
+  site_name: string
+  instructions: string
+  sync_requested_at: string
 }
 
 export interface SiteOverview {
@@ -132,6 +150,22 @@ class SitesService {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to create site')
+    return data
+  }
+
+  async getSyncStatus(id: number | string): Promise<SyncStatus> {
+    const res = await fetchWithAuth(`/api/v1/sites/${id}/sync-status/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to get sync status')
+    return data
+  }
+
+  async triggerSync(id: number | string): Promise<SyncTriggerResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${id}/trigger-sync/`, {
+      method: 'POST',
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to trigger sync')
     return data
   }
 }

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, ExternalLink, Check, Search, Filter, Sparkles, ArrowLeft } from 'lucide-react'
+import { Star, ExternalLink, Check, Search, Filter, Sparkles, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react'
 
-import { Page as ApiPage, AnalysisResult } from '@/lib/services/api'
+import { Page as ApiPage, AnalysisResult, SyncTriggerResponse } from '@/lib/services/api'
 import AnalysisResults from './AnalysisResults'
 
 interface Page extends ApiPage {}
@@ -15,16 +15,45 @@ interface Props {
   onAnalyze: () => Promise<AnalysisResult>
   analysisResults: AnalysisResult | null
   isAnalyzing: boolean
+  onTriggerSync?: () => Promise<SyncTriggerResponse>
+  lastSyncedAt?: string | null
+  siteName?: string
 }
 
-export default function PagesScreen({ pages, isLoading, onMarkMoneyPage, onAnalyze, analysisResults, isAnalyzing }: Props) {
+export default function PagesScreen({ 
+  pages, 
+  isLoading, 
+  onMarkMoneyPage, 
+  onAnalyze, 
+  analysisResults, 
+  isAnalyzing,
+  onTriggerSync,
+  lastSyncedAt,
+  siteName
+}: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'money' | 'supporting'>('all')
   const [showAnalysis, setShowAnalysis] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   const handleAnalyze = async () => {
     setShowAnalysis(true)
     await onAnalyze()
+  }
+
+  const handleTriggerSync = async () => {
+    if (!onTriggerSync) return
+    setIsSyncing(true)
+    setSyncMessage(null)
+    try {
+      const result = await onTriggerSync()
+      setSyncMessage(result.instructions)
+    } catch (err) {
+      setSyncMessage('Failed to request sync. Please try again.')
+    } finally {
+      setIsSyncing(false)
+    }
   }
 
   const filteredPages = pages.filter(page => {
@@ -168,9 +197,72 @@ export default function PagesScreen({ pages, isLoading, onMarkMoneyPage, onAnaly
 
         {/* Pages List */}
         <div className="space-y-2">
-          {filteredPages.length === 0 ? (
+          {filteredPages.length === 0 && !searchQuery && pages.length === 0 ? (
+            /* No pages synced - show sync card */
+            <div className="text-center py-12">
+              <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-amber-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">No Pages Synced Yet</h3>
+              <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">
+                {siteName ? `Connect your WordPress site "${siteName}" to sync your pages.` : 'Connect your WordPress site to sync your pages.'}
+              </p>
+              
+              {/* Sync Instructions Card */}
+              <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 max-w-lg mx-auto text-left">
+                <h4 className="font-medium text-white mb-3">How to sync your pages:</h4>
+                <ol className="space-y-3 text-sm text-slate-400">
+                  <li className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold">1</span>
+                    <span>Install the <strong className="text-white">Siloq WordPress Plugin</strong> on your site</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold">2</span>
+                    <span>Go to <strong className="text-white">Settings → Siloq</strong> in WordPress admin</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold">3</span>
+                    <span>Enter your <strong className="text-white">API Key</strong> and click <strong className="text-white">"Sync Now"</strong></span>
+                  </li>
+                </ol>
+                
+                {syncMessage && (
+                  <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                    <p className="text-sm text-amber-300">{syncMessage}</p>
+                  </div>
+                )}
+                
+                <div className="mt-6 flex gap-3">
+                  {onTriggerSync && (
+                    <button
+                      onClick={handleTriggerSync}
+                      disabled={isSyncing}
+                      className="flex-1 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                      {isSyncing ? 'Requesting...' : 'Request Sync'}
+                    </button>
+                  )}
+                  <a 
+                    href="https://github.com/Siloq-app/siloq-wordpress/releases" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors text-center"
+                  >
+                    Download Plugin
+                  </a>
+                </div>
+              </div>
+              
+              {lastSyncedAt && (
+                <p className="text-xs text-slate-500 mt-4">
+                  Last sync: {new Date(lastSyncedAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+          ) : filteredPages.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
-              {searchQuery ? 'No pages match your search' : 'No pages synced yet'}
+              No pages match your search
             </div>
           ) : (
             filteredPages.map((page) => (
