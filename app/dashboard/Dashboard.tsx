@@ -26,6 +26,14 @@ interface DashboardProps {
   onAutomationChange?: (mode: AutomationMode) => void
 }
 
+// Type for the modal's expected issue format
+interface ModalCannibalizationIssue {
+  keyword: string
+  severity: 'high' | 'medium' | 'low'
+  competingPages: { url: string; title: string }[]
+  recommendation?: string
+}
+
 export default function Dashboard({ 
   activeTab = 'dashboard',
   onTabChange,
@@ -34,6 +42,7 @@ export default function Dashboard({
 }: DashboardProps) {
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [showApprovalModal, setShowApprovalModal] = useState(false)
+  const [selectedIssue, setSelectedIssue] = useState<ModalCannibalizationIssue | null>(null)
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
@@ -60,6 +69,25 @@ export default function Dashboard({
         : 'Review and decide'
     }))
   }, [rawIssues])
+
+  // Handler to show approval modal with selected issue
+  const handleShowApprovalModal = (issueId: number) => {
+    const rawIssue = rawIssues.find(i => i.id === issueId)
+    if (rawIssue) {
+      setSelectedIssue({
+        keyword: rawIssue.keyword,
+        severity: rawIssue.severity,
+        competingPages: rawIssue.competing_pages.map(p => ({
+          url: p.url,
+          title: p.title
+        })),
+        recommendation: rawIssue.recommendation_type
+          ? `${rawIssue.recommendation_type.charAt(0).toUpperCase()}${rawIssue.recommendation_type.slice(1)} these pages to resolve the cannibalization issue.`
+          : undefined
+      })
+      setShowApprovalModal(true)
+    }
+  }
 
   const silos: Silo[] = useMemo(() => {
     return rawSilos.map(silo => ({
@@ -179,7 +207,7 @@ export default function Dashboard({
             pendingChanges={pendingChanges}
             onViewSilo={() => onTabChange?.('silos')}
             onViewApprovals={() => onTabChange?.('approvals')}
-            onShowApprovalModal={() => setShowApprovalModal(true)}
+            onShowApprovalModal={handleShowApprovalModal}
           />
         )
       case 'pages':
@@ -276,7 +304,13 @@ export default function Dashboard({
       )}
 
       {showApprovalModal && (
-        <ApprovalModal onClose={() => setShowApprovalModal(false)} />
+        <ApprovalModal 
+          issue={selectedIssue || undefined}
+          onClose={() => {
+            setShowApprovalModal(false)
+            setSelectedIssue(null)
+          }} 
+        />
       )}
     </div>
   )
