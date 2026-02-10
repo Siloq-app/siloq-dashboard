@@ -41,7 +41,7 @@ export default function GenerateModal({ silos, onClose }: Props) {
         <div className="mb-5">
           <label className="text-sm text-slate-400 block mb-2">Content Type</label>
           <select className="w-full p-3 bg-slate-900/60 border border-slate-700/50 rounded-lg text-slate-200 text-sm">
-            <option>Supporting Article (Soldier)</option>
+            <option>Supporting Article</option>
             <option>FAQ Page</option>
             <option>How-To Guide</option>
             <option>Comparison Article</option>

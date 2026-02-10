@@ -191,8 +191,8 @@ export default function GovernanceDashboard({
               ↩︎
             </span>
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-slate-900">Reverse Silo Architecture</p>
-              <p className="text-xs text-slate-500">Target Pages (Kings) and Supporting Pages (Soldiers)</p>
+              <p className="text-sm font-semibold text-slate-900">Content Strategy</p>
+              <p className="text-xs text-slate-500">Your money pages and the content that supports them</p>
             </div>
           </div>
         </div>
@@ -246,7 +246,7 @@ export default function GovernanceDashboard({
                   <div className="flex items-center gap-3 rounded-xl px-2.5 py-2 transition hover:bg-slate-50 relative z-10">
                     <span
                       className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-slate-900 text-[11px] font-semibold text-white ring-4 ring-white"
-                      title="Target (King)"
+                      title="Money Page"
                     >
                       K
                     </span>
@@ -269,7 +269,7 @@ export default function GovernanceDashboard({
                             ? 'bg-emerald-50 text-emerald-700' 
                             : 'bg-slate-100 text-slate-600'
                         }`}
-                        title="Supporting (Soldier)"
+                        title="Supporting Content"
                       >
                         S
                       </span>

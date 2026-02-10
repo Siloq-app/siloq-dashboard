@@ -25,7 +25,7 @@ export default function SiloPlanner({ silos, selectedSilo, onGenerateClick }: Pr
 
       {displaySilos.map((silo) => (
         <div key={silo.id} className="mb-8">
-          {/* Target Page (King) */}
+          {/* Money Page */}
           <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-6 mb-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center text-xl">
@@ -33,7 +33,7 @@ export default function SiloPlanner({ silos, selectedSilo, onGenerateClick }: Pr
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[11px] text-amber-400 uppercase font-semibold">Target Page (King)</span>
+                  <span className="text-[11px] text-amber-400 uppercase font-semibold">Money Page</span>
                 </div>
                 <h3 className="text-lg font-semibold mb-1">{silo.targetPage.title}</h3>
                 <span className="text-sm text-slate-400 font-mono">{silo.targetPage.url}</span>
@@ -51,10 +51,10 @@ export default function SiloPlanner({ silos, selectedSilo, onGenerateClick }: Pr
             </div>
           </div>
 
-          {/* Supporting Pages (Soldiers) */}
+          {/* Supporting Content */}
           <div className="pl-6 border-l-2 border-indigo-500/30">
             <div className="text-[11px] text-slate-500 uppercase font-semibold mb-3 ml-2">
-              Supporting Pages (Soldiers) — Link UP to Target
+              Supporting Content — Link UP to Target
             </div>
             
             {silo.supportingPages.map((page, i) => (

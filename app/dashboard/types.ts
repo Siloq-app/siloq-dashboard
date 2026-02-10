@@ -1,4 +1,4 @@
-export type TabType = 'dashboard' | 'overview' | 'silos' | 'approvals' | 'content' | 'links' | 'settings' | 'sites'
+export type TabType = 'dashboard' | 'overview' | 'pages' | 'silos' | 'approvals' | 'content' | 'links' | 'settings' | 'sites'
 export type AutomationMode = 'manual' | 'semi' | 'full'
 
 export interface CannibalizationIssue {

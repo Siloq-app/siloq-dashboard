@@ -7,9 +7,11 @@ import ApprovalQueue from '@/components/screens/ApprovalQueue'
 import SitesScreen from '@/components/screens/SitesScreen'
 import ContentHub from '@/components/screens/ContentHub'
 import Settings from '@/components/screens/Settings'
+import PagesScreen from '@/components/screens/PagesScreen'
 import GenerateModal from '@/components/modals/GenerateModal'
 import ApprovalModal from '@/components/modals/ApprovalModal'
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
+import { pagesService } from '@/lib/services/api'
 import { useSilos } from '@/lib/hooks/use-silos'
 import { useCannibalization } from '@/lib/hooks/use-cannibalization'
 import { usePendingActions } from '@/lib/hooks/use-pending-actions'
@@ -155,17 +157,33 @@ export default function Dashboard({
             onShowApprovalModal={() => setShowApprovalModal(true)}
           />
         )
+      case 'pages':
+        return (
+          <PagesScreen
+            pages={pages.map(p => ({ ...p, is_money_page: p.is_money_page || false }))}
+            isLoading={isLoadingSites}
+            onMarkMoneyPage={async (pageId, isMoney) => {
+              try {
+                await pagesService.toggleMoneyPage(pageId, isMoney)
+                // Refresh pages after update
+                window.location.reload()
+              } catch (err) {
+                console.error('Failed to update money page:', err)
+              }
+            }}
+          />
+        )
       case 'silos':
         if (isLoadingSilos) return <LoadingState />
         if (silos.length === 0) {
           return (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-100">All Silos</h2>
+                <h2 className="text-2xl font-bold text-slate-100">Content Strategy</h2>
               </div>
               <EmptyDataState 
-                title="No Silos Yet" 
-                description="Sync your WordPress pages and Siloq will help you organize them into SEO-optimized silos."
+                title="No Content Strategy Yet" 
+                description="Mark your money pages first, then Siloq will build a content strategy around them."
               />
             </div>
           )

@@ -9,13 +9,13 @@ interface Props {
 const contentActions = [
   { 
     title: 'Generate Target Page', 
-    desc: 'Create a new pillar page (King) that will receive links from Supporting Pages', 
+    desc: 'Create a new money page for your business', 
     icon: '👑', 
     color: 'amber' 
   },
   { 
     title: 'Generate Supporting Page', 
-    desc: 'Create a Soldier page that links UP to a Target Page', 
+    desc: 'Create supporting content that links to your money pages', 
     icon: '⚔️', 
     color: 'indigo' 
   },

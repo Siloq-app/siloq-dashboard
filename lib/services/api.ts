@@ -29,6 +29,7 @@ export interface Page {
   last_synced_at: string | null
   seo_score: number
   issue_count: number
+  is_money_page: boolean
 }
 
 export interface PageDetail extends Page {
@@ -152,9 +153,20 @@ class PagesService {
   }
 
   async getSeoData(id: number | string): Promise<PageDetail['seo_data']> {
-    const res = await fetchWithAuth(`/api/v1/pages/${id}/seo`)
+    const res = await fetchWithAuth(`/api/v1/pages/${id}/seo/`)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load SEO data')
+    return data
+  }
+
+  async toggleMoneyPage(id: number | string, isMoneyPage: boolean): Promise<{ id: number; is_money_page: boolean }> {
+    const res = await fetchWithAuth(`/api/v1/pages/${id}/toggle_money_page/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_money_page: isMoneyPage })
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to update page')
     return data
   }
 }
