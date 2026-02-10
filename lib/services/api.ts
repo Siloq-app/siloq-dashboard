@@ -103,14 +103,14 @@ export type CreateScanInput = {
 
 class SitesService {
   async list(): Promise<Site[]> {
-    const res = await fetchWithAuth('/api/v1/sites')
+    const res = await fetchWithAuth('/api/v1/sites/')
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load sites')
     return Array.isArray(data) ? data : data.results || []
   }
 
   async getById(id: number | string): Promise<Site> {
-    const res = await fetchWithAuth(`/api/v1/sites/${id}`)
+    const res = await fetchWithAuth(`/api/v1/sites/${id}/`)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load site')
     return data
@@ -124,7 +124,7 @@ class SitesService {
   }
 
   async create(site: { name: string; url: string }): Promise<Site> {
-    const res = await fetchWithAuth('/api/v1/sites', {
+    const res = await fetchWithAuth('/api/v1/sites/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(site),
@@ -137,7 +137,7 @@ class SitesService {
 
 class PagesService {
   async list(siteId?: number | string): Promise<Page[]> {
-    const url = siteId ? `/api/v1/pages?site_id=${siteId}` : '/api/v1/pages'
+    const url = siteId ? `/api/v1/pages/?site_id=${siteId}` : '/api/v1/pages/'
     const res = await fetchWithAuth(url)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load pages')
@@ -145,7 +145,7 @@ class PagesService {
   }
 
   async getById(id: number | string): Promise<PageDetail> {
-    const res = await fetchWithAuth(`/api/v1/pages/${id}`)
+    const res = await fetchWithAuth(`/api/v1/pages/${id}/`)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load page')
     return data
@@ -161,7 +161,7 @@ class PagesService {
 
 class ApiKeysService {
   async list(siteId?: number | string): Promise<ApiKey[]> {
-    const url = siteId ? `/api/v1/api-keys?site_id=${siteId}` : '/api/v1/api-keys'
+    const url = siteId ? `/api/v1/api-keys/?site_id=${siteId}` : '/api/v1/api-keys/'
     const res = await fetchWithAuth(url)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load API keys')
@@ -169,7 +169,7 @@ class ApiKeysService {
   }
 
   async create(key: { name: string; site_id: number }): Promise<{ key: ApiKey; full_key: string }> {
-    const res = await fetchWithAuth('/api/v1/api-keys', {
+    const res = await fetchWithAuth('/api/v1/api-keys/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(key),
@@ -180,7 +180,7 @@ class ApiKeysService {
   }
 
   async revoke(id: number | string): Promise<void> {
-    const res = await fetchWithAuth(`/api/v1/api-keys/${id}`, {
+    const res = await fetchWithAuth(`/api/v1/api-keys/${id}/`, {
       method: 'DELETE',
     })
     if (!res.ok) {
@@ -192,21 +192,21 @@ class ApiKeysService {
 
 class ScansService {
   async list(): Promise<Scan[]> {
-    const res = await fetchWithAuth('/api/v1/scans')
+    const res = await fetchWithAuth('/api/v1/scans/')
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load scans')
     return Array.isArray(data) ? data : data.results || []
   }
 
   async getById(id: number | string): Promise<Scan> {
-    const res = await fetchWithAuth(`/api/v1/scans/${id}`)
+    const res = await fetchWithAuth(`/api/v1/scans/${id}/`)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load scan')
     return data
   }
 
   async create(scan: CreateScanInput): Promise<Scan> {
-    const res = await fetchWithAuth('/api/v1/scans', {
+    const res = await fetchWithAuth('/api/v1/scans/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(scan),
