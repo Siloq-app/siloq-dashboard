@@ -1,6 +1,9 @@
-import * as React from "react"
-import Image from "next/image"
-import Link from "next/link"
+'use client';
+
+import * as React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
   Database,
@@ -11,9 +14,9 @@ import {
   Settings,
   HelpCircle,
   Search,
-} from "lucide-react"
+} from 'lucide-react';
 
-import { NavUser } from "@/components/nav-user"
+import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -27,89 +30,92 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar';
 
 // This is sample data.
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "",
+    name: 'shadcn',
+    email: 'm@example.com',
+    avatar: '',
   },
   navMain: [
     {
-      title: "Dashboard",
-      url: "#",
+      title: 'Dashboard',
+      url: '#',
       icon: LayoutDashboard,
       items: [
         {
-          title: "Overview",
-          url: "/dashboard?tab=overview",
-          isActive: true,
+          title: 'Overview',
+          url: '/dashboard?tab=overview',
         },
         {
-          title: "Silos",
-          url: "/dashboard?tab=silos",
+          title: 'Silos',
+          url: '/dashboard?tab=silos',
         },
         {
-          title: "Approvals",
-          url: "/dashboard?tab=approvals",
+          title: 'Approvals',
+          url: '/dashboard?tab=approvals',
         },
       ],
     },
     {
-      title: "Content",
-      url: "#",
+      title: 'Content',
+      url: '#',
       icon: FileText,
       items: [
         {
-          title: "Content Hub",
-          url: "/dashboard?tab=content",
+          title: 'Content Hub',
+          url: '/dashboard?tab=content',
         },
         {
-          title: "Internal Links",
-          url: "/dashboard?tab=links",
+          title: 'Internal Links',
+          url: '/dashboard?tab=links',
         },
       ],
     },
     {
-      title: "Sites",
-      url: "#",
+      title: 'Sites',
+      url: '#',
       icon: Globe,
       items: [
         {
-          title: "All Sites",
-          url: "/dashboard?tab=sites",
+          title: 'All Sites',
+          url: '/dashboard?tab=sites',
         },
       ],
     },
   ],
   navSecondary: [
     {
-      title: "Settings",
-      url: "/dashboard?tab=settings",
+      title: 'Settings',
+      url: '/dashboard?tab=settings',
       icon: Settings,
     },
     {
-      title: "Get Help",
-      url: "#",
+      title: 'Get Help',
+      url: '#',
       icon: HelpCircle,
     },
     {
-      title: "Search",
-      url: "#",
+      title: 'Search',
+      url: '#',
       icon: Search,
     },
   ],
-}
+};
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Dashboard: LayoutDashboard,
   Content: FileText,
   Sites: Globe,
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get('tab');
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -117,8 +123,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden" style={{ backgroundColor: 'transparent' }}>
-                  <Image src="/symbol.png" alt="Siloq" width={32} height={32} className="size-8 object-contain" />
+                <div
+                  className="flex aspect-square size-8 items-center justify-center overflow-hidden"
+                  style={{ backgroundColor: 'transparent' }}
+                >
+                  <Image
+                    src="/symbol.png"
+                    alt="Siloq"
+                    width={32}
+                    height={32}
+                    className="size-8 object-contain"
+                  />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">Siloq</span>
@@ -133,48 +148,61 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarMenu>
             {data.navMain.map((item) => {
-              const Icon = iconMap[item.title] || Database
+              const Icon = iconMap[item.title] || Database;
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link href={item.url} className="font-medium flex items-center gap-2">
+                    <Link
+                      href={item.url}
+                      className="flex items-center gap-2 font-medium"
+                    >
                       <Icon className="size-4" />
                       {item.title}
                     </Link>
                   </SidebarMenuButton>
                   {item.items?.length ? (
                     <SidebarMenuSub>
-                      {item.items.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild isActive={subItem.isActive}>
-                            <Link href={subItem.url}>{subItem.title}</Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
+                      {item.items.map((subItem) => {
+                        const isActive =
+                          currentTab === subItem.url.split('?tab=')[1];
+                        return (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubButton asChild isActive={isActive}>
+                              <Link href={subItem.url}>{subItem.title}</Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
                     </SidebarMenuSub>
                   ) : null}
                 </SidebarMenuItem>
-              )
+              );
             })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          {data.navSecondary.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
-                <Link href={item.url} className="font-medium flex items-center gap-2">
-                  <item.icon className="size-4" />
-                  {item.title}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {data.navSecondary.map((item) => {
+            const isActive = currentTab === item.url.split('?tab=')[1];
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild isActive={isActive}>
+                  <Link
+                    href={item.url}
+                    className="flex items-center gap-2 font-medium"
+                  >
+                    <item.icon className="size-4" />
+                    {item.title}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
         <NavUser user={data.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

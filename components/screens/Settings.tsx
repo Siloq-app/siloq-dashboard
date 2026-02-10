@@ -1,247 +1,332 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Check, Copy, Plus, Trash2, User, Key, Users, Shield, Bell, Mail, UserCircle, Link as LinkIcon, Eye, EyeOff } from 'lucide-react'
-import { AutomationMode } from '@/app/dashboard/Dashboard'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { useState } from 'react';
+import {
+  Check,
+  Copy,
+  Plus,
+  Trash2,
+  User,
+  Key,
+  Users,
+  Shield,
+  Bell,
+  Mail,
+  UserCircle,
+  Link as LinkIcon,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
+import { AutomationMode } from '@/app/dashboard/types';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface Props {
-  automationMode?: AutomationMode
-  onAutomationChange?: (mode: AutomationMode) => void
-  onNavigateToSites?: () => void
+  automationMode?: AutomationMode;
+  onAutomationChange?: (mode: AutomationMode) => void;
+  onNavigateToSites?: () => void;
 }
 
 const automationModes = [
-  { 
-    id: 'manual' as const, 
-    label: 'Manual', 
-    desc: 'All changes require explicit approval before execution' 
+  {
+    id: 'manual' as const,
+    label: 'Manual',
+    desc: 'All changes require explicit approval before execution',
+    color: 'slate' as const,
   },
-  { 
-    id: 'semi' as const, 
-    label: 'Semi-Auto', 
-    desc: 'Safe changes auto-execute immediately. Destructive changes require explicit approval.' 
+  {
+    id: 'semi' as const,
+    label: 'Semi-Auto',
+    desc: 'Safe changes auto-execute immediately. Destructive changes require explicit approval.',
+    color: 'amber' as const,
   },
-  { 
-    id: 'full' as const, 
-    label: 'Full-Auto', 
-    desc: 'All changes auto-execute immediately. 48-hour rollback window on destructive changes. Daily digest email notification.' 
+  {
+    id: 'full' as const,
+    label: 'Full-Auto',
+    desc: 'All changes auto-execute immediately. 48-hour rollback window on destructive changes. Daily digest email notification.',
+    color: 'emerald' as const,
   },
-]
+];
 
-type TabId = 'profile' | 'api-keys' | 'team' | 'agent-permissions' | 'notifications'
+type TabId =
+  | 'profile'
+  | 'api-keys'
+  | 'team'
+  | 'agent-permissions'
+  | 'notifications';
 
 const tabs = [
   { id: 'profile' as const, label: 'Profile', icon: User },
   { id: 'api-keys' as const, label: 'API Keys', icon: Key },
   { id: 'team' as const, label: 'Team', icon: Users },
-  { id: 'agent-permissions' as const, label: 'Agent Permissions', icon: Shield },
+  {
+    id: 'agent-permissions' as const,
+    label: 'Agent Permissions',
+    icon: Shield,
+  },
   { id: 'notifications' as const, label: 'Notifications', icon: Bell },
-]
+];
 
-export default function Settings({ automationMode, onAutomationChange, onNavigateToSites }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>('profile')
-  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+export default function Settings({
+  automationMode,
+  onAutomationChange,
+  onNavigateToSites,
+}: Props) {
+  const [activeTab, setActiveTab] = useState<TabId>('profile');
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const [apiKeys, setApiKeys] = useState([
-    { id: '1', name: 'Production Site', key: 'prod_key_placeholder_abc123xyz', created: 'Jan 30, 2026', lastUsed: 'Feb 6, 2026' },
-    { id: '2', name: 'Staging Site', key: 'dev_key_placeholder_def456uvw', created: 'Jan 15, 2026', lastUsed: 'Feb 5, 2026' },
-  ])
-  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set())
-  const [newKeyName, setNewKeyName] = useState('')
-  const [isGenerating, setIsGenerating] = useState(false)
+    {
+      id: '1',
+      name: 'Production Site',
+      key: 'prod_key_placeholder_abc123xyz',
+      created: 'Jan 30, 2026',
+      lastUsed: 'Feb 6, 2026',
+    },
+    {
+      id: '2',
+      name: 'Staging Site',
+      key: 'dev_key_placeholder_def456uvw',
+      created: 'Jan 15, 2026',
+      lastUsed: 'Feb 5, 2026',
+    },
+  ]);
+  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
+  const [newKeyName, setNewKeyName] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const toggleKeyVisibility = (id: string) => {
-    const newVisible = new Set(visibleKeys)
+    const newVisible = new Set(visibleKeys);
     if (newVisible.has(id)) {
-      newVisible.delete(id)
+      newVisible.delete(id);
     } else {
-      newVisible.add(id)
+      newVisible.add(id);
     }
-    setVisibleKeys(newVisible)
-  }
+    setVisibleKeys(newVisible);
+  };
 
   const handleDeleteKey = (id: string) => {
-    setApiKeys(apiKeys.filter(k => k.id !== id))
-  }
+    setApiKeys(apiKeys.filter((k) => k.id !== id));
+  };
 
   const handleGenerateKey = async () => {
-    if (!newKeyName.trim()) return
-    
-    setIsGenerating(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
+    if (!newKeyName.trim()) return;
+
+    setIsGenerating(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     const newKey = {
       id: Date.now().toString(),
       name: newKeyName,
       key: 'sk_live_' + Math.random().toString(36).substring(2, 20),
-      created: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      lastUsed: 'Never'
-    }
-    
-    setApiKeys([newKey, ...apiKeys])
-    setNewKeyName('')
-    setIsGenerating(false)
-  }
+      created: new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      lastUsed: 'Never',
+    };
+
+    setApiKeys([newKey, ...apiKeys]);
+    setNewKeyName('');
+    setIsGenerating(false);
+  };
 
   const maskKey = (key: string) => {
-    return key.substring(0, 10) + '•'.repeat(key.length - 10)
-  }
+    return key.substring(0, 10) + '•'.repeat(key.length - 10);
+  };
 
   const handleCopy = (key: string) => {
-    navigator.clipboard.writeText(key)
-    setCopiedKey(key)
-    setTimeout(() => setCopiedKey(null), 2000)
-  }
+    navigator.clipboard.writeText(key);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
 
   const [profile, setProfile] = useState({
     name: 'John Doe',
     email: 'john.doe@company.com',
-  })
-  const [errors, setErrors] = useState<{name?: string; email?: string}>({})
-  const [isSaving, setIsSaving] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
+  });
+  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const validateProfile = () => {
-    const newErrors: {name?: string; email?: string} = {}
-    
+    const newErrors: { name?: string; email?: string } = {};
+
     if (!profile.name.trim()) {
-      newErrors.name = 'Name is required'
+      newErrors.name = 'Name is required';
     }
-    
+
     if (!profile.email.trim()) {
-      newErrors.email = 'Email is required'
+      newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) {
-      newErrors.email = 'Please enter a valid email address'
+      newErrors.email = 'Please enter a valid email address';
     }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSaveProfile = async () => {
-    if (!validateProfile()) return
-    
-    setIsSaving(true)
-    setSaveSuccess(false)
-    
+    if (!validateProfile()) return;
+
+    setIsSaving(true);
+    setSaveSuccess(false);
+
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    setIsSaving(false)
-    setSaveSuccess(true)
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    setIsSaving(false);
+    setSaveSuccess(true);
+
     // Hide success message after 3 seconds
-    setTimeout(() => setSaveSuccess(false), 3000)
-  }
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
 
   const renderProfileTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-foreground mb-1">Profile Settings</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Update your personal information</p>
+        <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          Profile Settings
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Update your personal information
+        </p>
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Name <span className="text-red-500">*</span>
-          </label>
-          <input 
-            type="text" 
-            value={profile.name}
-            onChange={(e) => {
-              setProfile({...profile, name: e.target.value})
-              if (errors.name) setErrors({...errors, name: undefined})
-            }}
-            placeholder="Your name"
-            className={`w-full px-4 py-2.5 rounded-lg border bg-white text-foreground placeholder:text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-colors ${
-              errors.name ? 'border-red-500' : 'border-border'
-            }`}
-          />
-          {errors.name && (
-            <p className="text-sm text-red-500">{errors.name}</p>
-          )}
-        </div>
+        <div className="FieldGroup space-y-4">
+          <div className="Field space-y-2">
+            <label
+              htmlFor="name"
+              className="FieldLabel text-sm font-medium text-slate-900 dark:text-slate-100"
+            >
+              Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={profile.name}
+              onChange={(e) => {
+                setProfile({ ...profile, name: e.target.value });
+                if (errors.name) setErrors({ ...errors, name: undefined });
+              }}
+              placeholder="Your name"
+              className={`border-input file:text-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 ${
+                errors.name ? 'border-red-500' : ''
+              }`}
+            />
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name}</p>
+            )}
+          </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Email <span className="text-red-500">*</span>
-          </label>
-          <input 
-            type="email" 
-            value={profile.email}
-            onChange={(e) => {
-              setProfile({...profile, email: e.target.value})
-              if (errors.email) setErrors({...errors, email: undefined})
-            }}
-            placeholder="your@email.com"
-            className={`w-full px-4 py-2.5 rounded-lg border bg-white text-foreground placeholder:text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-colors ${
-              errors.email ? 'border-red-500' : 'border-border'
-            }`}
-          />
-          {errors.email && (
-            <p className="text-sm text-red-500">{errors.email}</p>
-          )}
+          <div className="Field space-y-2">
+            <label
+              htmlFor="email"
+              className="FieldLabel text-sm font-medium text-slate-900 dark:text-slate-100"
+            >
+              Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={profile.email}
+              onChange={(e) => {
+                setProfile({ ...profile, email: e.target.value });
+                if (errors.email) setErrors({ ...errors, email: undefined });
+              }}
+              placeholder="your@email.com"
+              className={`border-input file:text-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 ${
+                errors.email ? 'border-red-500' : ''
+              }`}
+            />
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email}</p>
+            )}
+          </div>
         </div>
       </div>
 
       {saveSuccess && (
-        <div className="flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-          <Check size={16} className="text-emerald-500" />
-          <span className="text-sm text-emerald-500">Profile saved successfully!</span>
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-900/20">
+          <Check size={16} className="text-emerald-600 dark:text-emerald-400" />
+          <span className="text-sm text-emerald-700 dark:text-emerald-400">
+            Profile saved successfully!
+          </span>
         </div>
       )}
 
-      <Button 
+      <button
         onClick={handleSaveProfile}
         disabled={isSaving}
-        className="flex items-center gap-2"
+        className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
       >
         {isSaving ? (
           <>
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
             Saving...
           </>
         ) : (
           <>
-            <Check size={16} />
             Save Changes
+            <Check size={16} />
           </>
         )}
-      </Button>
+      </button>
     </div>
-  )
+  );
 
   const renderApiKeysTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-foreground mb-1">API Keys for WordPress</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-          Manage sites and generate API keys per site (like GitHub tokens). Use the Siloq plugin with each key.
+        <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          API Keys for WordPress
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Manage sites and generate API keys per site (like GitHub tokens). Use
+          the Siloq plugin with each key.
         </p>
       </div>
 
-      <Card className="p-6 bg-white">
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-4">
-          Add WordPress sites in <strong>Sites</strong>, then create a token for each site. Paste the token and API URL in your WordPress plugin (Settings → Siloq).
-        </p>
-        {onNavigateToSites ? (
-          <Button onClick={onNavigateToSites} className="flex items-center gap-2">
-            <LinkIcon size={16} />
-            Manage sites & API keys
-          </Button>
-        ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Go to <strong>Sites</strong> in the sidebar to manage sites and API keys.</p>
-        )}
+      <Card className="border-indigo-200 bg-indigo-50 p-5 dark:border-indigo-800 dark:bg-indigo-950/20">
+        <div className="flex flex-col gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+            <Key className="text-indigo-600 dark:text-indigo-400" size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="mb-4 text-sm text-indigo-900 dark:text-indigo-300">
+              Add WordPress sites in <strong>Sites</strong>, then create a token
+              for each site. Paste the token and API URL in your WordPress
+              plugin (Settings → Siloq).
+            </p>
+            {onNavigateToSites ? (
+              <button
+                onClick={onNavigateToSites}
+                className="focus-visible:ring-ring inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white shadow transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              >
+                <LinkIcon size={16} />
+                <span className="truncate">Manage sites & API keys</span>
+              </button>
+            ) : (
+              <p className="text-sm text-indigo-700 dark:text-indigo-400">
+                Go to <strong>Sites</strong> in the sidebar to manage sites and
+                API keys.
+              </p>
+            )}
+          </div>
+        </div>
       </Card>
 
       {/* How to use */}
-      <div className="pt-4 border-t border-border">
-        <h4 className="text-sm font-semibold text-foreground mb-3">How to use:</h4>
-        <ol className="text-sm text-gray-600 dark:text-gray-400 font-medium space-y-2 list-decimal list-inside">
-          <li>Go to <strong>Sites</strong> and add your WordPress site</li>
+      <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
+        <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          How to use:
+        </h4>
+        <ol className="list-inside list-decimal space-y-2 text-sm text-slate-600 dark:text-slate-400">
+          <li>
+            Go to <strong>Sites</strong> and add your WordPress site
+          </li>
           <li>Generate a token for that site and copy it</li>
           <li>Install the Siloq WordPress plugin on your site</li>
           <li>Go to WordPress Admin &gt; Settings &gt; Siloq</li>
@@ -250,123 +335,281 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
         </ol>
       </div>
     </div>
-  )
+  );
 
   const renderTeamTab = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h3 className="text-lg font-semibold">Team Members</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Manage team access and permissions</p>
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            Team Members
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Manage team access and permissions
+          </p>
         </div>
-        <Button><Plus size={16} /> Invite Member</Button>
+        <button className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
+          Invite Member <Plus size={16} />
+        </button>
       </div>
 
       <div className="space-y-3">
         {[
-          { name: 'John Doe', email: 'john.doe@company.com', role: 'Administrator', status: 'active', avatar: 'JD' },
-          { name: 'Sarah Smith', email: 'sarah.smith@company.com', role: 'Editor', status: 'active', avatar: 'SS' },
-          { name: 'Mike Johnson', email: 'mike.j@company.com', role: 'Viewer', status: 'pending', avatar: 'MJ' },
-          { name: 'Emily Chen', email: 'emily.chen@company.com', role: 'Editor', status: 'active', avatar: 'EC' },
-        ].map((member, i) => (
-          <Card key={i} className="p-4 flex items-center justify-between bg-[#F0F1F3]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#2563eb] rounded-full flex items-center justify-center text-white font-semibold">
-                {member.avatar}
-              </div>
-              <div>
-                <div className="font-medium flex items-center gap-2">
-                  {member.name}
-                  {member.status === 'pending' && (
-                    <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">Pending</span>
-                  )}
+          {
+            name: 'John Doe',
+            email: 'john.doe@company.com',
+            role: 'Administrator',
+            status: 'active',
+            avatar: 'JD',
+            color: 'indigo',
+          },
+          {
+            name: 'Sarah Smith',
+            email: 'sarah.smith@company.com',
+            role: 'Editor',
+            status: 'active',
+            avatar: 'SS',
+            color: 'rose',
+          },
+          {
+            name: 'Mike Johnson',
+            email: 'mike.j@company.com',
+            role: 'Viewer',
+            status: 'pending',
+            avatar: 'MJ',
+            color: 'amber',
+          },
+          {
+            name: 'Emily Chen',
+            email: 'emily.chen@company.com',
+            role: 'Editor',
+            status: 'active',
+            avatar: 'EC',
+            color: 'emerald',
+          },
+        ].map((member, i) => {
+          const avatarColors: Record<string, string> = {
+            indigo: 'bg-indigo-600 dark:bg-indigo-500',
+            rose: 'bg-rose-600 dark:bg-rose-500',
+            amber: 'bg-amber-600 dark:bg-amber-500',
+            emerald: 'bg-emerald-600 dark:bg-emerald-500',
+          };
+          return (
+            <Card
+              key={i}
+              className="bg-card flex flex-col justify-between gap-3 border-slate-200 p-4 sm:flex-row sm:items-center dark:border-slate-700"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold text-white ${avatarColors[member.color]}`}
+                >
+                  {member.avatar}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{member.email}</div>
+                <div className="min-w-0">
+                  <div className="mb-1 flex items-center gap-2 text-sm font-medium leading-relaxed text-slate-900 dark:text-slate-100">
+                    {member.name}
+                    {member.status === 'pending' && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                  <div className="truncate text-sm text-slate-500 dark:text-slate-400">
+                    {member.email}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{member.role}</span>
-              <Button variant="ghost" size="sm">Edit</Button>
-            </div>
-          </Card>
-        ))}
+              <div className="flex items-center gap-3 sm:ml-auto">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  {member.role}
+                </span>
+                <button className="focus-visible:ring-ring inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                  Edit
+                </button>
+              </div>
+            </Card>
+          );
+        })}
       </div>
     </div>
-  )
+  );
 
   const renderAgentPermissionsTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold">Agent Permissions</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Configure what automated agents can and cannot do</p>
+        <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          Agent Permissions
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Configure what automated agents can and cannot do
+        </p>
       </div>
 
       <div>
-        <h4 className="text-base font-semibold mb-4">Automation Mode</h4>
+        <h4 className="mb-4 text-sm font-medium text-slate-900 dark:text-slate-100">
+          Automation Mode
+        </h4>
         <div className="space-y-3">
-          {automationModes.map((mode) => (
-            <Card
-              key={mode.id}
-              onClick={() => onAutomationChange?.(mode.id)}
-              className={`p-5 cursor-pointer transition-all ${
-                automationMode === mode.id
-                  ? 'border-[#2563eb] bg-[#2563eb]/5'
-                  : 'border-border bg-[#F0F1F3] hover:border-[#2563eb]/30'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-base font-semibold mb-1">{mode.label}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{mode.desc}</div>
-                </div>
-                {automationMode === mode.id && (
-                  <div className="w-6 h-6 bg-[#2563eb] rounded-full flex items-center justify-center">
-                    <Check size={14} className="text-white" />
+          {automationModes.map((mode) => {
+            const isSelected = automationMode === mode.id;
+            const getModeColors = (color: string, selected: boolean) => {
+              const colors: Record<
+                string,
+                { border: string; bg: string; label: string; check: string }
+              > = {
+                slate: {
+                  border: selected
+                    ? 'border-slate-600 dark:border-slate-400'
+                    : 'border-slate-200 dark:border-slate-700',
+                  bg: selected ? 'bg-slate-50 dark:bg-slate-800/50' : 'bg-card',
+                  label: 'text-slate-700 dark:text-slate-300',
+                  check: 'bg-slate-600 dark:bg-slate-400',
+                },
+                amber: {
+                  border: selected
+                    ? 'border-amber-500 dark:border-amber-400'
+                    : 'border-slate-200 dark:border-slate-700',
+                  bg: selected ? 'bg-amber-50 dark:bg-amber-950/30' : 'bg-card',
+                  label: 'text-amber-700 dark:text-amber-400',
+                  check: 'bg-amber-500 dark:bg-amber-400',
+                },
+                emerald: {
+                  border: selected
+                    ? 'border-emerald-500 dark:border-emerald-400'
+                    : 'border-slate-200 dark:border-slate-700',
+                  bg: selected
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30'
+                    : 'bg-card',
+                  label: 'text-emerald-700 dark:text-emerald-400',
+                  check: 'bg-emerald-500 dark:bg-emerald-400',
+                },
+              };
+              return colors[color] || colors.slate;
+            };
+            const modeColors = getModeColors(mode.color, isSelected);
+            return (
+              <Card
+                key={mode.id}
+                onClick={() => onAutomationChange?.(mode.id)}
+                className={`cursor-pointer border p-5 transition-all ${modeColors.border} ${modeColors.bg} hover:border-slate-300 dark:hover:border-slate-600`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                        mode.color === 'slate'
+                          ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                          : mode.color === 'amber'
+                            ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                            : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      }`}
+                    >
+                      {mode.color === 'slate' && <Shield size={16} />}
+                      {mode.color === 'amber' && <Bell size={16} />}
+                      {mode.color === 'emerald' && <Check size={16} />}
+                    </div>
+                    <div>
+                      <div
+                        className={`truncate text-sm font-medium ${isSelected ? modeColors.label : 'text-slate-900 dark:text-slate-100'}`}
+                      >
+                        {mode.label}
+                      </div>
+                      <div className="text-sm text-slate-600 dark:text-slate-400">
+                        {mode.desc}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            </Card>
-          ))}
+                  {isSelected && (
+                    <div
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${modeColors.check}`}
+                    >
+                      <Check size={14} className="text-white" />
+                    </div>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
       <div>
-        <h4 className="text-base font-semibold mb-4">Fine-grained Permissions</h4>
+        <h4 className="mb-4 text-sm font-medium text-slate-900 dark:text-slate-100">
+          Fine-grained Permissions
+        </h4>
         <div className="space-y-3">
           {[
-            { label: 'Allow content generation', desc: 'Agents can create new content blocks', enabled: true },
-            { label: 'Allow internal linking', desc: 'Agents can add internal links between pages', enabled: true },
-            { label: 'Allow meta tag updates', desc: 'Agents can modify title and description tags', enabled: true },
-            { label: 'Allow URL redirects', desc: 'Agents can create 301 redirects', enabled: false },
-            { label: 'Allow page deletion', desc: 'Agents can delete or archive pages', enabled: false },
-            { label: 'Allow schema markup changes', desc: 'Agents can modify structured data', enabled: true },
+            {
+              label: 'Allow content generation',
+              desc: 'Agents can create new content blocks',
+              enabled: true,
+            },
+            {
+              label: 'Allow internal linking',
+              desc: 'Agents can add internal links between pages',
+              enabled: true,
+            },
+            {
+              label: 'Allow meta tag updates',
+              desc: 'Agents can modify title and description tags',
+              enabled: true,
+            },
+            {
+              label: 'Allow URL redirects',
+              desc: 'Agents can create 301 redirects',
+              enabled: false,
+            },
+            {
+              label: 'Allow page deletion',
+              desc: 'Agents can delete or archive pages',
+              enabled: false,
+            },
+            {
+              label: 'Allow schema markup changes',
+              desc: 'Agents can modify structured data',
+              enabled: true,
+            },
           ].map((perm, i) => (
             <div
               key={i}
-              className="flex items-center justify-between p-4 bg-[#F0F1F3] rounded-lg border border-border"
+              className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
             >
               <div>
-                <div className="font-medium">{perm.label}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{perm.desc}</div>
+                <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {perm.label}
+                </div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  {perm.desc}
+                </div>
               </div>
-              <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${
-                perm.enabled ? 'bg-[#2563eb]' : 'bg-slate-300'
-              }`}>
-                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                  perm.enabled ? 'translate-x-4' : ''
-                }`} />
+              <div
+                className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
+                  perm.enabled
+                    ? 'bg-emerald-500'
+                    : 'bg-slate-300 dark:bg-slate-600'
+                }`}
+              >
+                <div
+                  className={`h-4 w-4 rounded-full bg-white transition-transform ${
+                    perm.enabled ? 'translate-x-4' : ''
+                  }`}
+                />
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <Card className="p-5 bg-[#F0F1F3] border-border">
-        <h4 className="text-sm font-semibold mb-4">Change Classification Reference</h4>
-        <div className="grid grid-cols-2 gap-6">
+      <Card className="bg-card border-slate-200 p-5 dark:border-slate-700">
+        <h4 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          Change Classification Reference
+        </h4>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
-            <div className="text-xs text-emerald-600 font-semibold mb-2">✓ SAFE (can auto-approve)</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium space-y-1">
+            <div className="mb-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              ✓ SAFE (can auto-approve)
+            </div>
+            <div className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
               <div>• Internal link additions</div>
               <div>• Entity assignments</div>
               <div>• New content generation</div>
@@ -375,8 +618,10 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
             </div>
           </div>
           <div>
-            <div className="text-xs text-red-600 font-semibold mb-2">⚠ DESTRUCTIVE (approval required)</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium space-y-1">
+            <div className="mb-2 text-xs font-semibold text-red-600 dark:text-red-400">
+              ⚠ DESTRUCTIVE (approval required)
+            </div>
+            <div className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
               <div>• URL redirects (301s)</div>
               <div>• Page deletions/archival</div>
               <div>• Content merges</div>
@@ -387,116 +632,186 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
         </div>
       </Card>
     </div>
-  )
+  );
 
   const renderNotificationsTab = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold">Notification Preferences</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Choose how and when you want to be notified</p>
+        <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          Notification Preferences
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Choose how and when you want to be notified
+        </p>
       </div>
 
       <div className="space-y-4">
-        <h4 className="text-base font-semibold">Email Notifications</h4>
+        <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+          Email Notifications
+        </h4>
         {[
-          { label: 'Daily digest email', desc: 'Summary of all changes made by agents (Full-Auto mode)', checked: true },
-          { label: 'Immediate alerts for BLOCK errors', desc: 'Critical issues that require immediate attention', checked: true },
-          { label: 'Weekly governance report', desc: 'Comprehensive report on site health and recommendations', checked: false },
-          { label: 'Team member activity', desc: 'Notifications when team members make changes', checked: false },
-          { label: 'New approval requests', desc: 'Alert when destructive changes need approval', checked: true },
+          {
+            label: 'Daily digest email',
+            desc: 'Summary of all changes made by agents (Full-Auto mode)',
+            checked: true,
+          },
+          {
+            label: 'Immediate alerts for BLOCK errors',
+            desc: 'Critical issues that require immediate attention',
+            checked: true,
+          },
+          {
+            label: 'Weekly governance report',
+            desc: 'Comprehensive report on site health and recommendations',
+            checked: false,
+          },
+          {
+            label: 'Team member activity',
+            desc: 'Notifications when team members make changes',
+            checked: false,
+          },
+          {
+            label: 'New approval requests',
+            desc: 'Alert when destructive changes need approval',
+            checked: true,
+          },
         ].map((pref, i) => (
           <div
             key={i}
-            className="flex items-center justify-between p-4 bg-[#F0F1F3] rounded-lg border border-border"
+            className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
           >
             <div>
-              <div className="font-medium">{pref.label}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{pref.desc}</div>
+              <div className="mb-1 truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                {pref.label}
+              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                {pref.desc}
+              </div>
             </div>
-            <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${
-              pref.checked ? 'bg-[#2563eb]' : 'bg-slate-300'
-            }`}>
-              <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                pref.checked ? 'translate-x-4' : ''
-              }`} />
+            <div
+              className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
+                pref.checked
+                  ? 'bg-emerald-500'
+                  : 'bg-slate-300 dark:bg-slate-600'
+              }`}
+            >
+              <div
+                className={`h-4 w-4 rounded-full bg-white transition-transform ${
+                  pref.checked ? 'translate-x-4' : ''
+                }`}
+              />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="space-y-4 pt-4 border-t border-border">
-        <h4 className="text-base font-semibold">In-App Notifications</h4>
+      <div className="space-y-4 border-t border-slate-200 pt-4 dark:border-slate-700">
+        <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+          In-App Notifications
+        </h4>
         {[
-          { label: 'Show toast notifications', desc: 'Display brief popup notifications for important events', checked: true },
-          { label: 'Play sound alerts', desc: 'Audio notification for critical alerts', checked: false },
-          { label: 'Browser push notifications', desc: 'Allow notifications when app is not in focus', checked: false },
+          {
+            label: 'Show toast notifications',
+            desc: 'Display brief popup notifications for important events',
+            checked: true,
+          },
+          {
+            label: 'Play sound alerts',
+            desc: 'Audio notification for critical alerts',
+            checked: false,
+          },
+          {
+            label: 'Browser push notifications',
+            desc: 'Allow notifications when app is not in focus',
+            checked: false,
+          },
         ].map((pref, i) => (
           <div
             key={i}
-            className="flex items-center justify-between p-4 bg-[#F0F1F3] rounded-lg border border-border"
+            className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
           >
             <div>
-              <div className="font-medium">{pref.label}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{pref.desc}</div>
+              <div className="mb-1 truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                {pref.label}
+              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                {pref.desc}
+              </div>
             </div>
-            <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${
-              pref.checked ? 'bg-[#2563eb]' : 'bg-slate-300'
-            }`}>
-              <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                pref.checked ? 'translate-x-4' : ''
-              }`} />
+            <div
+              className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
+                pref.checked
+                  ? 'bg-emerald-500'
+                  : 'bg-slate-300 dark:bg-slate-600'
+              }`}
+            >
+              <div
+                className={`h-4 w-4 rounded-full bg-white transition-transform ${
+                  pref.checked ? 'translate-x-4' : ''
+                }`}
+              />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="flex items-center gap-3 p-4 bg-[#2563eb]/5 rounded-lg border border-[#2563eb]/20">
-        <Mail className="text-[#2563eb]" size={20} />
-        <div className="text-sm">
-          <span className="font-medium">Primary email:</span> john.doe@company.com
+      <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="flex items-center gap-3">
+          <Mail
+            className="shrink-0 text-slate-600 dark:text-slate-400"
+            size={20}
+          />
+          <div className="text-sm text-slate-700 dark:text-slate-300">
+            <span className="font-medium">Primary email:</span>{' '}
+            john.doe@company.com
+          </div>
         </div>
-        <Button variant="ghost" size="sm" className="ml-auto">Change</Button>
+        <button className="focus-visible:ring-ring inline-flex h-9 w-fit items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 md:ml-auto dark:text-slate-300 dark:hover:bg-slate-700">
+          Change
+        </button>
       </div>
     </div>
-  )
+  );
 
   const tabContent = {
-    'profile': renderProfileTab,
+    profile: renderProfileTab,
     'api-keys': renderApiKeysTab,
-    'team': renderTeamTab,
+    team: renderTeamTab,
     'agent-permissions': renderAgentPermissionsTab,
-    'notifications': renderNotificationsTab,
-  }
+    notifications: renderNotificationsTab,
+  };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold">Settings</h2>
+      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+        Settings
+      </h3>
 
-      <div className="border-b border-border">
-        <div className="flex gap-1">
+      <div className="border-border border-b">
+        <div className="scrollbar-hide flex gap-1 overflow-x-auto lg:overflow-visible">
           {tabs.map((tab) => {
-            const Icon = tab.icon
+            const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                className={`flex flex-1 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors lg:flex-none lg:justify-start lg:px-4 ${
                   activeTab === tab.id
-                    ? 'border-[#2563eb] text-[#2563eb]'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-foreground'
+                    ? 'border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
                 }`}
               >
                 <Icon size={16} />
-                {tab.label}
+                <span className="hidden lg:inline">{tab.label}</span>
               </button>
-            )
+            );
           })}
         </div>
       </div>
 
-      <Card className="p-6 bg-[#F0F1F3] border-border">
+      <Card className="bg-card border-border p-4 sm:p-6">
         {tabContent[activeTab]()}
       </Card>
     </div>
-  )
+  );
 }

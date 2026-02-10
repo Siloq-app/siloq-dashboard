@@ -13,7 +13,7 @@ module.exports = {
           darker: '#020617',
           card: 'rgba(30, 41, 59, 0.8)',
           border: 'rgba(148, 163, 184, 0.1)',
-        }
+        },
       },
       fontFamily: {
         sans: ['DM Sans', 'system-ui', 'sans-serif'],
@@ -21,8 +21,8 @@ module.exports = {
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      }
+      },
     },
   },
   plugins: [],
-}
+};
