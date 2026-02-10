@@ -4,17 +4,19 @@ import { useState, useEffect, useMemo } from 'react'
 import { 
   Home, Target, FileText, AlertTriangle, Link2, RefreshCw, 
   ChevronDown, ChevronRight, ExternalLink, ArrowUp, ArrowLeftRight,
-  CheckCircle, XCircle, Loader2
+  CheckCircle, XCircle, Loader2, Plus, X, GripVertical, Unlink
 } from 'lucide-react'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { 
   dashboardService, 
+  pagesService,
   InternalLinksAnalysis, 
   LinkStructure, 
   Silo, 
   SiloPage,
-  AnchorConflict 
+  AnchorConflict,
+  Page
 } from '@/lib/services/api'
 
 interface Props {
@@ -23,28 +25,39 @@ interface Props {
 
 export default function InternalLinksScreen({ siteId }: Props) {
   const [analysis, setAnalysis] = useState<InternalLinksAnalysis | null>(null)
+  const [allPages, setAllPages] = useState<Page[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
+  const [isAssigning, setIsAssigning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedSilos, setExpandedSilos] = useState<Set<number>>(new Set())
-  const [activeTab, setActiveTab] = useState<'structure' | 'issues'>('structure')
+  const [activeTab, setActiveTab] = useState<'structure' | 'issues' | 'assign'>('structure')
+  
+  // Assignment modal state
+  const [assignModalOpen, setAssignModalOpen] = useState(false)
+  const [selectedPage, setSelectedPage] = useState<Page | null>(null)
+  const [selectedTargetId, setSelectedTargetId] = useState<number | null>(null)
 
   useEffect(() => {
-    loadAnalysis()
+    loadData()
   }, [siteId])
 
-  const loadAnalysis = async () => {
+  const loadData = async () => {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await dashboardService.getInternalLinks(siteId)
-      setAnalysis(data)
+      const [analysisData, pagesData] = await Promise.all([
+        dashboardService.getInternalLinks(siteId),
+        pagesService.list(siteId)
+      ])
+      setAnalysis(analysisData)
+      setAllPages(pagesData)
       // Auto-expand first silo
-      if (data.structure.silos.length > 0) {
-        setExpandedSilos(new Set([data.structure.silos[0].target.id]))
+      if (analysisData.structure.silos.length > 0) {
+        setExpandedSilos(new Set([analysisData.structure.silos[0].target.id]))
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load internal links')
+      setError(e instanceof Error ? e.message : 'Failed to load data')
     } finally {
       setIsLoading(false)
     }
@@ -54,7 +67,7 @@ export default function InternalLinksScreen({ siteId }: Props) {
     setIsSyncing(true)
     try {
       await dashboardService.syncLinks(siteId)
-      await loadAnalysis()
+      await loadData()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to sync links')
     } finally {
@@ -72,6 +85,65 @@ export default function InternalLinksScreen({ siteId }: Props) {
       }
       return next
     })
+  }
+
+  // Get unassigned pages (not money pages and not supporting any silo)
+  const unassignedPages = useMemo(() => {
+    if (!analysis || !allPages.length) return []
+    
+    // Get IDs of all pages in silos
+    const assignedIds = new Set<number>()
+    analysis.structure.silos.forEach(silo => {
+      assignedIds.add(silo.target.id)
+      silo.supporting_pages.forEach(sp => assignedIds.add(sp.id))
+    })
+    if (analysis.structure.homepage) {
+      assignedIds.add(analysis.structure.homepage.id)
+    }
+    
+    // Return pages not in any silo and not money pages
+    return allPages.filter(p => !assignedIds.has(p.id) && !p.is_money_page)
+  }, [analysis, allPages])
+
+  // Get money pages (targets) for assignment dropdown
+  const targetPages = useMemo(() => {
+    if (!analysis) return []
+    return analysis.structure.silos.map(s => s.target)
+  }, [analysis])
+
+  const handleAssignPage = async () => {
+    if (!selectedPage || !selectedTargetId) return
+    
+    setIsAssigning(true)
+    try {
+      await dashboardService.assignSilo(siteId, selectedPage.id, selectedTargetId)
+      await loadData()
+      setAssignModalOpen(false)
+      setSelectedPage(null)
+      setSelectedTargetId(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to assign page')
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
+  const handleUnassignPage = async (pageId: number) => {
+    setIsAssigning(true)
+    try {
+      await dashboardService.assignSilo(siteId, pageId, null)
+      await loadData()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to unassign page')
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
+  const openAssignModal = (page: Page) => {
+    setSelectedPage(page)
+    setSelectedTargetId(targetPages.length > 0 ? targetPages[0].id : null)
+    setAssignModalOpen(true)
   }
 
   const totalIssues = analysis?.total_issues || 0
@@ -94,7 +166,7 @@ export default function InternalLinksScreen({ siteId }: Props) {
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <p className="text-red-400 mb-4">{error}</p>
-          <Button onClick={loadAnalysis}>Try Again</Button>
+          <Button onClick={loadData}>Try Again</Button>
         </div>
       </div>
     )
@@ -109,7 +181,7 @@ export default function InternalLinksScreen({ siteId }: Props) {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Internal Links</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Visualize your site architecture and link flow
+            Visualize and manage your site architecture
           </p>
         </div>
         <Button 
@@ -123,7 +195,7 @@ export default function InternalLinksScreen({ siteId }: Props) {
       </div>
 
       {/* Health Score Card */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="p-4 col-span-1">
           <div className="text-center">
             <div className={`text-4xl font-bold ${
@@ -132,7 +204,7 @@ export default function InternalLinksScreen({ siteId }: Props) {
             }`}>
               {healthScore}
             </div>
-            <div className="text-sm text-muted-foreground mt-1">Link Health Score</div>
+            <div className="text-sm text-muted-foreground mt-1">Link Health</div>
           </div>
         </Card>
         
@@ -143,7 +215,7 @@ export default function InternalLinksScreen({ siteId }: Props) {
             </div>
             <div>
               <div className="text-2xl font-bold">{analysis.structure.total_target_pages}</div>
-              <div className="text-sm text-muted-foreground">Target Pages</div>
+              <div className="text-sm text-muted-foreground">Targets</div>
             </div>
           </div>
         </Card>
@@ -155,7 +227,23 @@ export default function InternalLinksScreen({ siteId }: Props) {
             </div>
             <div>
               <div className="text-2xl font-bold">{analysis.structure.total_supporting_pages}</div>
-              <div className="text-sm text-muted-foreground">Supporting Pages</div>
+              <div className="text-sm text-muted-foreground">Supporting</div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              unassignedPages.length > 0 ? 'bg-amber-500/10' : 'bg-green-500/10'
+            }`}>
+              <FileText className={`w-5 h-5 ${
+                unassignedPages.length > 0 ? 'text-amber-500' : 'text-green-500'
+              }`} />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{unassignedPages.length}</div>
+              <div className="text-sm text-muted-foreground">Unassigned</div>
             </div>
           </div>
         </Card>
@@ -171,7 +259,7 @@ export default function InternalLinksScreen({ siteId }: Props) {
             </div>
             <div>
               <div className="text-2xl font-bold">{totalIssues}</div>
-              <div className="text-sm text-muted-foreground">Link Issues</div>
+              <div className="text-sm text-muted-foreground">Issues</div>
             </div>
           </div>
         </Card>
@@ -190,6 +278,20 @@ export default function InternalLinksScreen({ siteId }: Props) {
           Silo Structure
         </button>
         <button
+          onClick={() => setActiveTab('assign')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'assign' 
+              ? 'border-primary text-primary' 
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Assign Pages {unassignedPages.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 text-xs bg-amber-500/20 text-amber-500 rounded">
+              {unassignedPages.length}
+            </span>
+          )}
+        </button>
+        <button
           onClick={() => setActiveTab('issues')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'issues' 
@@ -197,7 +299,11 @@ export default function InternalLinksScreen({ siteId }: Props) {
               : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
-          Issues ({totalIssues})
+          Issues {totalIssues > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 text-xs bg-red-500/20 text-red-500 rounded">
+              {totalIssues}
+            </span>
+          )}
         </button>
       </div>
 
@@ -207,10 +313,214 @@ export default function InternalLinksScreen({ siteId }: Props) {
           structure={analysis.structure} 
           expandedSilos={expandedSilos}
           onToggleSilo={toggleSilo}
+          onUnassignPage={handleUnassignPage}
+          isAssigning={isAssigning}
+        />
+      ) : activeTab === 'assign' ? (
+        <AssignPagesView
+          unassignedPages={unassignedPages}
+          targetPages={targetPages}
+          onAssign={openAssignModal}
         />
       ) : (
         <IssuesView analysis={analysis} />
       )}
+
+      {/* Assignment Modal */}
+      {assignModalOpen && selectedPage && (
+        <AssignmentModal
+          page={selectedPage}
+          targetPages={targetPages}
+          selectedTargetId={selectedTargetId}
+          onSelectTarget={setSelectedTargetId}
+          onAssign={handleAssignPage}
+          onClose={() => {
+            setAssignModalOpen(false)
+            setSelectedPage(null)
+          }}
+          isAssigning={isAssigning}
+        />
+      )}
+    </div>
+  )
+}
+
+// Assignment Modal Component
+function AssignmentModal({
+  page,
+  targetPages,
+  selectedTargetId,
+  onSelectTarget,
+  onAssign,
+  onClose,
+  isAssigning
+}: {
+  page: Page
+  targetPages: SiloPage[]
+  selectedTargetId: number | null
+  onSelectTarget: (id: number) => void
+  onAssign: () => void
+  onClose: () => void
+  isAssigning: boolean
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+      <Card className="w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Assign to Silo</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {/* Page being assigned */}
+          <div>
+            <div className="text-sm text-muted-foreground mb-1">Page</div>
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="font-medium truncate">{page.title}</div>
+              <div className="text-xs text-muted-foreground truncate">{page.url}</div>
+            </div>
+          </div>
+
+          {/* Target selection */}
+          <div>
+            <div className="text-sm text-muted-foreground mb-2">Assign to Target Page</div>
+            {targetPages.length === 0 ? (
+              <div className="p-4 border-2 border-dashed rounded-lg text-center text-muted-foreground">
+                No target pages available. Mark pages as money pages first.
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {targetPages.map(target => (
+                  <button
+                    key={target.id}
+                    onClick={() => onSelectTarget(target.id)}
+                    className={`w-full p-3 rounded-lg border text-left transition-colors ${
+                      selectedTargetId === target.id
+                        ? 'border-amber-500 bg-amber-500/10'
+                        : 'border-border hover:border-muted-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded flex items-center justify-center ${
+                        selectedTargetId === target.id ? 'bg-amber-500' : 'bg-amber-500/20'
+                      }`}>
+                        <Target className={`w-4 h-4 ${
+                          selectedTargetId === target.id ? 'text-white' : 'text-amber-500'
+                        }`} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{target.title}</div>
+                        <div className="text-xs text-muted-foreground truncate">{target.url}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button 
+              onClick={onAssign} 
+              disabled={!selectedTargetId || isAssigning}
+              className="flex-1"
+            >
+              {isAssigning ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Assigning...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Assign to Silo
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+// Assign Pages View
+function AssignPagesView({
+  unassignedPages,
+  targetPages,
+  onAssign
+}: {
+  unassignedPages: Page[]
+  targetPages: SiloPage[]
+  onAssign: (page: Page) => void
+}) {
+  if (unassignedPages.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium mb-2">All Pages Assigned</h3>
+        <p className="text-muted-foreground">
+          All your pages are either target pages or assigned to a silo.
+        </p>
+      </Card>
+    )
+  }
+
+  if (targetPages.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <Target className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium mb-2">No Target Pages</h3>
+        <p className="text-muted-foreground mb-4">
+          Mark some pages as money pages first, then you can assign supporting pages to them.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Go to <strong>Pages</strong> tab and click the ⭐ icon to mark money pages.
+        </p>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-medium">Unassigned Pages</h3>
+          <p className="text-sm text-muted-foreground">
+            Click a page to assign it to a target page (silo)
+          </p>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {unassignedPages.length} pages
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {unassignedPages.map(page => (
+          <Card 
+            key={page.id}
+            className="p-4 cursor-pointer hover:border-primary transition-colors"
+            onClick={() => onAssign(page)}
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium truncate">{page.title}</div>
+                <div className="text-xs text-muted-foreground truncate">{page.url}</div>
+              </div>
+              <Plus className="w-5 h-5 text-muted-foreground shrink-0" />
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }
@@ -219,11 +529,15 @@ export default function InternalLinksScreen({ siteId }: Props) {
 function SiloStructureView({ 
   structure, 
   expandedSilos, 
-  onToggleSilo 
+  onToggleSilo,
+  onUnassignPage,
+  isAssigning
 }: { 
   structure: LinkStructure
   expandedSilos: Set<number>
   onToggleSilo: (id: number) => void
+  onUnassignPage: (pageId: number) => void
+  isAssigning: boolean
 }) {
   return (
     <div className="space-y-6">
@@ -263,6 +577,8 @@ function SiloStructureView({
                 silo={silo} 
                 isExpanded={expandedSilos.has(silo.target.id)}
                 onToggle={() => onToggleSilo(silo.target.id)}
+                onUnassignPage={onUnassignPage}
+                isAssigning={isAssigning}
               />
             ))}
           </div>
@@ -314,11 +630,15 @@ function SiloStructureView({
 function SiloCard({ 
   silo, 
   isExpanded, 
-  onToggle 
+  onToggle,
+  onUnassignPage,
+  isAssigning
 }: { 
   silo: Silo
   isExpanded: boolean
   onToggle: () => void
+  onUnassignPage: (pageId: number) => void
+  isAssigning: boolean
 }) {
   return (
     <div className="w-full max-w-md">
@@ -362,16 +682,27 @@ function SiloCard({
             {silo.supporting_pages.map((page, index) => (
               <Card 
                 key={page.id} 
-                className="p-3 bg-blue-500/10 border-blue-500/20"
+                className="p-3 bg-blue-500/10 border-blue-500/20 group"
               >
                 <div className="flex items-start gap-2">
                   <div className="w-6 h-6 rounded bg-blue-500 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-white">{index + 1}</span>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium truncate">{page.title}</div>
                     <div className="text-xs text-muted-foreground truncate">{page.url}</div>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onUnassignPage(page.id)
+                    }}
+                    disabled={isAssigning}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-all"
+                    title="Remove from silo"
+                  >
+                    <Unlink className="w-4 h-4 text-red-500" />
+                  </button>
                 </div>
               </Card>
             ))}
@@ -393,6 +724,9 @@ function SiloCard({
           <Card className="p-4 border-dashed text-center">
             <p className="text-sm text-muted-foreground">
               No supporting pages assigned yet
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Go to "Assign Pages" tab to add supporting pages
             </p>
           </Card>
         </div>
