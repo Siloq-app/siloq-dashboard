@@ -215,7 +215,7 @@ export default function InternalLinksScreen({ siteId }: Props) {
   )
 }
 
-// Silo Structure Visualization
+// Silo Structure Visualization with SVG Lines
 function SiloStructureView({ 
   structure, 
   expandedSilos, 
@@ -225,12 +225,14 @@ function SiloStructureView({
   expandedSilos: Set<number>
   onToggleSilo: (id: number) => void
 }) {
+  const siloCount = structure.silos.length
+
   return (
     <div className="space-y-6">
       {/* Homepage */}
       {structure.homepage && (
         <div className="flex justify-center">
-          <Card className="p-4 bg-slate-800 border-slate-600 inline-flex items-center gap-3">
+          <Card className="p-4 bg-slate-800 border-slate-600 inline-flex items-center gap-3 relative z-10">
             <div className="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center">
               <Home className="w-5 h-5 text-slate-300" />
             </div>
@@ -242,21 +244,69 @@ function SiloStructureView({
         </div>
       )}
 
-      {/* Connection line from homepage */}
-      {structure.homepage && structure.silos.length > 0 && (
-        <div className="flex justify-center">
-          <div className="w-px h-8 bg-slate-600" />
+      {/* SVG Connection Lines from Homepage to Targets */}
+      {structure.homepage && siloCount > 0 && (
+        <div className="relative flex justify-center">
+          <svg 
+            className="w-full h-16 overflow-visible"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {/* Vertical line from homepage */}
+            <line
+              x1="50%"
+              y1="0"
+              x2="50%"
+              y2="24"
+              stroke="#475569"
+              strokeWidth="2"
+            />
+            {/* Horizontal distribution line */}
+            {siloCount > 1 && (
+              <line
+                x1={`${50 - (siloCount - 1) * 12}%`}
+                y1="24"
+                x2={`${50 + (siloCount - 1) * 12}%`}
+                y2="24"
+                stroke="#475569"
+                strokeWidth="2"
+              />
+            )}
+            {/* Vertical lines down to each silo */}
+            {structure.silos.map((_, index) => {
+              const xPercent = siloCount === 1 
+                ? 50 
+                : 50 + (index - (siloCount - 1) / 2) * 24
+              return (
+                <g key={index}>
+                  <line
+                    x1={`${xPercent}%`}
+                    y1="24"
+                    x2={`${xPercent}%`}
+                    y2="64"
+                    stroke="#475569"
+                    strokeWidth="2"
+                  />
+                  {/* Arrow head */}
+                  <polygon
+                    points={`${xPercent - 0.5}%,56 ${xPercent}%,64 ${xPercent + 0.5}%,56`}
+                    fill="#475569"
+                    transform={`translate(0, 0)`}
+                  />
+                </g>
+              )
+            })}
+          </svg>
         </div>
       )}
 
       {/* Target Pages Row */}
-      {structure.silos.length > 0 && (
+      {siloCount > 0 && (
         <div className="space-y-4">
           <div className="text-center text-sm text-muted-foreground font-medium">
             Target Pages (Money Pages)
           </div>
           
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-6">
             {structure.silos.map((silo) => (
               <SiloCard 
                 key={silo.target.id} 
@@ -270,7 +320,7 @@ function SiloStructureView({
       )}
 
       {/* Empty State */}
-      {structure.silos.length === 0 && (
+      {siloCount === 0 && (
         <Card className="p-8 text-center">
           <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium mb-2">No Silos Set Up</h3>
@@ -297,6 +347,13 @@ function SiloStructureView({
             <span className="text-muted-foreground">Supporting Page</span>
           </div>
           <div className="flex items-center gap-2">
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <line x1="12" y1="4" x2="12" y2="16" stroke="#475569" strokeWidth="2"/>
+              <polygon points="8,14 12,20 16,14" fill="#475569"/>
+            </svg>
+            <span className="text-muted-foreground">Link direction</span>
+          </div>
+          <div className="flex items-center gap-2">
             <ArrowUp className="w-4 h-4 text-emerald-500" />
             <span className="text-muted-foreground">Links UP to target</span>
           </div>
@@ -310,7 +367,7 @@ function SiloStructureView({
   )
 }
 
-// Individual Silo Card
+// Individual Silo Card with Visual Link Lines
 function SiloCard({ 
   silo, 
   isExpanded, 
@@ -320,11 +377,13 @@ function SiloCard({
   isExpanded: boolean
   onToggle: () => void
 }) {
+  const supportingCount = silo.supporting_pages.length
+
   return (
     <div className="w-full max-w-md">
       {/* Target Page */}
       <Card 
-        className="p-4 bg-amber-500/10 border-amber-500/30 cursor-pointer hover:bg-amber-500/20 transition-colors"
+        className="p-4 bg-amber-500/10 border-amber-500/30 cursor-pointer hover:bg-amber-500/20 transition-colors relative z-10"
         onClick={onToggle}
       >
         <div className="flex items-center justify-between">
@@ -347,48 +406,110 @@ function SiloCard({
         </div>
       </Card>
 
-      {/* Supporting Pages */}
-      {isExpanded && silo.supporting_pages.length > 0 && (
-        <div className="mt-2 ml-6 space-y-2">
-          {/* Connection line */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="w-4 border-t border-dashed border-slate-600" />
+      {/* Supporting Pages with Visual Lines */}
+      {isExpanded && supportingCount > 0 && (
+        <div className="relative">
+          {/* SVG Connection Lines */}
+          <svg 
+            className="absolute left-6 top-0 w-full h-12 overflow-visible pointer-events-none"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {/* Vertical line from target */}
+            <line
+              x1="20"
+              y1="0"
+              x2="20"
+              y2="24"
+              stroke="#3b82f6"
+              strokeWidth="2"
+              strokeDasharray="4 2"
+            />
+            {/* Horizontal distribution for multiple supporting pages */}
+            {supportingCount > 1 && (
+              <line
+                x1="20"
+                y1="24"
+                x2={20 + (supportingCount - 1) * 80}
+                y2="24"
+                stroke="#3b82f6"
+                strokeWidth="2"
+                strokeDasharray="4 2"
+              />
+            )}
+            {/* Vertical lines to each supporting page */}
+            {silo.supporting_pages.map((_, index) => (
+              <g key={index}>
+                <line
+                  x1={20 + index * 80}
+                  y1="24"
+                  x2={20 + index * 80}
+                  y2="48"
+                  stroke="#3b82f6"
+                  strokeWidth="2"
+                  strokeDasharray="4 2"
+                />
+                {/* Upward arrow (link direction UP to target) */}
+                <polygon
+                  points={`${15 + index * 80},12 ${20 + index * 80},4 ${25 + index * 80},12`}
+                  fill="#10b981"
+                />
+              </g>
+            ))}
+          </svg>
+          
+          {/* Connection indicator */}
+          <div className="ml-6 pt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <ArrowUp className="w-3 h-3 text-emerald-500" />
             <span>Links up to target</span>
           </div>
           
           {/* Supporting page cards */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="ml-6 mt-10 grid grid-cols-2 gap-3">
             {silo.supporting_pages.map((page, index) => (
               <Card 
                 key={page.id} 
-                className="p-3 bg-blue-500/10 border-blue-500/20"
+                className="p-3 bg-blue-500/10 border-blue-500/20 relative"
               >
                 <div className="flex items-start gap-2">
                   <div className="w-6 h-6 rounded bg-blue-500 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-white">{index + 1}</span>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium truncate">{page.title}</div>
-                    <div className="text-xs text-muted-foreground truncate">{page.url}</div>
+                    <a 
+                      href={page.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 hover:underline truncate block"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {page.slug || page.url}
+                    </a>
                   </div>
                 </div>
               </Card>
             ))}
           </div>
 
-          {/* Sibling interlink indicator */}
-          {silo.supporting_pages.length > 1 && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
-              <ArrowLeftRight className="w-3 h-3 text-blue-400" />
-              <span>Supporting pages interlink with each other</span>
+          {/* Sibling interlink indicator with visual */}
+          {supportingCount > 1 && (
+            <div className="ml-6 mt-3 p-2 bg-blue-500/5 rounded-lg border border-blue-500/20">
+              <div className="flex items-center gap-2 text-xs">
+                <svg className="w-16 h-4" viewBox="0 0 64 16">
+                  {/* Horizontal bidirectional arrows */}
+                  <line x1="8" y1="8" x2="56" y2="8" stroke="#60a5fa" strokeWidth="2"/>
+                  <polygon points="4,8 12,4 12,12" fill="#60a5fa"/>
+                  <polygon points="60,8 52,4 52,12" fill="#60a5fa"/>
+                </svg>
+                <span className="text-blue-400">Supporting pages interlink with siblings</span>
+              </div>
             </div>
           )}
         </div>
       )}
 
       {/* Empty supporting pages */}
-      {isExpanded && silo.supporting_pages.length === 0 && (
+      {isExpanded && supportingCount === 0 && (
         <div className="mt-2 ml-6">
           <Card className="p-4 border-dashed text-center">
             <p className="text-sm text-muted-foreground">
