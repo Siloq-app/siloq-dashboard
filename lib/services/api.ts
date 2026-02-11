@@ -683,6 +683,35 @@ export interface GeneratedSilos {
   total_suggested_pages: number
 }
 
+// Content Suggestions Types
+export interface ContentSuggestion {
+  title: string
+  type: string
+  priority: string | number
+}
+
+export interface TargetSuggestion {
+  target_page: {
+    id: number
+    title: string
+    url?: string
+  }
+  existing_supporting_count: number
+  suggested_topics: ContentSuggestion[]
+  gap_analysis: {
+    missing_how_to?: boolean
+    missing_comparison?: boolean
+    missing_local?: boolean
+    missing_educational?: boolean
+  }
+}
+
+export interface ContentSuggestionsResponse {
+  total_targets: number
+  total_suggested_topics: number
+  suggestions: TargetSuggestion[]
+}
+
 export const sitesService = new SitesService()
 export const pagesService = new PagesService()
 export const apiKeysService = new ApiKeysService()
