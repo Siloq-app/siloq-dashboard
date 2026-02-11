@@ -1,16 +1,21 @@
-'use client'
+'use client';
 
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp } from 'lucide-react';
 
 interface Props {
-  score: number
-  change: number
+  score: number;
+  change: number;
 }
 
 export default function HealthScore({ score, change }: Props) {
   return (
-    <div className="bg-[#ffffff] card p-7 text-center border-0">
-      <div className="relative w-16 h-16 mx-auto mb-5">
+    <div className="bg-card text-card-foreground flex h-full flex-col justify-center rounded-xl border p-4 shadow">
+      <div className="mb-3 text-center">
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          Health Score
+        </span>
+      </div>
+      <div className="relative mx-auto mb-5 h-16 w-16">
         <svg viewBox="0 0 100 100" className="-rotate-90">
           <circle
             cx="50"
@@ -31,7 +36,13 @@ export default function HealthScore({ score, change }: Props) {
             strokeDasharray={`${score * 2.83} 283`}
           />
           <defs>
-            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient
+              id="scoreGradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
               <stop offset="0%" stopColor="#3b82f6" />
               <stop offset="100%" stopColor="#8b5cf6" />
             </linearGradient>
@@ -39,7 +50,7 @@ export default function HealthScore({ score, change }: Props) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-xl font-bold tabular-nums">{score}</span>
-          <span className="text-xs text-slate-400 tabular-nums">/ 100</span>
+          <span className="text-xs tabular-nums text-slate-400">/ 100</span>
         </div>
       </div>
       <div className="flex items-center justify-center gap-1.5 text-emerald-400">
@@ -47,5 +58,5 @@ export default function HealthScore({ score, change }: Props) {
         <span className="text-sm">+{change} from last week</span>
       </div>
     </div>
-  )
+  );
 }
