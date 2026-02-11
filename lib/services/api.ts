@@ -522,6 +522,13 @@ class DashboardService {
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to set homepage')
     return data
   }
+
+  async getContentSuggestions(siteId: number | string): Promise<ContentSuggestionsResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content-suggestions/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load content suggestions')
+    return data
+  }
 }
 
 // Internal Links Types
@@ -606,40 +613,36 @@ export interface InternalLinksAnalysis {
   }[]
 }
 
-// Anchor Text Overview Types
-export interface AnchorTarget {
-  id: number
+// Content Suggestions Types
+export interface ContentSuggestion {
   title: string
-  url: string
-  is_money_page: boolean
-  link_count: number
+  type: 'educational' | 'how-to' | 'comparison' | 'tips' | 'commercial' | 'local' | 'general'
+  target_keyword: string
+  priority: number
 }
 
-export interface AnchorSource {
-  id: number
-  title: string
-  url: string
+export interface GapAnalysis {
+  has_how_to: boolean
+  has_comparison: boolean
+  has_guide: boolean
+  has_faq: boolean
 }
 
-export interface AnchorTextItem {
-  anchor_text: string
-  normalized: string
-  total_uses: number
-  target_count: number
-  targets: AnchorTarget[]
-  source_count: number
-  sources: AnchorSource[]
-  has_conflict: boolean
-}
-
-export interface AnchorTextOverview {
-  anchors: AnchorTextItem[]
-  stats: {
-    total_anchors: number
-    conflict_count: number
-    clean_count: number
-    health_percentage: number
+export interface TargetSuggestion {
+  target_page: {
+    id: number
+    title: string
+    url: string
   }
+  existing_supporting_count: number
+  suggested_topics: ContentSuggestion[]
+  gap_analysis: GapAnalysis
+}
+
+export interface ContentSuggestionsResponse {
+  suggestions: TargetSuggestion[]
+  total_targets: number
+  total_suggested_topics: number
 }
 
 export const sitesService = new SitesService()

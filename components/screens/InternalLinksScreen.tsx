@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { 
   Home, Target, FileText, AlertTriangle, Link2, RefreshCw, 
   ChevronDown, ChevronRight, ExternalLink, ArrowUp, ArrowLeftRight,
-  CheckCircle, XCircle, Loader2
+  CheckCircle, XCircle, Loader2, Lightbulb, Sparkles, BookOpen,
+  Scale, DollarSign, MapPin, HelpCircle, Plus
 } from 'lucide-react'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
@@ -15,8 +16,9 @@ import {
   Silo, 
   SiloPage,
   AnchorConflict,
-  AnchorTextOverview,
-  AnchorTextItem
+  ContentSuggestionsResponse,
+  TargetSuggestion,
+  ContentSuggestion
 } from '@/lib/services/api'
 
 interface Props {
@@ -25,33 +27,33 @@ interface Props {
 
 export default function InternalLinksScreen({ siteId }: Props) {
   const [analysis, setAnalysis] = useState<InternalLinksAnalysis | null>(null)
-  const [anchorOverview, setAnchorOverview] = useState<AnchorTextOverview | null>(null)
+  const [contentSuggestions, setContentSuggestions] = useState<ContentSuggestionsResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingAnchors, setIsLoadingAnchors] = useState(false)
+  const [isLoadingContent, setIsLoadingContent] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedSilos, setExpandedSilos] = useState<Set<number>>(new Set())
-  const [activeTab, setActiveTab] = useState<'structure' | 'issues' | 'anchors'>('structure')
+  const [activeTab, setActiveTab] = useState<'structure' | 'content' | 'issues'>('structure')
 
   useEffect(() => {
     loadAnalysis()
   }, [siteId])
 
   useEffect(() => {
-    if (activeTab === 'anchors' && !anchorOverview && !isLoadingAnchors) {
-      loadAnchors()
+    if (activeTab === 'content' && !contentSuggestions && !isLoadingContent) {
+      loadContentSuggestions()
     }
   }, [activeTab])
 
-  const loadAnchors = async () => {
-    setIsLoadingAnchors(true)
+  const loadContentSuggestions = async () => {
+    setIsLoadingContent(true)
     try {
-      const data = await dashboardService.getAnchorTextOverview(siteId)
-      setAnchorOverview(data)
+      const data = await dashboardService.getContentSuggestions(siteId)
+      setContentSuggestions(data)
     } catch (e) {
-      console.error('Failed to load anchor overview:', e)
+      console.error('Failed to load content suggestions:', e)
     } finally {
-      setIsLoadingAnchors(false)
+      setIsLoadingContent(false)
     }
   }
 
@@ -212,14 +214,15 @@ export default function InternalLinksScreen({ siteId }: Props) {
           Silo Structure
         </button>
         <button
-          onClick={() => setActiveTab('anchors')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'anchors' 
+          onClick={() => setActiveTab('content')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === 'content' 
               ? 'border-primary text-primary' 
               : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
-          Anchor Text
+          <Lightbulb className="w-4 h-4" />
+          Content Ideas
         </button>
         <button
           onClick={() => setActiveTab('issues')}
@@ -240,11 +243,11 @@ export default function InternalLinksScreen({ siteId }: Props) {
           expandedSilos={expandedSilos}
           onToggleSilo={toggleSilo}
         />
-      ) : activeTab === 'anchors' ? (
-        <AnchorTextView 
-          overview={anchorOverview} 
-          isLoading={isLoadingAnchors}
-          onRefresh={loadAnchors}
+      ) : activeTab === 'content' ? (
+        <ContentIdeasView 
+          suggestions={contentSuggestions}
+          isLoading={isLoadingContent}
+          onRefresh={loadContentSuggestions}
         />
       ) : (
         <IssuesView analysis={analysis} />
@@ -763,263 +766,216 @@ function IssueSection({
   )
 }
 
-// Anchor Text Overview View
-function AnchorTextView({ 
-  overview, 
+// Content Ideas View
+function ContentIdeasView({ 
+  suggestions, 
   isLoading,
   onRefresh
 }: { 
-  overview: AnchorTextOverview | null
+  suggestions: ContentSuggestionsResponse | null
   isLoading: boolean
   onRefresh: () => void
 }) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [expandedAnchor, setExpandedAnchor] = useState<string | null>(null)
-  const [filterConflicts, setFilterConflicts] = useState(false)
+  const [expandedTarget, setExpandedTarget] = useState<number | null>(null)
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-48">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-          <p className="text-slate-400">Loading anchor text data...</p>
+          <p className="text-slate-400">Generating content suggestions...</p>
         </div>
       </div>
     )
   }
 
-  if (!overview) {
+  if (!suggestions) {
     return (
       <div className="text-center py-12">
-        <Link2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground mb-4">No anchor text data available</p>
+        <Lightbulb className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground mb-4">No content suggestions yet</p>
         <Button onClick={onRefresh} variant="outline">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Load Anchor Data
+          <Sparkles className="w-4 h-4 mr-2" />
+          Generate Ideas
         </Button>
       </div>
     )
   }
 
-  const { anchors, stats } = overview
+  if (suggestions.suggestions.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-medium mb-2">No Target Pages Found</h3>
+        <p className="text-muted-foreground">
+          Mark some pages as money pages first to get content suggestions.
+        </p>
+      </Card>
+    )
+  }
 
-  // Filter anchors based on search and conflict filter
-  const filteredAnchors = anchors.filter(anchor => {
-    const matchesSearch = !searchQuery || 
-      anchor.anchor_text.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFilter = !filterConflicts || anchor.has_conflict
-    return matchesSearch && matchesFilter
-  })
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'how-to': return <BookOpen className="w-4 h-4" />
+      case 'comparison': return <Scale className="w-4 h-4" />
+      case 'commercial': return <DollarSign className="w-4 h-4" />
+      case 'local': return <MapPin className="w-4 h-4" />
+      case 'educational': return <HelpCircle className="w-4 h-4" />
+      default: return <FileText className="w-4 h-4" />
+    }
+  }
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'how-to': return 'bg-blue-500/10 text-blue-500'
+      case 'comparison': return 'bg-purple-500/10 text-purple-500'
+      case 'commercial': return 'bg-green-500/10 text-green-500'
+      case 'local': return 'bg-orange-500/10 text-orange-500'
+      case 'educational': return 'bg-cyan-500/10 text-cyan-500'
+      case 'tips': return 'bg-amber-500/10 text-amber-500'
+      default: return 'bg-slate-500/10 text-slate-500'
+    }
+  }
 
   return (
     <div className="space-y-6">
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card className="p-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-foreground">{stats.total_anchors}</div>
-            <div className="text-sm text-muted-foreground">Unique Anchors</div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-500">{stats.clean_count}</div>
-            <div className="text-sm text-muted-foreground">Clean (1 target)</div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${stats.conflict_count > 0 ? 'text-red-500' : 'text-green-500'}`}>
-              {stats.conflict_count}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <Target className="w-5 h-5 text-amber-500" />
             </div>
-            <div className="text-sm text-muted-foreground">Conflicts</div>
+            <div>
+              <div className="text-2xl font-bold">{suggestions.total_targets}</div>
+              <div className="text-sm text-muted-foreground">Target Pages</div>
+            </div>
           </div>
         </Card>
         <Card className="p-4">
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${
-              stats.health_percentage >= 90 ? 'text-green-500' : 
-              stats.health_percentage >= 70 ? 'text-amber-500' : 'text-red-500'
-            }`}>
-              {stats.health_percentage}%
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <Lightbulb className="w-5 h-5 text-emerald-500" />
             </div>
-            <div className="text-sm text-muted-foreground">Anchor Health</div>
+            <div>
+              <div className="text-2xl font-bold">{suggestions.total_suggested_topics}</div>
+              <div className="text-sm text-muted-foreground">Content Ideas</div>
+            </div>
           </div>
+        </Card>
+        <Card className="p-4 col-span-2 md:col-span-1">
+          <Button onClick={onRefresh} variant="outline" className="w-full h-full">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh Ideas
+          </Button>
         </Card>
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex gap-4 items-center">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder="Search anchor text..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-        <Button
-          variant={filterConflicts ? "default" : "outline"}
-          onClick={() => setFilterConflicts(!filterConflicts)}
-          className={filterConflicts ? 'bg-red-500 hover:bg-red-600' : ''}
-        >
-          <AlertTriangle className="w-4 h-4 mr-2" />
-          Conflicts Only
-        </Button>
-      </div>
-
-      {/* Anchor List */}
-      <div className="space-y-3">
-        {filteredAnchors.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No anchors found matching your criteria
-          </div>
-        ) : (
-          filteredAnchors.map((anchor) => (
-            <AnchorCard 
-              key={anchor.normalized} 
-              anchor={anchor}
-              isExpanded={expandedAnchor === anchor.normalized}
-              onToggle={() => setExpandedAnchor(
-                expandedAnchor === anchor.normalized ? null : anchor.normalized
+      {/* Suggestions by Target */}
+      <div className="space-y-4">
+        {suggestions.suggestions.map((targetSuggestion) => (
+          <Card key={targetSuggestion.target_page.id} className="overflow-hidden">
+            <button
+              onClick={() => setExpandedTarget(
+                expandedTarget === targetSuggestion.target_page.id 
+                  ? null 
+                  : targetSuggestion.target_page.id
               )}
-            />
-          ))
-        )}
+              className="w-full p-4 text-left hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center">
+                    <Target className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-medium">{targetSuggestion.target_page.title}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {targetSuggestion.existing_supporting_count} existing • {targetSuggestion.suggested_topics.length} suggestions
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <GapBadges gaps={targetSuggestion.gap_analysis} />
+                  {expandedTarget === targetSuggestion.target_page.id ? (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+            </button>
+
+            {expandedTarget === targetSuggestion.target_page.id && (
+              <div className="px-4 pb-4 border-t border-border pt-4 space-y-3">
+                {targetSuggestion.suggested_topics.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                    Good coverage! No gaps detected.
+                  </div>
+                ) : (
+                  targetSuggestion.suggested_topics.map((topic, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <div className={`p-2 rounded-lg ${getTypeColor(topic.type)}`}>
+                        {getTypeIcon(topic.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium">{topic.title}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs px-2 py-0.5 rounded ${getTypeColor(topic.type)}`}>
+                            {topic.type}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Priority: {topic.priority}
+                          </span>
+                        </div>
+                      </div>
+                      <Button size="sm" variant="ghost" className="shrink-0">
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </Card>
+        ))}
       </div>
     </div>
   )
 }
 
-// Individual Anchor Card
-function AnchorCard({ 
-  anchor, 
-  isExpanded, 
-  onToggle 
-}: { 
-  anchor: AnchorTextItem
-  isExpanded: boolean
-  onToggle: () => void
-}) {
+// Gap Analysis Badges
+function GapBadges({ gaps }: { gaps: { has_how_to: boolean; has_comparison: boolean; has_guide: boolean; has_faq: boolean } }) {
+  const missing = []
+  if (!gaps.has_how_to) missing.push('How-to')
+  if (!gaps.has_comparison) missing.push('Comparison')
+  if (!gaps.has_guide) missing.push('Guide')
+  if (!gaps.has_faq) missing.push('FAQ')
+
+  if (missing.length === 0) {
+    return (
+      <span className="text-xs px-2 py-1 bg-green-500/10 text-green-500 rounded">
+        ✓ Complete
+      </span>
+    )
+  }
+
   return (
-    <Card className={`overflow-hidden ${anchor.has_conflict ? 'border-red-500/30' : ''}`}>
-      <button
-        onClick={onToggle}
-        className="w-full p-4 text-left hover:bg-muted/50 transition-colors"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {anchor.has_conflict ? (
-              <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              </div>
-            )}
-            <div>
-              <div className="font-medium text-foreground">"{anchor.anchor_text}"</div>
-              <div className="text-sm text-muted-foreground">
-                Used {anchor.total_uses}× • {anchor.target_count} target{anchor.target_count !== 1 ? 's' : ''} • {anchor.source_count} source{anchor.source_count !== 1 ? 's' : ''}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {anchor.has_conflict && (
-              <span className="text-xs px-2 py-1 bg-red-500/10 text-red-500 rounded">
-                CONFLICT
-              </span>
-            )}
-            {isExpanded ? (
-              <ChevronDown className="w-5 h-5 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            )}
-          </div>
-        </div>
-      </button>
-
-      {isExpanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
-          {/* Target Pages */}
-          <div>
-            <div className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              Links To ({anchor.target_count})
-            </div>
-            <div className="space-y-2">
-              {anchor.targets.map((target) => (
-                <div 
-                  key={target.id} 
-                  className={`p-3 rounded-lg ${
-                    anchor.has_conflict ? 'bg-red-500/5 border border-red-500/20' : 'bg-muted/50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {target.is_money_page && (
-                        <span className="text-amber-500">⭐</span>
-                      )}
-                      <span className="font-medium">{target.title}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {target.link_count} link{target.link_count !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <a 
-                    href={target.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-400 hover:underline flex items-center gap-1 mt-1"
-                  >
-                    {target.url}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Source Pages */}
-          <div>
-            <div className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Used On ({anchor.source_count})
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {anchor.sources.map((source) => (
-                <a
-                  key={source.id}
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm px-3 py-1 bg-muted rounded-full hover:bg-muted/80 transition-colors"
-                >
-                  {source.title}
-                </a>
-              ))}
-            </div>
-          </div>
-
-          {/* Conflict Warning */}
-          {anchor.has_conflict && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <span className="font-medium text-red-500">Anchor Text Conflict: </span>
-                  <span className="text-muted-foreground">
-                    This anchor text points to {anchor.target_count} different pages. 
-                    For best SEO, each anchor should consistently link to ONE target page.
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+    <div className="flex gap-1">
+      {missing.slice(0, 2).map((gap) => (
+        <span key={gap} className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 rounded">
+          Missing: {gap}
+        </span>
+      ))}
+      {missing.length > 2 && (
+        <span className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 rounded">
+          +{missing.length - 2}
+        </span>
       )}
-    </Card>
+    </div>
   )
 }
