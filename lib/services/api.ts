@@ -699,10 +699,10 @@ export interface TargetSuggestion {
   existing_supporting_count: number
   suggested_topics: ContentSuggestion[]
   gap_analysis: {
-    missing_how_to?: boolean
-    missing_comparison?: boolean
-    missing_local?: boolean
-    missing_educational?: boolean
+    has_how_to: boolean
+    has_comparison: boolean
+    has_guide: boolean
+    has_faq: boolean
   }
 }
 
