@@ -519,6 +519,13 @@ class DashboardService {
     return data
   }
 
+  async getAnchorTextOverview(siteId: number | string): Promise<AnchorTextOverview> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/anchor-text-overview/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load anchor text overview')
+    return data
+  }
+
   async syncLinks(siteId: number | string): Promise<{ message: string; pages_processed: number; total_links_found: number }> {
     const res = await fetchWithAuth(`/api/v1/sites/${siteId}/sync-links/`, {
       method: 'POST',
@@ -547,6 +554,13 @@ class DashboardService {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to set homepage')
+    return data
+  }
+
+  async getContentSuggestions(siteId: number | string): Promise<ContentSuggestionsResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content-suggestions/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load content suggestions')
     return data
   }
 }
