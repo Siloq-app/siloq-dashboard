@@ -485,6 +485,13 @@ class DashboardService {
     return data
   }
 
+  async getAnchorTextOverview(siteId: number | string): Promise<AnchorTextOverview> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/anchor-text-overview/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load anchor text overview')
+    return data
+  }
+
   async syncLinks(siteId: number | string): Promise<{ message: string; pages_processed: number; total_links_found: number }> {
     const res = await fetchWithAuth(`/api/v1/sites/${siteId}/sync-links/`, {
       method: 'POST',
@@ -597,6 +604,42 @@ export interface InternalLinksAnalysis {
     priority: 'high' | 'medium' | 'low'
     message: string
   }[]
+}
+
+// Anchor Text Overview Types
+export interface AnchorTarget {
+  id: number
+  title: string
+  url: string
+  is_money_page: boolean
+  link_count: number
+}
+
+export interface AnchorSource {
+  id: number
+  title: string
+  url: string
+}
+
+export interface AnchorTextItem {
+  anchor_text: string
+  normalized: string
+  total_uses: number
+  target_count: number
+  targets: AnchorTarget[]
+  source_count: number
+  sources: AnchorSource[]
+  has_conflict: boolean
+}
+
+export interface AnchorTextOverview {
+  anchors: AnchorTextItem[]
+  stats: {
+    total_anchors: number
+    conflict_count: number
+    clean_count: number
+    health_percentage: number
+  }
 }
 
 export const sitesService = new SitesService()
