@@ -10,6 +10,12 @@ export interface Site {
   last_synced_at: string | null
   sync_requested_at: string | null
   created_at: string
+  // Business profile fields
+  business_type?: string | null
+  primary_services?: string[]
+  service_areas?: string[]
+  onboarding_complete?: boolean
+  needs_onboarding?: boolean
 }
 
 export interface SyncStatus {
@@ -170,6 +176,34 @@ class SitesService {
       console.error('Sync trigger failed:', res.status, data)
       throw new Error(data.message || data.detail || `Failed to trigger sync (${res.status})`)
     }
+    return data
+  }
+
+  async getProfile(id: number | string): Promise<BusinessProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${id}/profile/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load business profile')
+    return data
+  }
+
+  async updateProfile(id: number | string, profile: Partial<BusinessProfile>): Promise<BusinessProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${id}/profile/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to update business profile')
+    return data
+  }
+
+  async generateSilos(id: number | string): Promise<GeneratedSilos> {
+    const res = await fetchWithAuth(`/api/v1/sites/${id}/generate-silos/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to generate silo suggestions')
     return data
   }
 }
@@ -613,36 +647,40 @@ export interface InternalLinksAnalysis {
   }[]
 }
 
-// Content Suggestions Types
-export interface ContentSuggestion {
-  title: string
-  type: 'educational' | 'how-to' | 'comparison' | 'tips' | 'commercial' | 'local' | 'general'
-  target_keyword: string
-  priority: number
+// Business Profile Types
+export interface BusinessProfile {
+  business_type: string | null
+  primary_services: string[]
+  service_areas: string[]
+  target_audience: string
+  business_description: string
+  onboarding_complete: boolean
+  business_type_choices?: { value: string; label: string }[]
 }
 
-export interface GapAnalysis {
-  has_how_to: boolean
-  has_comparison: boolean
-  has_guide: boolean
-  has_faq: boolean
-}
-
-export interface TargetSuggestion {
-  target_page: {
-    id: number
+export interface SiloSuggestion {
+  service: string
+  suggested_target_page: {
     title: string
-    url: string
+    slug: string
+    description: string
   }
-  existing_supporting_count: number
-  suggested_topics: ContentSuggestion[]
-  gap_analysis: GapAnalysis
+  suggested_supporting_topics: string[]
 }
 
-export interface ContentSuggestionsResponse {
-  suggestions: TargetSuggestion[]
-  total_targets: number
-  total_suggested_topics: number
+export interface LocationSilo {
+  area: string
+  suggested_page: {
+    title: string
+    slug: string
+  }
+  can_create_per_service: boolean
+}
+
+export interface GeneratedSilos {
+  service_silos: SiloSuggestion[]
+  location_silos: LocationSilo[]
+  total_suggested_pages: number
 }
 
 export const sitesService = new SitesService()
