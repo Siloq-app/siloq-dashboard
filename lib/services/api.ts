@@ -712,6 +712,17 @@ export interface ContentSuggestionsResponse {
   suggestions: TargetSuggestion[]
 }
 
+
+// Anchor Text Overview Types
+export interface AnchorTextOverview {
+  total_anchors: number
+  unique_anchors: number
+  anchors: {
+    text: string
+    count: number
+    target_pages: number[]
+  }[]
+}
 export const sitesService = new SitesService()
 export const pagesService = new PagesService()
 export const apiKeysService = new ApiKeysService()
