@@ -34,13 +34,23 @@ function DashboardContent() {
   const [activeTab, setActiveTab] = useState<TabType>(tabFromUrl || 'dashboard')
   const [automationMode, setAutomationMode] = useState<AutomationMode>('manual')
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showSiteDropdown, setShowSiteDropdown] = useState(false)
   const router = useRouter()
-  const { selectedSite } = useDashboardData()
+  const { selectedSite, sites, selectSite } = useDashboardData()
   
   // Extract domain from site URL for display
   const siteDomain = selectedSite?.url 
     ? new URL(selectedSite.url).hostname.replace('www.', '')
     : null
+  
+  // Helper to get domain from URL
+  const getDomain = (url: string) => {
+    try {
+      return new URL(url).hostname.replace('www.', '')
+    } catch {
+      return url
+    }
+  }
 
   useEffect(() => {
     if (!tabFromUrl) {
@@ -49,6 +59,19 @@ function DashboardContent() {
       setActiveTab(tabFromUrl)
     }
   }, [tabFromUrl])
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('[data-dropdown]')) {
+        setShowDropdown(false)
+        setShowSiteDropdown(false)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token')
@@ -96,7 +119,7 @@ function DashboardContent() {
         {/* Right side actions */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Automation Mode Selector */}
-          <div className="relative">
+          <div className="relative" data-dropdown>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
               className="flex items-center gap-2 bg-muted border rounded-lg px-2 sm:px-3 py-1.5 hover:bg-muted/80 transition-colors text-sm"
@@ -138,14 +161,43 @@ function DashboardContent() {
             )}
           </div>
 
-          {/* Site Status */}
-          {siteDomain && (
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium hidden md:inline">{siteDomain}</span>
-              <span className="text-xs text-gray-600 dark:text-gray-400 md:hidden">{siteDomain.split('.')[0]}</span>
+          {/* Site Selector */}
+          <div className="relative" data-dropdown>
+            <button
+              onClick={() => setShowSiteDropdown(!showSiteDropdown)}
+              className="flex items-center gap-2 bg-muted border rounded-lg px-2 sm:px-3 py-1.5 hover:bg-muted/80 transition-colors text-sm"
+            >
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium max-w-[150px] truncate">
+                {siteDomain || 'Select Site'}
+              </span>
               <div className="w-2 h-2 bg-emerald-500 rounded-full" title="Connected" />
-            </div>
-          )}
+              <ChevronDown className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
+            </button>
+
+            {showSiteDropdown && sites.length > 0 && (
+              <div className="absolute top-full right-0 mt-2 bg-white border rounded-xl p-2 w-64 sm:w-72 z-50 shadow-2xl max-h-80 overflow-y-auto">
+                <div className="text-xs text-gray-500 px-3 py-1 font-semibold uppercase">Your Sites ({sites.length})</div>
+                {sites.map((site) => (
+                  <button
+                    key={site.id}
+                    onClick={() => { selectSite(site); setShowSiteDropdown(false) }}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors",
+                      selectedSite?.id === site.id ? 'bg-primary/10' : 'hover:bg-muted'
+                    )}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium truncate">{site.name || getDomain(site.url)}</div>
+                      <div className="text-xs text-gray-500 truncate">{getDomain(site.url)}</div>
+                    </div>
+                    {selectedSite?.id === site.id && (
+                      <Check className="h-4 w-4 text-primary flex-shrink-0 ml-2" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Logout */}
           <button
