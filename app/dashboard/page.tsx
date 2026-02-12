@@ -180,7 +180,12 @@ function DashboardContent() {
                 {sites.map((site) => (
                   <button
                     key={site.id}
-                    onClick={() => { selectSite(site); setShowSiteDropdown(false) }}
+                    onClick={() => { 
+                      selectSite(site)
+                      setShowSiteDropdown(false)
+                      // Force page reload to ensure all components get new site data
+                      window.location.reload()
+                    }}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors",
                       selectedSite?.id === site.id ? 'bg-primary/10' : 'hover:bg-muted'
