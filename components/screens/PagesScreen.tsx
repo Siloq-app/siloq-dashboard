@@ -244,7 +244,7 @@ export default function PagesScreen({
                     </button>
                   )}
                   <a 
-                    href="https://github.com/Siloq-app/siloq-wordpress/releases" 
+                    href="https://github.com/Siloq-app/siloq-wordpress/releases/latest/download/siloq-connector.zip" 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors text-center"
