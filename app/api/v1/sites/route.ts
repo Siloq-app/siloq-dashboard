@@ -7,10 +7,6 @@ function getAuthHeader(request: NextRequest): string | null {
 
 export async function GET(request: NextRequest) {
   const auth = getAuthHeader(request);
-  console.log(
-    'Sites API - Auth header received:',
-    auth ? 'Present' : 'Missing'
-  );
   if (!auth) {
     return NextResponse.json(
       { message: 'Unauthorized - No auth header' },
@@ -19,11 +15,6 @@ export async function GET(request: NextRequest) {
   }
   try {
     const backendUrl = SITES_ENDPOINTS.list();
-    console.log('Sites API - Forwarding to backend:', backendUrl);
-    console.log(
-      'Sites API - Auth header prefix:',
-      auth?.substring(0, 20) + '...'
-    );
 
     const res = await fetch(backendUrl, {
       method: 'GET',
@@ -34,15 +25,20 @@ export async function GET(request: NextRequest) {
       },
       signal: AbortSignal.timeout(10000),
     });
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await res.text();
+      return NextResponse.json(
+        { message: `Backend returned ${res.status} ${res.statusText}. Expected JSON but got: ${text.slice(0, 100)}` },
+        { status: res.status || 502 }
+      );
+    }
     const data = await res.json();
-    console.log('Sites API - Backend response status:', res.status);
     if (!res.ok) {
-      console.log('Sites API - Backend error:', data);
       return NextResponse.json(data, { status: res.status });
     }
     return NextResponse.json(data);
   } catch (e: any) {
-    console.error('Sites list proxy error:', e);
     const errorCode = e?.cause?.code || e?.code;
     const isConnectionRefused =
       errorCode === 'ECONNREFUSED' || e?.message?.includes('fetch failed');
@@ -76,7 +72,9 @@ export async function POST(request: NextRequest) {
   }
   try {
     const body = await request.json();
-    const res = await fetch(SITES_ENDPOINTS.list(), {
+    const backendUrl = SITES_ENDPOINTS.list();
+    
+    const res = await fetch(backendUrl, {
       method: 'POST',
       headers: {
         Authorization: auth,
@@ -84,15 +82,21 @@ export async function POST(request: NextRequest) {
         Accept: 'application/json',
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(10000),
     });
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await res.text();
+      return NextResponse.json(
+        { message: `Backend returned ${res.status} ${res.statusText}. Expected JSON but got: ${text.slice(0, 100)}` },
+        { status: res.status || 502 }
+      );
+    }
     const data = await res.json();
     if (!res.ok) {
       return NextResponse.json(data, { status: res.status });
     }
     return NextResponse.json(data, { status: res.status });
   } catch (e: any) {
-    console.error('Sites create proxy error:', e);
     const errorCode = e?.cause?.code || e?.code;
     const isConnectionRefused = errorCode === 'ECONNREFUSED';
     const isConnectionReset = errorCode === 'ECONNRESET';

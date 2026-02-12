@@ -167,9 +167,9 @@ export function SubscriptionManager({
       )}
 
       {/* Upgrade Options */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h4 className="mb-4 font-semibold">Upgrade Options</h4>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 dark:border-slate-800 dark:bg-slate-900">
+        <h4 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Upgrade Options</h4>
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {tiers.filter((t) => t !== 'free_trial' && t !== currentTier).map((tier) => {
             const tierConfig = TIER_CONFIGS[tier];
             const isRecommended = recommendedTier === tier;
@@ -193,11 +193,11 @@ export function SubscriptionManager({
                 )}
                 <div className="mb-2 flex items-center gap-2">
                   {tierIcons[tier]}
-                  <span className="font-semibold">{tierConfig.name}</span>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{tierConfig.name}</span>
                 </div>
-                <p className="text-2xl font-bold">${tierConfig.price}</p>
-                <p className="text-sm text-slate-500">/month</p>
-                <ul className="mt-3 space-y-1 text-sm">
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${tierConfig.price}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">/month</p>
+                <ul className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-400">
                   <li className="flex items-center gap-1">
                     <Check className="h-3 w-3 text-emerald-500" />
                     {tierConfig.sites} site{tierConfig.sites > 1 ? 's' : ''}
@@ -217,14 +217,14 @@ export function SubscriptionManager({
         </div>
 
         {selectedTier && (
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex flex-col sm:flex-row justify-end">
             <button
               onClick={() => {
                 setIsUpgrading(true);
                 onUpgrade(selectedTier);
               }}
               disabled={isUpgrading}
-              className="rounded-lg bg-indigo-600 px-6 py-2 font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+              className="w-full sm:w-auto rounded-lg bg-indigo-600 px-6 py-2 font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
             >
               {isUpgrading ? 'Processing...' : `Upgrade to ${TIER_CONFIGS[selectedTier].name}`}
             </button>
