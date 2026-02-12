@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import {
   Globe,
   Plus,
@@ -10,7 +11,6 @@ import {
   Check,
   Trash2,
   Loader2,
-  AlertCircle,
   ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { fetchWithAuth } from '@/lib/auth-headers';
 
 interface Site {
@@ -77,15 +76,24 @@ export default function SitesScreen() {
 
   const loadSites = useCallback(async () => {
     setIsLoadingSites(true);
-    setError('');
     try {
       const res = await fetchWithAuth('/api/v1/sites');
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(
+          `Backend returned ${res.status} ${res.statusText}. ` +
+          (text.includes('<!DOCTYPE') || text.includes('<html')
+            ? 'Backend is not running or returned an HTML error page.'
+            : 'Expected JSON response but got non-JSON content.')
+        );
+      }
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.message || data.detail || 'Failed to load sites');
       setSites(Array.isArray(data) ? data : data.results || []);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load sites');
+      toast.error(e instanceof Error ? e.message : 'Failed to load sites');
       setSites([]);
     } finally {
       setIsLoadingSites(false);
@@ -97,6 +105,16 @@ export default function SitesScreen() {
     setError('');
     try {
       const res = await fetchWithAuth(`/api/v1/api-keys?site_id=${siteId}`);
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(
+          `Backend returned ${res.status} ${res.statusText}. ` +
+          (text.includes('<!DOCTYPE') || text.includes('<html')
+            ? 'Backend is not running or returned an HTML error page.'
+            : 'Expected JSON response but got non-JSON content.')
+        );
+      }
       const data = await res.json();
       if (!res.ok)
         throw new Error(
@@ -121,21 +139,94 @@ export default function SitesScreen() {
 
   const handleAddSite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSiteName.trim() || !newSiteUrl.trim()) {
-      setError('Name and URL are required');
+    
+    // Site name validations
+    const trimmedName = newSiteName.trim();
+    const trimmedUrl = newSiteUrl.trim();
+    
+    if (!trimmedName && !trimmedUrl) {
+      toast.error('Please fill in all required fields', {
+        description: 'Site name and URL are required',
+      });
       return;
     }
+    
+    if (!trimmedName) {
+      toast.error('Site name is required');
+      return;
+    }
+    
+    if (trimmedName.length < 2) {
+      toast.error('Site name is too short', {
+        description: 'Site name must be at least 2 characters long',
+      });
+      return;
+    }
+    
+    if (trimmedName.length > 100) {
+      toast.error('Site name is too long', {
+        description: 'Site name must not exceed 100 characters',
+      });
+      return;
+    }
+    
+    // Check for invalid characters in site name
+    const invalidNameChars = /[<>\"'&]/;
+    if (invalidNameChars.test(trimmedName)) {
+      toast.error('Invalid characters in site name', {
+        description: 'Site name cannot contain < > " \' & characters',
+      });
+      return;
+    }
+    
+    if (!trimmedUrl) {
+      toast.error('Site URL is required');
+      return;
+    }
+    
+    // URL must start with http:// or https://
+    if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+      toast.error('URL must start with http:// or https://', {
+        description: 'Please include the protocol in your URL',
+      });
+      return;
+    }
+    
+    // URL format validation
+    const urlPattern = /^(https?:\/\/)(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|localhost|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?(\/.*)?$/i;
+    if (!urlPattern.test(trimmedUrl)) {
+      toast.error('Please enter a valid URL', {
+        description: 'URL format is invalid. Example: https://example.com',
+      });
+      return;
+    }
+    
+    // Check for spaces in URL
+    if (trimmedUrl.includes(' ')) {
+      toast.error('URL cannot contain spaces');
+      return;
+    }
+    
     setIsCreatingSite(true);
-    setError('');
     try {
       const res = await fetchWithAuth('/api/v1/sites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: newSiteName.trim(),
-          url: newSiteUrl.trim(),
+          name: trimmedName,
+          url: trimmedUrl,
         }),
       });
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(
+          `Backend returned ${res.status} ${res.statusText}. ` +
+          (text.includes('<!DOCTYPE') || text.includes('<html')
+            ? 'Backend is not running or returned an HTML error page.'
+            : 'Expected JSON response but got non-JSON content.')
+        );
+      }
       const data = await res.json();
       if (!res.ok)
         throw new Error(
@@ -147,9 +238,10 @@ export default function SitesScreen() {
       setShowAddSite(false);
       setNewSiteName('');
       setNewSiteUrl('');
+      toast.success('Site added successfully!');
       loadSites();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to create site');
+      toast.error(e instanceof Error ? e.message : 'Failed to create site');
     } finally {
       setIsCreatingSite(false);
     }
@@ -157,9 +249,46 @@ export default function SitesScreen() {
 
   const handleGenerateToken = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSite || !newTokenName.trim()) return;
+    
+    // Token name validation
+    const trimmedTokenName = newTokenName.trim();
+    
+    if (!selectedSite) {
+      toast.error('No site selected', {
+        description: 'Please select a site first',
+      });
+      return;
+    }
+    
+    if (!trimmedTokenName) {
+      toast.error('Token name is required');
+      return;
+    }
+    
+    if (trimmedTokenName.length < 2) {
+      toast.error('Token name is too short', {
+        description: 'Token name must be at least 2 characters long',
+      });
+      return;
+    }
+    
+    if (trimmedTokenName.length > 50) {
+      toast.error('Token name is too long', {
+        description: 'Token name must not exceed 50 characters',
+      });
+      return;
+    }
+    
+    // Check for invalid characters in token name
+    const invalidTokenChars = /[<>\"'&]/;
+    if (invalidTokenChars.test(trimmedTokenName)) {
+      toast.error('Invalid characters in token name', {
+        description: 'Token name cannot contain < > " \' & characters',
+      });
+      return;
+    }
+    
     setIsGeneratingToken(true);
-    setError('');
     setNewlyCreatedKey(null);
     try {
       const res = await fetchWithAuth('/api/v1/api-keys', {
@@ -167,9 +296,19 @@ export default function SitesScreen() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           site_id: selectedSite.id,
-          name: newTokenName.trim(),
+          name: trimmedTokenName,
         }),
       });
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(
+          `Backend returned ${res.status} ${res.statusText}. ` +
+          (text.includes('<!DOCTYPE') || text.includes('<html')
+            ? 'Backend is not running or returned an HTML error page.'
+            : 'Expected JSON response but got non-JSON content.')
+        );
+      }
       const data = await res.json();
       if (!res.ok)
         throw new Error(
@@ -177,39 +316,77 @@ export default function SitesScreen() {
         );
       const fullKey = data.key?.key ?? data.key;
       if (fullKey) {
-        setNewlyCreatedKey({ key: fullKey, name: newTokenName.trim() });
+        setNewlyCreatedKey({ key: fullKey, name: trimmedTokenName });
         setNewTokenName('');
         setShowGenerateToken(false);
+        toast.success('API key generated successfully!');
         loadApiKeys(selectedSite.id);
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to create token');
+      toast.error(e instanceof Error ? e.message : 'Failed to create token');
     } finally {
       setIsGeneratingToken(false);
     }
   };
 
   const handleRevokeKey = async (keyId: number) => {
-    if (!confirm('Revoke this API key? It will stop working immediately.'))
-      return;
-    setError('');
     try {
       const res = await fetchWithAuth(`/api/v1/api-keys/${keyId}`, {
         method: 'DELETE',
       });
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(
+          `Backend returned ${res.status} ${res.statusText}. ` +
+          (text.includes('<!DOCTYPE') || text.includes('<html')
+            ? 'Backend is not running or returned an HTML error page.'
+            : 'Expected JSON response but got non-JSON content.')
+        );
+      }
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.message || data.detail || 'Failed to revoke');
       }
+      toast.success('API key revoked');
       if (selectedSite) loadApiKeys(selectedSite.id);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to revoke key');
+      toast.error(e instanceof Error ? e.message : 'Failed to revoke API key');
+    }
+  };
+
+  const handleDeleteSite = async (siteId: number) => {
+    toast.info('Deleting site...');
+    try {
+      const res = await fetchWithAuth(`/api/v1/sites/${siteId}`, {
+        method: 'DELETE',
+      });
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(
+          `Backend returned ${res.status} ${res.statusText}. ` +
+          (text.includes('<!DOCTYPE') || text.includes('<html')
+            ? 'Backend is not running or returned an HTML error page.'
+            : 'Expected JSON response but got non-JSON content.')
+        );
+      }
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || data.detail || 'Failed to delete site');
+      }
+      toast.success('Site deleted successfully');
+      setSelectedSite(null);
+      loadSites();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to delete site');
     }
   };
 
   const copyKey = (key: string) => {
     navigator.clipboard.writeText(key);
     setCopiedKey(true);
+    toast.success('API key copied to clipboard');
     setTimeout(() => setCopiedKey(false), 2000);
   };
 
@@ -233,84 +410,95 @@ export default function SitesScreen() {
         </div>
         <Card className="bg-card border-border rounded-lg border">
           <CardHeader className="p-4">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <Globe className="h-4 w-4" />
-              {selectedSite.name}
-            </CardTitle>
-            <CardDescription className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              <a
-                href={selectedSite.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary inline-flex items-center gap-1 font-mono hover:underline"
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                  <Globe className="h-4 w-4" />
+                  {selectedSite.name}
+                </CardTitle>
+                <CardDescription className="truncate font-mono text-xs text-slate-700 dark:text-slate-500">
+                  <a
+                    href={selectedSite.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary inline-flex items-center gap-1 font-mono hover:underline"
+                  >
+                    {selectedSite.url}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </CardDescription>
+              </div>
+              <button
+                onClick={() => {
+                  if (confirm(`Delete "${selectedSite.name}" and all its API keys? This cannot be undone.`)) {
+                    handleDeleteSite(selectedSite.id);
+                  }
+                }}
+                className="focus-visible:ring-ring inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/20"
               >
-                {selectedSite.url}
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </CardDescription>
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </CardHeader>
         </Card>
 
         <Card className="bg-card border-border rounded-lg border">
           <CardHeader className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="space-y-3">
               <div className="space-y-1.5">
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                   <Key className="h-4 w-4" />
-                  API keys for this site
+                  API keys for this site:
                 </CardTitle>
-                <CardDescription className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <CardDescription className="truncate font-mono text-xs text-slate-700 dark:text-slate-500">
                   Tokens are per site. Use one token per WordPress site in the
                   plugin (Settings → Siloq). API URL: {BACKEND_API_URL}/api/v1
                 </CardDescription>
               </div>
               <Button
-                size="sm"
                 onClick={() => {
                   setShowGenerateToken(true);
                   setNewlyCreatedKey(null);
                   setError('');
                 }}
               >
-                <Plus className="mr-1 h-4 w-4" />
+                <Plus className="mr-2 h-5 w-5" />
                 Generate new token
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3 p-4">
+          <CardContent className="space-y-3 p-4 w-1/2">
             {error && (
-              <Alert variant="destructive" className="rounded-lg">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle className="text-sm font-semibold">Error</AlertTitle>
-                <AlertDescription className="text-sm">{error}</AlertDescription>
-              </Alert>
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+                <strong>Error</strong> — {error}
+              </div>
             )}
 
             {newlyCreatedKey && (
-              <Alert className="rounded-lg border-amber-500/50 bg-amber-500/5">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle className="text-sm font-semibold">
+              <div className="rounded-lg border border-amber-500/50 bg-amber-500/5 p-4">
+                <div className="flex items-center gap-2 font-semibold text-amber-900 dark:text-amber-100">
+                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+                  </svg>
                   Copy your token now — it won&apos;t be shown again
-                </AlertTitle>
-                <AlertDescription>
-                  <div className="mt-2 flex items-center gap-2">
-                    <code className="bg-muted flex-1 break-all rounded px-2 py-1 font-mono text-sm">
-                      {newlyCreatedKey.key}
-                    </code>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyKey(newlyCreatedKey.key)}
-                    >
-                      {copiedKey ? (
-                        <Check className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </AlertDescription>
-              </Alert>
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <code className="bg-muted break-all rounded px-2 py-1 font-mono text-xs">
+                    {newlyCreatedKey.key}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyKey(newlyCreatedKey.key)}
+                  >
+                    {copiedKey ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             )}
 
             {showGenerateToken && (
@@ -333,7 +521,7 @@ export default function SitesScreen() {
                 <button
                   type="submit"
                   disabled={isGeneratingToken}
-                  className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50"
+                  className="focus-visible:ring-ring ml-auto flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   {isGeneratingToken ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -365,16 +553,31 @@ export default function SitesScreen() {
                 {apiKeys.map((key) => (
                   <li
                     key={key.id}
-                    className="border-border bg-card flex items-center justify-between rounded-lg border p-3"
+                    className={`border-border flex items-center justify-between rounded-lg border p-3 ${
+                      key.is_active
+                        ? 'bg-card'
+                        : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                    }`}
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{key.name}</span>
-                        <span className="font-mono text-sm text-gray-600 dark:text-gray-400">
+                        <span className={`text-sm font-medium ${
+                          key.is_active ? '' : 'text-gray-500 line-through'
+                        }`}>{key.name}</span>
+                        <span className={`font-mono text-sm ${
+                          key.is_active
+                            ? 'text-gray-600 dark:text-gray-400'
+                            : 'text-gray-400 dark:text-gray-500 line-through'
+                        }`}>
                           {key.key_prefix}
                         </span>
+                        {!key.is_active && (
+                          <span className="rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                            Revoked
+                          </span>
+                        )}
                       </div>
-                      <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      <div className="truncate font-mono text-xs text-slate-700 dark:text-slate-500">
                         Created {new Date(key.created_at).toLocaleDateString()}
                         {key.last_used_at &&
                           ` • Last used ${new Date(key.last_used_at).toLocaleDateString()}`}
@@ -419,11 +622,9 @@ export default function SitesScreen() {
       </div>
 
       {error && (
-        <Alert variant="destructive" className="rounded-lg">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle className="text-sm font-semibold">Error</AlertTitle>
-          <AlertDescription className="text-sm">{error}</AlertDescription>
-        </Alert>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+          <strong>Error</strong> — {error}
+        </div>
       )}
 
       {showAddSite && (
@@ -432,16 +633,16 @@ export default function SitesScreen() {
             <CardTitle className="text-sm font-semibold">
               Add WordPress site
             </CardTitle>
-            <CardDescription className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <CardDescription className="truncate font-mono text-xs text-slate-700 dark:text-slate-500">
               You can connect multiple sites. Each site gets its own API keys —
               add as many sites as you need.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
-            <form onSubmit={handleAddSite} className="space-y-3">
+            <form onSubmit={handleAddSite} className="space-y-3 w-1/2">
               <div className="space-y-1.5">
                 <Label htmlFor="site-name" className="text-sm">
-                  Site name
+                  Site name <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="site-name"
@@ -449,11 +650,12 @@ export default function SitesScreen() {
                   value={newSiteName}
                   onChange={(e) => setNewSiteName(e.target.value)}
                   className="h-9 text-sm"
+                  required
                 />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="site-url" className="text-sm">
-                  Site URL
+                  Site URL <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="site-url"
@@ -462,7 +664,11 @@ export default function SitesScreen() {
                   value={newSiteUrl}
                   onChange={(e) => setNewSiteUrl(e.target.value)}
                   className="h-9 text-sm"
+                  required
                 />
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Must start with http:// or https://
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -520,7 +726,7 @@ export default function SitesScreen() {
                         <span className="text-foreground text-sm font-medium">
                           {site.name}
                         </span>
-                        <p className="font-mono text-sm font-medium text-gray-600 dark:text-gray-400">
+                        <p className="font-mono truncate font-mono text-xs text-slate-700 dark:text-slate-500">
                           {site.url}
                         </p>
                       </div>
