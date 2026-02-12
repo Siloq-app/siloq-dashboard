@@ -5,6 +5,8 @@ import { CannibalizationIssue, Silo, PendingChange } from '@/app/dashboard/Dashb
 import HealthScore from '../ui/HealthScore'
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
+import GSCConnectionCard from '../gsc/GSCConnectionCard'
+import GSCAnalysisResults from '../gsc/GSCAnalysisResults'
 
 interface Props {
   healthScore: number
@@ -14,6 +16,8 @@ interface Props {
   onViewSilo: (silo: Silo) => void
   onViewApprovals: () => void
   onShowApprovalModal: (issueId: number) => void
+  siteId?: number | string
+  gscConnected?: boolean
 }
 
 export default function GovernanceDashboard({
@@ -24,12 +28,28 @@ export default function GovernanceDashboard({
   onViewSilo,
   onViewApprovals,
   onShowApprovalModal,
+  siteId,
+  gscConnected = false,
 }: Props) {
   const safeCount = pendingChanges.filter(c => c.risk === 'safe').length
   const destructiveCount = pendingChanges.filter(c => c.risk === 'destructive').length
 
   return (
     <>
+      {/* GSC Connection Card - Show if site selected but GSC not connected */}
+      {siteId && !gscConnected && (
+        <div className="mb-6">
+          <GSCConnectionCard siteId={siteId} />
+        </div>
+      )}
+
+      {/* GSC Analysis Results - Show if connected */}
+      {siteId && gscConnected && (
+        <div className="mb-6">
+          <GSCAnalysisResults siteId={siteId} isConnected={gscConnected} />
+        </div>
+      )}
+
       {/* Health Score + Quick Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 lg:gap-6 mb-6">
         <HealthScore score={healthScore} change={8} />

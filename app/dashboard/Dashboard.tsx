@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import GovernanceDashboard from '@/components/screens/GovernanceDashboard'
 import SiloPlanner from '@/components/screens/SiloPlanner'
 import ApprovalQueue from '@/components/screens/ApprovalQueue'
@@ -13,7 +13,7 @@ import GenerateModal from '@/components/modals/GenerateModal'
 import ApprovalModal from '@/components/modals/ApprovalModal'
 import OnboardingWizard from '@/components/OnboardingWizard'
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data'
-import { pagesService, dashboardService, sitesService, AnalysisResult, SyncTriggerResponse } from '@/lib/services/api'
+import { pagesService, dashboardService, sitesService, gscService, AnalysisResult, SyncTriggerResponse, GSCStatus } from '@/lib/services/api'
 import { useSilos } from '@/lib/hooks/use-silos'
 import { useCannibalization } from '@/lib/hooks/use-cannibalization'
 import { usePendingActions } from '@/lib/hooks/use-pending-actions'
@@ -49,6 +49,16 @@ export default function Dashboard({
   const [selectedIssue, setSelectedIssue] = useState<ModalCannibalizationIssue | null>(null)
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [gscStatus, setGscStatus] = useState<GSCStatus | null>(null)
+
+  // Fetch GSC status when site changes
+  useEffect(() => {
+    if (selectedSite?.id) {
+      gscService.getStatus(selectedSite.id)
+        .then(setGscStatus)
+        .catch(() => setGscStatus({ connected: false, gsc_site_url: null, connected_at: null }))
+    }
+  }, [selectedSite?.id])
 
   // Fetch real data from backend
   const { sites, selectedSite, siteOverview, pages, isLoading: isLoadingSites } = useDashboardData()
@@ -274,6 +284,8 @@ export default function Dashboard({
               onViewSilo={() => onTabChange?.('silos')}
               onViewApprovals={() => onTabChange?.('approvals')}
               onShowApprovalModal={handleShowApprovalModal}
+              siteId={selectedSite?.id}
+              gscConnected={gscStatus?.connected || false}
             />
           </>
         )

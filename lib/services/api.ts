@@ -723,8 +723,95 @@ export interface AnchorTextOverview {
     target_pages: number[]
   }[]
 }
+// GSC (Google Search Console) Types
+export interface GSCStatus {
+  connected: boolean
+  gsc_site_url: string | null
+  connected_at: string | null
+}
+
+export interface GSCAuthUrl {
+  auth_url: string
+}
+
+export interface GSCSite {
+  siteUrl: string
+  permissionLevel: string
+}
+
+export interface GSCAnalysisIssue {
+  type: string
+  severity: string
+  query: string
+  explanation: string
+  recommendation: string
+  impression_split: string
+  competing_pages: Array<{
+    url: string
+    type: string
+    clicks: number
+    share: string
+  }>
+  suggested_winner: string | null
+}
+
+export interface GSCAnalysisResult {
+  site_id: number
+  gsc_site_url: string
+  queries_analyzed: number
+  issues_found: number
+  issues: GSCAnalysisIssue[]
+}
+
+class GSCService {
+  async getAuthUrl(siteId: number | string): Promise<GSCAuthUrl> {
+    const res = await fetchWithAuth(`/api/v1/gsc/auth-url/?site_id=${siteId}`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to get GSC auth URL')
+    return data
+  }
+
+  async getStatus(siteId: number | string): Promise<GSCStatus> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/status/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to get GSC status')
+    return data
+  }
+
+  async listSites(accessToken: string): Promise<GSCSite[]> {
+    const res = await fetchWithAuth(`/api/v1/gsc/sites/?access_token=${accessToken}`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to list GSC sites')
+    return data.sites || []
+  }
+
+  async connect(siteId: number | string, gscSiteUrl: string, accessToken?: string, refreshToken?: string): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/connect/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gsc_site_url: gscSiteUrl,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to connect GSC')
+  }
+
+  async analyze(siteId: number | string): Promise<GSCAnalysisResult> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/analyze/`, {
+      method: 'POST',
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to analyze GSC data')
+    return data
+  }
+}
+
 export const sitesService = new SitesService()
 export const pagesService = new PagesService()
 export const apiKeysService = new ApiKeysService()
 export const scansService = new ScansService()
 export const dashboardService = new DashboardService()
+export const gscService = new GSCService()
