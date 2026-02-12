@@ -229,10 +229,17 @@ export default function AnalysisResults({ results, isLoading, onAnalyze }: Props
           <Sparkles className="w-8 h-8 text-indigo-400" />
         </div>
         <h3 className="text-lg font-semibold mb-2">Ready to Analyze</h3>
-        <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">
-          Click the button above to analyze your site for cannibalization issues 
+        <p className="text-slate-400 text-sm mb-4 max-w-md mx-auto">
+          Analyze your site for cannibalization issues 
           and get personalized content recommendations.
         </p>
+        <button
+          onClick={onAnalyze}
+          className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+        >
+          <Sparkles className="w-5 h-5" />
+          Start Analysis
+        </button>
       </div>
     )
   }
