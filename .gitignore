@@ -34,3 +34,22 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# logs
+logs/
+*.log
+
+# temp
+temp/
+tmp/
+.cache/
+
+# windsurf
+.windsurf
