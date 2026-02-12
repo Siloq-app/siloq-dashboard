@@ -73,11 +73,26 @@ export default function SitesScreen() {
     setError('')
     try {
       const res = await fetchWithAuth('/api/v1/sites/')
+      
+      // Check content type before parsing
+      const contentType = res.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text()
+        console.error('Non-JSON response from API:', text.substring(0, 200))
+        throw new Error('API returned non-JSON response. Please try logging out and back in.')
+      }
+      
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load sites')
       setSites(Array.isArray(data) ? data : data.results || [])
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load sites')
+      const message = e instanceof Error ? e.message : 'Failed to load sites'
+      // More helpful error messages
+      if (message.includes('Unexpected token')) {
+        setError('Connection error: Please try logging out and back in, or clear your browser cache.')
+      } else {
+        setError(message)
+      }
       setSites([])
     } finally {
       setIsLoadingSites(false)
