@@ -51,6 +51,9 @@ export default function Dashboard({
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [gscStatus, setGscStatus] = useState<GSCStatus | null>(null)
 
+  // Fetch real data from backend (must be before useEffect that uses selectedSite)
+  const { sites, selectedSite, siteOverview, pages, isLoading: isLoadingSites } = useDashboardData()
+
   // Fetch GSC status when site changes
   useEffect(() => {
     if (selectedSite?.id) {
@@ -59,9 +62,6 @@ export default function Dashboard({
         .catch(() => setGscStatus({ connected: false, gsc_site_url: null, connected_at: null }))
     }
   }, [selectedSite?.id])
-
-  // Fetch real data from backend
-  const { sites, selectedSite, siteOverview, pages, isLoading: isLoadingSites } = useDashboardData()
   const { silos: rawSilos, isLoading: isLoadingSilos } = useSilos(selectedSite?.id)
   const { issues: rawIssues, isLoading: isLoadingIssues } = useCannibalization(selectedSite?.id)
   const { pendingActions: rawPendingActions, isLoading: isLoadingActions, approveAction, denyAction } = usePendingActions(selectedSite?.id)
