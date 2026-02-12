@@ -39,7 +39,7 @@ export function useUser(): UseUserResult {
     setError(null)
 
     try {
-      const res = await fetchWithAuth('/api/v1/auth/me')
+      const res = await fetchWithAuth('/api/v1/auth/me/')
       const data = await res.json()
       
       if (!res.ok) {

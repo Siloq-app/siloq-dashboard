@@ -72,7 +72,7 @@ export default function SitesScreen() {
     setIsLoadingSites(true)
     setError('')
     try {
-      const res = await fetchWithAuth('/api/v1/sites')
+      const res = await fetchWithAuth('/api/v1/sites/')
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load sites')
       setSites(Array.isArray(data) ? data : data.results || [])
@@ -88,7 +88,7 @@ export default function SitesScreen() {
     setIsLoadingKeys(true)
     setError('')
     try {
-      const res = await fetchWithAuth(`/api/v1/api-keys?site_id=${siteId}`)
+      const res = await fetchWithAuth(`/api/v1/api-keys/?site_id=${siteId}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load API keys')
       setApiKeys(Array.isArray(data) ? data : data.results || data.keys || [])
@@ -117,7 +117,7 @@ export default function SitesScreen() {
     setIsCreatingSite(true)
     setError('')
     try {
-      const res = await fetchWithAuth('/api/v1/sites', {
+      const res = await fetchWithAuth('/api/v1/sites/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newSiteName.trim(), url: newSiteUrl.trim() }),
@@ -142,7 +142,7 @@ export default function SitesScreen() {
     setError('')
     setNewlyCreatedKey(null)
     try {
-      const res = await fetchWithAuth('/api/v1/api-keys', {
+      const res = await fetchWithAuth('/api/v1/api-keys/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ site_id: selectedSite.id, name: newTokenName.trim() }),
@@ -167,7 +167,7 @@ export default function SitesScreen() {
     if (!confirm('Revoke this API key? It will stop working immediately.')) return
     setError('')
     try {
-      const res = await fetchWithAuth(`/api/v1/api-keys/${keyId}`, { method: 'DELETE' })
+      const res = await fetchWithAuth(`/api/v1/api-keys/${keyId}/`, { method: 'DELETE' })
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.message || data.detail || 'Failed to revoke')
