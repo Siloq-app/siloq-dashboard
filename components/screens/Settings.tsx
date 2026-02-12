@@ -40,6 +40,27 @@ const tabs = [
   { id: 'notifications' as const, label: 'Notifications', icon: Bell },
 ]
 
+// Default permission states
+const defaultPermissions = {
+  contentGeneration: true,
+  internalLinking: true,
+  metaTagUpdates: true,
+  urlRedirects: false,
+  pageDeletion: false,
+  schemaMarkup: true,
+}
+
+const defaultNotifications = {
+  dailyDigest: true,
+  blockErrors: true,
+  weeklyReport: false,
+  teamActivity: false,
+  approvalRequests: true,
+  toastNotifications: true,
+  soundAlerts: false,
+  pushNotifications: false,
+}
+
 export default function Settings({ automationMode, onAutomationChange, onNavigateToSites }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('profile')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
@@ -51,6 +72,18 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set())
   const [newKeyName, setNewKeyName] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  
+  // Permission toggles state
+  const [permissions, setPermissions] = useState(defaultPermissions)
+  const [notifications, setNotifications] = useState(defaultNotifications)
+  
+  const togglePermission = (key: keyof typeof defaultPermissions) => {
+    setPermissions(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+  
+  const toggleNotification = (key: keyof typeof defaultNotifications) => {
+    setNotifications(prev => ({ ...prev, [key]: !prev[key] }))
+  }
 
   const toggleKeyVisibility = (id: string) => {
     const newVisible = new Set(visibleKeys)
@@ -259,7 +292,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
           <h3 className="text-lg font-semibold">Team Members</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Manage team access and permissions</p>
         </div>
-        <Button><Plus size={16} /> Invite Member</Button>
+        <Button onClick={() => alert('Team invitations coming in V1.1!')}><Plus size={16} /> Invite Member</Button>
       </div>
 
       <div className="space-y-3">
@@ -286,7 +319,7 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{member.role}</span>
-              <Button variant="ghost" size="sm">Edit</Button>
+              <Button variant="ghost" size="sm" onClick={() => alert('Team member editing coming in V1.1!')}>Edit</Button>
             </div>
           </Card>
         ))}
@@ -334,28 +367,31 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
         <h4 className="text-base font-semibold mb-4">Fine-grained Permissions</h4>
         <div className="space-y-3">
           {[
-            { label: 'Allow content generation', desc: 'Agents can create new content blocks', enabled: true },
-            { label: 'Allow internal linking', desc: 'Agents can add internal links between pages', enabled: true },
-            { label: 'Allow meta tag updates', desc: 'Agents can modify title and description tags', enabled: true },
-            { label: 'Allow URL redirects', desc: 'Agents can create 301 redirects', enabled: false },
-            { label: 'Allow page deletion', desc: 'Agents can delete or archive pages', enabled: false },
-            { label: 'Allow schema markup changes', desc: 'Agents can modify structured data', enabled: true },
-          ].map((perm, i) => (
+            { key: 'contentGeneration' as const, label: 'Allow content generation', desc: 'Agents can create new content blocks' },
+            { key: 'internalLinking' as const, label: 'Allow internal linking', desc: 'Agents can add internal links between pages' },
+            { key: 'metaTagUpdates' as const, label: 'Allow meta tag updates', desc: 'Agents can modify title and description tags' },
+            { key: 'urlRedirects' as const, label: 'Allow URL redirects', desc: 'Agents can create 301 redirects' },
+            { key: 'pageDeletion' as const, label: 'Allow page deletion', desc: 'Agents can delete or archive pages' },
+            { key: 'schemaMarkup' as const, label: 'Allow schema markup changes', desc: 'Agents can modify structured data' },
+          ].map((perm) => (
             <div
-              key={i}
+              key={perm.key}
               className="flex items-center justify-between p-4 bg-[#F0F1F3] rounded-lg border border-border"
             >
               <div>
                 <div className="font-medium">{perm.label}</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{perm.desc}</div>
               </div>
-              <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${
-                perm.enabled ? 'bg-[#2563eb]' : 'bg-slate-300'
-              }`}>
+              <button
+                onClick={() => togglePermission(perm.key)}
+                className={`w-10 h-6 rounded-full p-1 transition-colors ${
+                  permissions[perm.key] ? 'bg-[#2563eb]' : 'bg-slate-300'
+                }`}
+              >
                 <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                  perm.enabled ? 'translate-x-4' : ''
+                  permissions[perm.key] ? 'translate-x-4' : ''
                 }`} />
-              </div>
+              </button>
             </div>
           ))}
         </div>
@@ -399,27 +435,30 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
       <div className="space-y-4">
         <h4 className="text-base font-semibold">Email Notifications</h4>
         {[
-          { label: 'Daily digest email', desc: 'Summary of all changes made by agents (Full-Auto mode)', checked: true },
-          { label: 'Immediate alerts for BLOCK errors', desc: 'Critical issues that require immediate attention', checked: true },
-          { label: 'Weekly governance report', desc: 'Comprehensive report on site health and recommendations', checked: false },
-          { label: 'Team member activity', desc: 'Notifications when team members make changes', checked: false },
-          { label: 'New approval requests', desc: 'Alert when destructive changes need approval', checked: true },
-        ].map((pref, i) => (
+          { key: 'dailyDigest' as const, label: 'Daily digest email', desc: 'Summary of all changes made by agents (Full-Auto mode)' },
+          { key: 'blockErrors' as const, label: 'Immediate alerts for BLOCK errors', desc: 'Critical issues that require immediate attention' },
+          { key: 'weeklyReport' as const, label: 'Weekly governance report', desc: 'Comprehensive report on site health and recommendations' },
+          { key: 'teamActivity' as const, label: 'Team member activity', desc: 'Notifications when team members make changes' },
+          { key: 'approvalRequests' as const, label: 'New approval requests', desc: 'Alert when destructive changes need approval' },
+        ].map((pref) => (
           <div
-            key={i}
+            key={pref.key}
             className="flex items-center justify-between p-4 bg-[#F0F1F3] rounded-lg border border-border"
           >
             <div>
               <div className="font-medium">{pref.label}</div>
               <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{pref.desc}</div>
             </div>
-            <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${
-              pref.checked ? 'bg-[#2563eb]' : 'bg-slate-300'
-            }`}>
+            <button
+              onClick={() => toggleNotification(pref.key)}
+              className={`w-10 h-6 rounded-full p-1 transition-colors ${
+                notifications[pref.key] ? 'bg-[#2563eb]' : 'bg-slate-300'
+              }`}
+            >
               <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                pref.checked ? 'translate-x-4' : ''
+                notifications[pref.key] ? 'translate-x-4' : ''
               }`} />
-            </div>
+            </button>
           </div>
         ))}
       </div>
@@ -427,25 +466,28 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
       <div className="space-y-4 pt-4 border-t border-border">
         <h4 className="text-base font-semibold">In-App Notifications</h4>
         {[
-          { label: 'Show toast notifications', desc: 'Display brief popup notifications for important events', checked: true },
-          { label: 'Play sound alerts', desc: 'Audio notification for critical alerts', checked: false },
-          { label: 'Browser push notifications', desc: 'Allow notifications when app is not in focus', checked: false },
-        ].map((pref, i) => (
+          { key: 'toastNotifications' as const, label: 'Show toast notifications', desc: 'Display brief popup notifications for important events' },
+          { key: 'soundAlerts' as const, label: 'Play sound alerts', desc: 'Audio notification for critical alerts' },
+          { key: 'pushNotifications' as const, label: 'Browser push notifications', desc: 'Allow notifications when app is not in focus' },
+        ].map((pref) => (
           <div
-            key={i}
+            key={pref.key}
             className="flex items-center justify-between p-4 bg-[#F0F1F3] rounded-lg border border-border"
           >
             <div>
               <div className="font-medium">{pref.label}</div>
               <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{pref.desc}</div>
             </div>
-            <div className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${
-              pref.checked ? 'bg-[#2563eb]' : 'bg-slate-300'
-            }`}>
+            <button
+              onClick={() => toggleNotification(pref.key)}
+              className={`w-10 h-6 rounded-full p-1 transition-colors ${
+                notifications[pref.key] ? 'bg-[#2563eb]' : 'bg-slate-300'
+              }`}
+            >
               <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                pref.checked ? 'translate-x-4' : ''
+                notifications[pref.key] ? 'translate-x-4' : ''
               }`} />
-            </div>
+            </button>
           </div>
         ))}
       </div>
@@ -453,9 +495,9 @@ export default function Settings({ automationMode, onAutomationChange, onNavigat
       <div className="flex items-center gap-3 p-4 bg-[#2563eb]/5 rounded-lg border border-[#2563eb]/20">
         <Mail className="text-[#2563eb]" size={20} />
         <div className="text-sm">
-          <span className="font-medium">Primary email:</span> john.doe@company.com
+          <span className="font-medium">Primary email:</span> {profile.email}
         </div>
-        <Button variant="ghost" size="sm" className="ml-auto">Change</Button>
+        <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setActiveTab('profile')}>Change</Button>
       </div>
     </div>
   )

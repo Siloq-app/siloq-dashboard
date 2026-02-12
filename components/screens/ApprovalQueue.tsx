@@ -1,15 +1,69 @@
 'use client'
 
-import { Check, RotateCcw, TrendingUp } from 'lucide-react'
+import { Check, RotateCcw, TrendingUp, Loader2 } from 'lucide-react'
 import { PendingChange } from '@/app/dashboard/Dashboard'
+import { useState } from 'react'
 
 interface Props {
   pendingChanges: PendingChange[]
+  onApprove?: (id: number) => Promise<void>
+  onDeny?: (id: number) => Promise<void>
+  onApproveAll?: () => Promise<void>
+  onApproveAllSafe?: () => Promise<void>
 }
 
-export default function ApprovalQueue({ pendingChanges }: Props) {
+export default function ApprovalQueue({ 
+  pendingChanges, 
+  onApprove, 
+  onDeny, 
+  onApproveAll, 
+  onApproveAllSafe 
+}: Props) {
+  const [loadingId, setLoadingId] = useState<number | null>(null)
+  const [bulkLoading, setBulkLoading] = useState<'all' | 'safe' | null>(null)
+  
   const safeChanges = pendingChanges.filter(c => c.risk === 'safe')
   const destructiveChanges = pendingChanges.filter(c => c.risk === 'destructive')
+
+  const handleApprove = async (id: number) => {
+    if (!onApprove) return
+    setLoadingId(id)
+    try {
+      await onApprove(id)
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
+  const handleDeny = async (id: number) => {
+    if (!onDeny) return
+    setLoadingId(id)
+    try {
+      await onDeny(id)
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
+  const handleApproveAll = async () => {
+    if (!onApproveAll) return
+    setBulkLoading('all')
+    try {
+      await onApproveAll()
+    } finally {
+      setBulkLoading(null)
+    }
+  }
+
+  const handleApproveAllSafe = async () => {
+    if (!onApproveAllSafe) return
+    setBulkLoading('safe')
+    try {
+      await onApproveAllSafe()
+    } finally {
+      setBulkLoading(null)
+    }
+  }
 
   return (
     <div className="card p-7">
@@ -21,11 +75,27 @@ export default function ApprovalQueue({ pendingChanges }: Props) {
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="btn-secondary">
-            Approve All Safe ({safeChanges.length})
+          <button 
+            className="btn-secondary disabled:opacity-50"
+            onClick={handleApproveAllSafe}
+            disabled={bulkLoading !== null || safeChanges.length === 0}
+          >
+            {bulkLoading === 'safe' ? (
+              <><Loader2 size={14} className="animate-spin" /> Approving...</>
+            ) : (
+              <>Approve All Safe ({safeChanges.length})</>
+            )}
           </button>
-          <button className="btn-primary">
-            <Check size={14} /> Approve All
+          <button 
+            className="btn-primary disabled:opacity-50"
+            onClick={handleApproveAll}
+            disabled={bulkLoading !== null || pendingChanges.length === 0}
+          >
+            {bulkLoading === 'all' ? (
+              <><Loader2 size={14} className="animate-spin" /> Approving...</>
+            ) : (
+              <><Check size={14} /> Approve All</>
+            )}
           </button>
         </div>
       </div>
@@ -86,9 +156,23 @@ export default function ApprovalQueue({ pendingChanges }: Props) {
               </div>
 
               <div className="flex gap-2 ml-6">
-                <button className="btn-deny">Deny</button>
-                <button className="btn-approve">
-                  <Check size={14} /> Approve
+                <button 
+                  className="btn-deny disabled:opacity-50"
+                  onClick={() => handleDeny(change.id)}
+                  disabled={loadingId === change.id}
+                >
+                  {loadingId === change.id ? <Loader2 size={14} className="animate-spin" /> : 'Deny'}
+                </button>
+                <button 
+                  className="btn-approve disabled:opacity-50"
+                  onClick={() => handleApprove(change.id)}
+                  disabled={loadingId === change.id}
+                >
+                  {loadingId === change.id ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <><Check size={14} /> Approve</>
+                  )}
                 </button>
               </div>
             </div>

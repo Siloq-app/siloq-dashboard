@@ -1,6 +1,7 @@
 'use client'
 
-import { X, Check, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { X, Check, AlertTriangle, Loader2 } from 'lucide-react'
 
 interface CompetingPage {
   url: string
@@ -17,9 +18,31 @@ interface CannibalizationIssue {
 interface Props {
   onClose: () => void
   issue?: CannibalizationIssue
+  onMarkReviewed?: (keyword: string) => Promise<void>
 }
 
-export default function ApprovalModal({ onClose, issue }: Props) {
+export default function ApprovalModal({ onClose, issue, onMarkReviewed }: Props) {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleMarkReviewed = async () => {
+    if (!issue) return
+    
+    if (onMarkReviewed) {
+      setIsLoading(true)
+      try {
+        await onMarkReviewed(issue.keyword)
+        onClose()
+      } catch (e) {
+        console.error('Failed to mark as reviewed:', e)
+      } finally {
+        setIsLoading(false)
+      }
+    } else {
+      // Default behavior: just close
+      onClose()
+    }
+  }
+
   // If no issue provided, show placeholder
   if (!issue) {
     return (
@@ -108,9 +131,17 @@ export default function ApprovalModal({ onClose, issue }: Props) {
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button onClick={onClose} className="btn-secondary flex-1">Close</button>
-          <button className="btn-approve flex-1 justify-center">
-            <Check size={14} className="mr-1" /> Mark as Reviewed
+          <button onClick={onClose} className="btn-secondary flex-1" disabled={isLoading}>Close</button>
+          <button 
+            className="btn-approve flex-1 justify-center disabled:opacity-50"
+            onClick={handleMarkReviewed}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <><Loader2 size={14} className="mr-1 animate-spin" /> Saving...</>
+            ) : (
+              <><Check size={14} className="mr-1" /> Mark as Reviewed</>
+            )}
           </button>
         </div>
       </div>

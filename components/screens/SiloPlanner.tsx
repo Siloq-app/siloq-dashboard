@@ -7,10 +7,21 @@ interface Props {
   silos: Silo[]
   selectedSilo: Silo | null
   onGenerateClick: () => void
+  onViewPage?: (url: string) => void
+  onAddLink?: (supportingPageUrl: string, targetPageUrl: string) => void
 }
 
-export default function SiloPlanner({ silos, selectedSilo, onGenerateClick }: Props) {
+export default function SiloPlanner({ silos, selectedSilo, onGenerateClick, onViewPage, onAddLink }: Props) {
   const displaySilos = selectedSilo ? [selectedSilo] : silos
+  
+  const handleViewPage = (url: string) => {
+    if (onViewPage) {
+      onViewPage(url)
+    } else {
+      // Default behavior: open in new tab
+      window.open(url, '_blank')
+    }
+  }
 
   return (
     <div className="card p-7">
@@ -44,7 +55,10 @@ export default function SiloPlanner({ silos, selectedSilo, onGenerateClick }: Pr
                 </div>
               </div>
               <div className="flex gap-2">
-                <button className="btn-secondary">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => handleViewPage(silo.targetPage.url)}
+                >
                   <Eye size={14} /> View
                 </button>
               </div>
@@ -88,7 +102,16 @@ export default function SiloPlanner({ silos, selectedSilo, onGenerateClick }: Pr
                       <Link2 size={12} /> Linked to Target
                     </span>
                   ) : (
-                    <button className="btn-secondary text-xs py-1.5 px-3">
+                    <button 
+                      className="btn-secondary text-xs py-1.5 px-3"
+                      onClick={() => {
+                        if (onAddLink) {
+                          onAddLink(page.url, silo.targetPage.url)
+                        } else {
+                          alert(`Feature coming soon: Add internal link from "${page.title}" to "${silo.targetPage.title}"`)
+                        }
+                      }}
+                    >
                       <Link2 size={12} /> Add Link
                     </button>
                   )}

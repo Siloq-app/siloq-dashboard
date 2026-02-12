@@ -37,7 +37,7 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard?tab=overview",
       icon: LayoutDashboard,
       items: [
         {
@@ -61,7 +61,7 @@ const data = {
     },
     {
       title: "Content",
-      url: "#",
+      url: "/dashboard?tab=content",
       icon: FileText,
       items: [
         {
@@ -76,7 +76,7 @@ const data = {
     },
     {
       title: "Sites",
-      url: "#",
+      url: "/dashboard?tab=sites",
       icon: Globe,
       items: [
         {
@@ -94,13 +94,8 @@ const data = {
     },
     {
       title: "Get Help",
-      url: "#",
+      url: "https://docs.siloq.ai",
       icon: HelpCircle,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: Search,
     },
   ],
 }

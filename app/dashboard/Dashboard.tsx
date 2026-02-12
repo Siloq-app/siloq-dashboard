@@ -351,6 +351,22 @@ export default function Dashboard({
         return (
           <ApprovalQueue
             pendingChanges={pendingChanges}
+            onApprove={async (id) => {
+              await approveAction(id)
+            }}
+            onDeny={async (id) => {
+              await denyAction(id)
+            }}
+            onApproveAll={async () => {
+              for (const change of pendingChanges) {
+                await approveAction(change.id)
+              }
+            }}
+            onApproveAllSafe={async () => {
+              for (const change of pendingChanges.filter(c => c.risk === 'safe')) {
+                await approveAction(change.id)
+              }
+            }}
           />
         )
       case 'sites':
