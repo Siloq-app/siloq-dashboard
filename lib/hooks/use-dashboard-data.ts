@@ -12,6 +12,27 @@ export interface DashboardData {
   error: string | null
 }
 
+// Persist selected site ID across hook instances
+const SELECTED_SITE_KEY = 'siloq_selected_site_id'
+const SITE_CHANGE_EVENT = 'siloq_site_changed'
+
+function getPersistedSiteId(): number | null {
+  if (typeof window === 'undefined') return null
+  const stored = localStorage.getItem(SELECTED_SITE_KEY)
+  return stored ? parseInt(stored, 10) : null
+}
+
+function persistSiteId(siteId: number | null) {
+  if (typeof window === 'undefined') return
+  if (siteId) {
+    localStorage.setItem(SELECTED_SITE_KEY, String(siteId))
+    // Dispatch custom event for same-tab hook instances
+    window.dispatchEvent(new CustomEvent(SITE_CHANGE_EVENT, { detail: siteId }))
+  } else {
+    localStorage.removeItem(SELECTED_SITE_KEY)
+  }
+}
+
 export function useDashboardData() {
   const [sites, setSites] = useState<Site[]>([])
   const [selectedSite, setSelectedSite] = useState<Site | null>(null)
@@ -27,8 +48,14 @@ export function useDashboardData() {
       const sitesList = await sitesService.list()
       setSites(sitesList)
       
+      // Try to restore previously selected site, or use first site
+      const persistedId = getPersistedSiteId()
+      const restoredSite = persistedId ? sitesList.find(s => s.id === persistedId) : null
+      
       if (sitesList.length > 0 && !selectedSite) {
-        setSelectedSite(sitesList[0])
+        const siteToSelect = restoredSite || sitesList[0]
+        setSelectedSite(siteToSelect)
+        persistSiteId(siteToSelect.id)
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load sites')
@@ -66,6 +93,10 @@ export function useDashboardData() {
 
   const selectSite = useCallback(async (site: Site) => {
     setSelectedSite(site)
+    persistSiteId(site.id)
+    // Clear existing data while loading new site
+    setPages([])
+    setSiteOverview(null)
     await Promise.all([
       loadSiteOverview(site.id),
       loadPages(site.id),
@@ -85,6 +116,43 @@ export function useDashboardData() {
   useEffect(() => {
     loadSites()
   }, [loadSites])
+
+  // Sync selected site across multiple hook instances
+  useEffect(() => {
+    // Handle storage events (other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === SELECTED_SITE_KEY && e.newValue) {
+        const newSiteId = parseInt(e.newValue, 10)
+        const newSite = sites.find(s => s.id === newSiteId)
+        if (newSite && newSite.id !== selectedSite?.id) {
+          setSelectedSite(newSite)
+          loadSiteOverview(newSite.id)
+          loadPages(newSite.id)
+        }
+      }
+    }
+    
+    // Handle custom events (same tab, different hook instances)
+    const handleSiteChange = (e: Event) => {
+      const customEvent = e as CustomEvent<number>
+      const newSiteId = customEvent.detail
+      const newSite = sites.find(s => s.id === newSiteId)
+      if (newSite && newSite.id !== selectedSite?.id) {
+        setSelectedSite(newSite)
+        setPages([])
+        setSiteOverview(null)
+        loadSiteOverview(newSite.id)
+        loadPages(newSite.id)
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener(SITE_CHANGE_EVENT, handleSiteChange)
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener(SITE_CHANGE_EVENT, handleSiteChange)
+    }
+  }, [sites, selectedSite, loadSiteOverview, loadPages])
 
   useEffect(() => {
     if (selectedSite) {

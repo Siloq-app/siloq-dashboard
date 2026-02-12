@@ -214,6 +214,7 @@ function DashboardContent() {
           activeTab={activeTab}
           automationMode={automationMode}
           onAutomationChange={setAutomationMode}
+          onTabChange={(tab) => router.push(`/dashboard?tab=${tab}`)}
         />
       </div>
     </>
