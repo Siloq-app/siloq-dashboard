@@ -48,20 +48,21 @@ export function mapCannibalizationIssues(
  * Map API silos to dashboard format
  */
 export function mapSilos(response: SiloResponse[]): Silo[] {
+  if (!Array.isArray(response)) return [];
   return response.map((silo) => ({
-    id: silo.id,
-    name: silo.name,
+    id: silo.id || 0,
+    name: silo.name || 'Untitled Silo',
     targetPage: {
       title: silo.target_page?.title || 'Untitled',
       url: silo.target_page?.url || '',
-      status: 'published', // API doesn't provide this, default to published
+      status: 'published',
       entities: silo.target_page?.entities || [],
     },
-    supportingPages: silo.supporting_pages.map((page) => ({
-      title: page.title,
-      url: page.url,
+    supportingPages: (silo.supporting_pages || []).map((page) => ({
+      title: page.title || '',
+      url: page.url || '',
       status: (page.status as 'published' | 'draft' | 'suggested') || 'published',
-      linked: page.has_link_to_target,
+      linked: page.has_link_to_target ?? false,
       entities: page.entities || [],
     })),
   }));

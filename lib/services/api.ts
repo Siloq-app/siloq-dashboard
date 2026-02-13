@@ -325,7 +325,7 @@ class SilosService {
     const data = await res.json();
     if (!res.ok)
       throw new Error(data.message || data.detail || 'Failed to load silos');
-    return Array.isArray(data) ? data : data.results || [];
+    return Array.isArray(data) ? data : data.silos || data.results || [];
   }
 }
 
