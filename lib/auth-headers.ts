@@ -25,6 +25,13 @@ export async function fetchWithAuth(
     headers.set('Authorization', auth.Authorization);
   }
   // Prepend backend URL for relative API paths
-  const fullUrl = url.startsWith('/api/v1') ? `${BACKEND_URL}${url}` : url;
+  let fullUrl = url.startsWith('/api/v1') ? `${BACKEND_URL}${url}` : url;
+  // Ensure trailing slash for Django compatibility
+  if (fullUrl.includes('/api/v1') && !fullUrl.endsWith('/') && !fullUrl.includes('?')) {
+    fullUrl += '/';
+  } else if (fullUrl.includes('/api/v1') && fullUrl.includes('?') && !fullUrl.split('?')[0].endsWith('/')) {
+    const [path, query] = fullUrl.split('?');
+    fullUrl = `${path}/?${query}`;
+  }
   return fetch(fullUrl, { ...options, headers });
 }
