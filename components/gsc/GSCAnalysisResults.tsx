@@ -5,18 +5,36 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { gscService, GSCAnalysisResult, GSCAnalysisIssue } from '@/lib/services/api'
-import { AlertTriangle, Loader2, RefreshCw, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
+import { fetchWithAuth } from '@/lib/auth-headers'
+import { AlertTriangle, Loader2, RefreshCw, ExternalLink, ChevronDown, ChevronUp, Unplug } from 'lucide-react'
 
 interface Props {
   siteId: number | string
   isConnected: boolean
+  onDisconnected?: () => void
 }
 
-export default function GSCAnalysisResults({ siteId, isConnected }: Props) {
+export default function GSCAnalysisResults({ siteId, isConnected, onDisconnected }: Props) {
   const [results, setResults] = useState<GSCAnalysisResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedIssue, setExpandedIssue] = useState<number | null>(null)
+  const [disconnecting, setDisconnecting] = useState(false)
+
+  const handleDisconnect = async () => {
+    try {
+      setDisconnecting(true)
+      const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/disconnect/`, { method: 'POST' })
+      if (res.ok) {
+        onDisconnected?.()
+        window.location.reload()
+      }
+    } catch (err) {
+      console.error('Failed to disconnect GSC:', err)
+    } finally {
+      setDisconnecting(false)
+    }
+  }
 
   const runAnalysis = async () => {
     try {
@@ -52,6 +70,18 @@ export default function GSCAnalysisResults({ siteId, isConnected }: Props) {
           <AlertTriangle className="h-5 w-5 text-amber-500" />
           GSC Cannibalization Analysis
         </CardTitle>
+        <div className="flex gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDisconnect}
+          disabled={disconnecting}
+          className="gap-1 text-muted-foreground hover:text-red-500"
+          title="Disconnect GSC and reconnect"
+        >
+          <Unplug className="h-4 w-4" />
+          {disconnecting ? 'Disconnecting...' : 'Reconnect'}
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -71,6 +101,7 @@ export default function GSCAnalysisResults({ siteId, isConnected }: Props) {
             </>
           )}
         </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {error && (
