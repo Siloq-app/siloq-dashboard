@@ -114,8 +114,8 @@ const data = {
       icon: Settings,
     },
     {
-      title: 'Get Help',
-      url: '#',
+      title: 'Help Center',
+      url: '/dashboard/help',
       icon: HelpCircle,
     },
     {
