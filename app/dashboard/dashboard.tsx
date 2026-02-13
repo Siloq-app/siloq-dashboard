@@ -13,7 +13,6 @@ import ApprovalModal from '@/components/modals/ApprovalModal';
 import CannibalizationModal from '@/components/modals/CannibalizationModal';
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data';
 import { TabType, AutomationMode } from './types';
-import { cannibalizationIssues, silos, pendingChanges, linkOpportunities } from './data';
 import InternalLinks from '@/components/screens/InternalLinks';
 
 interface DashboardProps {
@@ -34,7 +33,15 @@ export default function Dashboard({
   const [showCannibalizationModal, setShowCannibalizationModal] = useState(false);
   const [selectedPageIds, setSelectedPageIds] = useState<number[]>([]);
 
-  const { siteOverview, selectedSite } = useDashboardData();
+  const {
+    siteOverview,
+    selectedSite,
+    cannibalizationIssues,
+    silos,
+    pendingChanges,
+    linkOpportunities,
+    isLoading,
+  } = useDashboardData();
 
   const healthScore =
     (siteOverview?.health_score ?? selectedSite?.page_count)
@@ -49,6 +56,32 @@ export default function Dashboard({
   const totalPages = siteOverview?.total_pages ?? selectedSite?.page_count ?? 0;
 
   const renderScreen = () => {
+    // Show loading state
+    if (isLoading && !selectedSite) {
+      return (
+        <div className="flex h-full items-center justify-center">
+          <div className="text-center">
+            <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
+            <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Show empty state if no site selected
+    if (!selectedSite) {
+      return (
+        <div className="flex h-full items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg font-medium mb-2">No site selected</p>
+            <p className="text-sm text-muted-foreground">
+              Select a site from the header to view dashboard data
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'dashboard':
       case 'overview':

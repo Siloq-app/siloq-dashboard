@@ -250,7 +250,98 @@ class ScansService {
   }
 }
 
+// Cannibalization Issues
+export interface CannibalizationIssueResponse {
+  issues: Array<{
+    id: number;
+    type: string;
+    keyword: string;
+    severity: 'high' | 'medium' | 'low';
+    total_impressions: number;
+    validation_status: string;
+    competing_pages: Array<{
+      url: string;
+      title?: string;
+      impressions?: number;
+      clicks?: number;
+    }>;
+    recommendation: string;
+  }>;
+  total: number;
+  gsc_connected: boolean;
+}
+
+export interface SiloResponse {
+  id: number;
+  name: string;
+  site: number;
+  target_page?: {
+    id: number;
+    url: string;
+    title: string;
+    entities?: string[];
+  };
+  supporting_pages: Array<{
+    id: number;
+    url: string;
+    title: string;
+    status: string;
+    has_link_to_target: boolean;
+    entities?: string[];
+  }>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecommendationResponse {
+  recommendations: Array<{
+    id: number;
+    type: string;
+    description: string;
+    priority: 'high' | 'medium' | 'low';
+    status: 'pending' | 'approved' | 'rejected' | 'applied';
+    impact: string;
+    risk_level: 'safe' | 'destructive';
+    doctrine?: string;
+    created_at: string;
+  }>;
+  total: number;
+}
+
+class CannibalizationService {
+  async fetchIssues(siteId: number | string): Promise<CannibalizationIssueResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/cannibalization-issues/`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load cannibalization issues');
+    return data;
+  }
+}
+
+class SilosService {
+  async fetchSilos(siteId: number | string): Promise<SiloResponse[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/silos/`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load silos');
+    return Array.isArray(data) ? data : data.results || [];
+  }
+}
+
+class RecommendationsService {
+  async fetchRecommendations(siteId: number | string): Promise<RecommendationResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/recommendations/`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load recommendations');
+    return data;
+  }
+}
+
 export const sitesService = new SitesService();
 export const pagesService = new PagesService();
 export const apiKeysService = new ApiKeysService();
 export const scansService = new ScansService();
+export const cannibalizationService = new CannibalizationService();
+export const silosService = new SilosService();
+export const recommendationsService = new RecommendationsService();
