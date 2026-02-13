@@ -120,7 +120,9 @@ function CannibalizationCard({ issue, gscConnected }: { issue: CannibalizationIs
             <SeverityBadge severity={issue.severity} />
             <ValidationBadge status={issue.validation_status} gscConnected={gscConnected} />
             <span className="text-sm text-slate-400">
-              {issue.competing_pages.length} pages competing
+              {(issue as any).is_cluster 
+                ? `${(issue as any).cluster_size} pages in cluster` 
+                : `${issue.competing_pages.length} pages competing`}
             </span>
             {gscData && (
               <span className="text-xs text-slate-500">
