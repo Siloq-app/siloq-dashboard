@@ -126,19 +126,42 @@ export default function PagesScreen({
             <h2 className="text-2xl font-semibold">Your Pages</h2>
             <p className="text-slate-400 text-sm mt-1">
               {pages.length} pages synced • {moneyPageCount} marked as money pages
+              {lastSyncedAt && (
+                <span className="ml-2 text-slate-500">
+                  • Last sync: {new Date(lastSyncedAt).toLocaleString()}
+                </span>
+              )}
             </p>
           </div>
-          {moneyPageCount > 0 && (
-            <button
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              {isAnalyzing ? 'Analyzing...' : 'Analyze Site'}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {onTriggerSync && (
+              <button
+                onClick={handleTriggerSync}
+                disabled={isSyncing}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Syncing...' : 'Sync Pages'}
+              </button>
+            )}
+            {moneyPageCount > 0 && (
+              <button
+                onClick={handleAnalyze}
+                disabled={isAnalyzing}
+                className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                {isAnalyzing ? 'Analyzing...' : 'Analyze Site'}
+              </button>
+            )}
+          </div>
         </div>
+
+        {syncMessage && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 mb-4">
+            <p className="text-sm text-amber-300">{syncMessage}</p>
+          </div>
+        )}
 
         {/* Instructions */}
         <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 mb-6">
