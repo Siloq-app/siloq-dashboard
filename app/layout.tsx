@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Inter } from 'next/font/google';
+import { DM_Sans, Inter, Outfit, JetBrains_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -12,6 +12,18 @@ const dmSans = DM_Sans({
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
   display: 'swap',
 });
 
@@ -34,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${inter.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}>
       <body
         className="font-sans text-slate-200 antialiased"
         suppressHydrationWarning
