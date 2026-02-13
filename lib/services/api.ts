@@ -9,6 +9,7 @@ export interface Site {
   api_key_count: number;
   last_synced_at: string | null;
   created_at: string;
+  gsc_connected?: boolean;
 }
 
 export interface SiteOverview {
@@ -338,6 +339,82 @@ class RecommendationsService {
   }
 }
 
+// --- GSC Types & Service ---
+
+export interface GscSite {
+  siteUrl: string;
+  permissionLevel: string;
+}
+
+export interface GscQueryRow {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+}
+
+export interface GscPageRow {
+  page: string;
+  clicks: number;
+  impressions: number;
+}
+
+export interface GscData {
+  queries: GscQueryRow[];
+  pages: GscPageRow[];
+  totals: {
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+  };
+}
+
+class GscService {
+  async getAuthUrl(): Promise<{ url: string }> {
+    const res = await fetchWithAuth('/api/v1/gsc/auth-url/');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to get GSC auth URL');
+    return data;
+  }
+
+  async getSites(): Promise<GscSite[]> {
+    const res = await fetchWithAuth('/api/v1/gsc/sites/');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load GSC sites');
+    return data;
+  }
+
+  async connectSite(siteId: number | string, gscUrl: string): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/connect/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ site_url: gscUrl }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || data.detail || 'Failed to connect GSC property');
+    }
+  }
+
+  async getData(siteId: number | string): Promise<GscData> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/data/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load GSC data');
+    return data;
+  }
+
+  async analyze(siteId: number | string): Promise<{ message: string }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/analyze/`, {
+      method: 'POST',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to run GSC analysis');
+    return data;
+  }
+}
+
 export const sitesService = new SitesService();
 export const pagesService = new PagesService();
 export const apiKeysService = new ApiKeysService();
@@ -345,3 +422,4 @@ export const scansService = new ScansService();
 export const cannibalizationService = new CannibalizationService();
 export const silosService = new SilosService();
 export const recommendationsService = new RecommendationsService();
+export const gscService = new GscService();

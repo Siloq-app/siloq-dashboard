@@ -5,41 +5,82 @@
 
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { CreditCard, Loader2 } from 'lucide-react';
 import { SubscriptionManager } from '@/components/billing/SubscriptionManager';
 import { AICostDisplay } from '@/components/billing/AICostDisplay';
-import { SubscriptionTier, AIBillingMode, AICostEstimate } from '@/lib/billing/types';
+import { SubscriptionTier, AIBillingMode, AICostEstimate, TIER_CONFIGS } from '@/lib/billing/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import Header from '@/app/dashboard/header';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.siloq.ai';
+
 export default function SubscriptionPage() {
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Mock data - replace with actual API calls
+  const [isFetching, setIsFetching] = useState(true);
+
   const [currentTier, setCurrentTier] = useState<SubscriptionTier>('free_trial');
   const [billingMode, setBillingMode] = useState<AIBillingMode>('trial');
-  const [trialPagesUsed, setTrialPagesUsed] = useState(3);
-  const trialPagesLimit = 10;
-  const sitesCount = 1;
-  const silosCount = 1;
+  const [trialPagesUsed, setTrialPagesUsed] = useState(0);
+  const [trialPagesLimit, setTrialPagesLimit] = useState(10);
+  const [sitesCount, setSitesCount] = useState(1);
+  const [silosCount, setSilosCount] = useState(1);
+
+  // Fetch subscription data from backend
+  useEffect(() => {
+    async function fetchSubscription() {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/subscription`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tier) setCurrentTier(data.tier);
+          if (data.billingMode) setBillingMode(data.billingMode);
+          if (data.trialPagesUsed !== undefined) setTrialPagesUsed(data.trialPagesUsed);
+          if (data.trialPagesLimit !== undefined) setTrialPagesLimit(data.trialPagesLimit);
+          if (data.sitesCount !== undefined) setSitesCount(data.sitesCount);
+          if (data.silosCount !== undefined) setSilosCount(data.silosCount);
+        }
+      } catch (err) {
+        console.error('Failed to fetch subscription:', err);
+      } finally {
+        setIsFetching(false);
+      }
+    }
+    fetchSubscription();
+  }, []);
 
   const handleUpgrade = async (tier: SubscriptionTier) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/billing', {
+      // Create Stripe Checkout session via our API
+      const response = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tier }),
       });
-      
+
       if (response.ok) {
-        setCurrentTier(tier);
-        // Redirect to Stripe checkout or show success
         const data = await response.json();
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+          return;
+        }
+      }
+
+      // Fallback: try the old route
+      const fallback = await fetch('/api/billing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier }),
+      });
+      if (fallback.ok) {
+        const data = await fallback.json();
         if (data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
         }
@@ -59,7 +100,7 @@ export default function SubscriptionPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ aiBillingMode: mode }),
       });
-      
+
       if (response.ok) {
         setBillingMode(mode);
       }
@@ -70,7 +111,6 @@ export default function SubscriptionPage() {
     }
   };
 
-  // Mock cost estimate for display
   const mockCostEstimate: AICostEstimate = {
     inputTokens: 1500,
     outputTokens: 800,
@@ -104,16 +144,15 @@ export default function SubscriptionPage() {
                 </p>
               </div>
 
-              {isLoading && (
+              {(isLoading || isFetching) && (
                 <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-6 w-6 animate-spin" />
-                    <span>Processing...</span>
+                    <span>{isFetching ? 'Loading...' : 'Processing...'}</span>
                   </div>
                 </div>
               )}
 
-              {/* Subscription Manager */}
               <SubscriptionManager
                 currentTier={currentTier}
                 billingMode={billingMode}
@@ -127,7 +166,6 @@ export default function SubscriptionPage() {
 
               <Separator />
 
-              {/* AI Cost Display Example */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">AI Cost Estimation</CardTitle>
@@ -146,7 +184,6 @@ export default function SubscriptionPage() {
 
               <Separator />
 
-              {/* Billing Portal Access */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">Billing Portal</CardTitle>
@@ -155,15 +192,26 @@ export default function SubscriptionPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form action="/api/billing/portal" method="POST">
-                    <input type="hidden" name="return_url" value={typeof window !== 'undefined' ? window.location.href : ''} />
-                    <button
-                      type="submit"
-                      className="inline-flex w-full sm:w-auto items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                    >
-                      Open Billing Portal
-                    </button>
-                  </form>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/billing/portal', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ returnUrl: window.location.href }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          if (data.url) window.location.href = data.url;
+                        }
+                      } catch (err) {
+                        console.error('Portal error:', err);
+                      }
+                    }}
+                    className="inline-flex w-full sm:w-auto items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                  >
+                    Open Billing Portal
+                  </button>
                 </CardContent>
               </Card>
             </div>

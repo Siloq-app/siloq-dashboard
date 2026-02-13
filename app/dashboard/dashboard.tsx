@@ -14,6 +14,7 @@ import CannibalizationModal from '@/components/modals/CannibalizationModal';
 import { useDashboardData } from '@/lib/hooks/use-dashboard-data';
 import { TabType, AutomationMode } from './types';
 import InternalLinks from '@/components/screens/InternalLinks';
+import SearchConsole from '@/components/screens/SearchConsole';
 
 interface DashboardProps {
   activeTab?: TabType;
@@ -123,6 +124,8 @@ export default function Dashboard({
             }}
           />
         );
+      case 'search-console':
+        return <SearchConsole selectedSite={selectedSite} />;
       case 'settings':
         return <Settings onNavigateToSites={() => onTabChange?.('sites')} />;
       default:

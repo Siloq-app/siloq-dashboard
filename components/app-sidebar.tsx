@@ -80,6 +80,17 @@ const data = {
       ],
     },
     {
+      title: 'Search Console',
+      url: '#',
+      icon: Search,
+      items: [
+        {
+          title: 'Performance',
+          url: '/dashboard?tab=search-console',
+        },
+      ],
+    },
+    {
       title: 'Sites',
       url: '#',
       icon: Globe,
@@ -118,6 +129,7 @@ const data = {
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Dashboard: LayoutDashboard,
   Content: FileText,
+  'Search Console': Search,
   Sites: Globe,
 };
 

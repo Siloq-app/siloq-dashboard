@@ -7,7 +7,8 @@ export type TabType =
   | 'links'
   | 'pages'
   | 'settings'
-  | 'sites';
+  | 'sites'
+  | 'search-console';
 export type AutomationMode = 'manual' | 'semi' | 'full';
 
 export interface CannibalizationIssue {

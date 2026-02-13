@@ -30,10 +30,10 @@ function getStripe(): Stripe {
 // Stripe Price IDs for each tier (to be configured in Stripe dashboard)
 const STRIPE_PRICE_IDS: Record<SubscriptionTier, string | null> = {
   free_trial: null, // No Stripe subscription for trial
-  pro: process.env.STRIPE_PRICE_ID_PRO || '',
-  builder_plus: process.env.STRIPE_PRICE_ID_BUILDER || '',
-  architect: process.env.STRIPE_PRICE_ID_ARCHITECT || '',
-  empire: process.env.STRIPE_PRICE_ID_EMPIRE || '',
+  pro: process.env.STRIPE_PRICE_ID_PRO || process.env.STRIPE_PRICE_PRO || '',
+  builder_plus: process.env.STRIPE_PRICE_ID_BUILDER || process.env.STRIPE_PRICE_BUILDER || '',
+  architect: process.env.STRIPE_PRICE_ID_ARCHITECT || process.env.STRIPE_PRICE_ARCHITECT || '',
+  empire: process.env.STRIPE_PRICE_ID_EMPIRE || process.env.STRIPE_PRICE_EMPIRE || '',
 };
 
 /**

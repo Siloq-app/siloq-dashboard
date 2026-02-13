@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Check,
   Copy,
@@ -20,11 +20,25 @@ import {
 import { AutomationMode } from '@/app/dashboard/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { SubscriptionTier, TIER_CONFIGS } from '@/lib/billing/types';
+
+type TeamRole = 'owner' | 'admin' | 'editor' | 'viewer';
+
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: TeamRole;
+  status: 'active' | 'pending';
+  avatar: string;
+  color: string;
+}
 
 interface Props {
   automationMode?: AutomationMode;
   onAutomationChange?: (mode: AutomationMode) => void;
   onNavigateToSites?: () => void;
+  currentTier?: SubscriptionTier;
 }
 
 const automationModes = [
@@ -71,9 +85,80 @@ export default function Settings({
   automationMode,
   onAutomationChange,
   onNavigateToSites,
+  currentTier = 'free_trial',
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Team state
+  const tierConfig = TIER_CONFIGS[currentTier];
+  const maxTeammates = tierConfig.maxTeammates;
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<TeamRole>('viewer');
+  const [isInviting, setIsInviting] = useState(false);
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [teamError, setTeamError] = useState<string | null>(null);
+
+  // Fetch team members
+  useEffect(() => {
+    async function fetchTeam() {
+      try {
+        const res = await fetch('/api/v1/team/invite');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.members && Array.isArray(data.members)) {
+            setTeamMembers(data.members);
+          }
+        }
+      } catch {
+        // silent fail
+      }
+    }
+    fetchTeam();
+  }, []);
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) return;
+    setIsInviting(true);
+    setTeamError(null);
+
+    // Check limit
+    const nonOwnerCount = teamMembers.filter(m => m.role !== 'owner').length;
+    if (nonOwnerCount >= maxTeammates) {
+      setTeamError(`You've reached the teammate limit for your ${tierConfig.name} plan. Upgrade to add more.`);
+      setIsInviting(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/v1/team/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const initials = inviteEmail.substring(0, 2).toUpperCase();
+        const colors = ['indigo', 'rose', 'amber', 'emerald', 'purple', 'cyan'];
+        setTeamMembers(prev => [...prev, {
+          id: Date.now().toString(),
+          name: inviteEmail.split('@')[0],
+          email: inviteEmail,
+          role: inviteRole,
+          status: 'pending',
+          avatar: initials,
+          color: colors[prev.length % colors.length],
+        }]);
+        setInviteEmail('');
+        setShowInviteForm(false);
+      }
+    } catch {
+      setTeamError('Failed to send invite. Please try again.');
+    } finally {
+      setIsInviting(false);
+    }
+  };
 
   const [apiKeys, setApiKeys] = useState([
     {
@@ -337,71 +422,129 @@ export default function Settings({
     </div>
   );
 
-  const renderTeamTab = () => (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            Team Members
-          </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Manage team access and permissions
-          </p>
-        </div>
-        <button className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
-          Invite Member <Plus size={16} />
-        </button>
-      </div>
+  const renderTeamTab = () => {
+    const nonOwnerCount = teamMembers.filter(m => m.role !== 'owner').length;
+    const atLimit = nonOwnerCount >= maxTeammates;
+    const avatarColors: Record<string, string> = {
+      indigo: 'bg-indigo-600 dark:bg-indigo-500',
+      rose: 'bg-rose-600 dark:bg-rose-500',
+      amber: 'bg-amber-600 dark:bg-amber-500',
+      emerald: 'bg-emerald-600 dark:bg-emerald-500',
+      purple: 'bg-purple-600 dark:bg-purple-500',
+      cyan: 'bg-cyan-600 dark:bg-cyan-500',
+    };
 
-      <div className="space-y-3">
-        {[
-          {
-            name: 'John Doe',
-            email: 'john.doe@company.com',
-            role: 'Administrator',
-            status: 'active',
-            avatar: 'JD',
-            color: 'indigo',
-          },
-          {
-            name: 'Sarah Smith',
-            email: 'sarah.smith@company.com',
-            role: 'Editor',
-            status: 'active',
-            avatar: 'SS',
-            color: 'rose',
-          },
-          {
-            name: 'Mike Johnson',
-            email: 'mike.j@company.com',
-            role: 'Viewer',
-            status: 'pending',
-            avatar: 'MJ',
-            color: 'amber',
-          },
-          {
-            name: 'Emily Chen',
-            email: 'emily.chen@company.com',
-            role: 'Editor',
-            status: 'active',
-            avatar: 'EC',
-            color: 'emerald',
-          },
-        ].map((member, i) => {
-          const avatarColors: Record<string, string> = {
-            indigo: 'bg-indigo-600 dark:bg-indigo-500',
-            rose: 'bg-rose-600 dark:bg-rose-500',
-            amber: 'bg-amber-600 dark:bg-amber-500',
-            emerald: 'bg-emerald-600 dark:bg-emerald-500',
-          };
-          return (
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+              Team Members
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {currentTier === 'free_trial'
+                ? 'Upgrade to Pro to add teammates'
+                : `${nonOwnerCount}/${maxTeammates} teammates`}
+            </p>
+          </div>
+          {currentTier !== 'free_trial' && (
+            <button
+              onClick={() => setShowInviteForm(true)}
+              disabled={atLimit}
+              className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            >
+              Invite Member <Plus size={16} />
+            </button>
+          )}
+        </div>
+
+        {currentTier === 'free_trial' && (
+          <Card className="border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-950/20">
+            <div className="flex items-center gap-3">
+              <Users className="text-amber-600 dark:text-amber-400" size={20} />
+              <div>
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-300">
+                  Upgrade to Pro to add teammates
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  Team collaboration starts at the Pro plan ($199/mo) with 1 teammate.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {atLimit && currentTier !== 'free_trial' && (
+          <Card className="border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/20">
+            <p className="text-sm text-amber-800 dark:text-amber-300">
+              You&apos;ve reached the {maxTeammates} teammate limit for {tierConfig.name}.{' '}
+              <a href="/dashboard/settings/subscription" className="font-medium underline">
+                Upgrade your plan
+              </a>{' '}
+              to add more.
+            </p>
+          </Card>
+        )}
+
+        {teamError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+            {teamError}
+          </div>
+        )}
+
+        {showInviteForm && (
+          <Card className="border-slate-200 p-4 dark:border-slate-700">
+            <h4 className="mb-3 text-sm font-medium text-slate-900 dark:text-slate-100">
+              Invite a teammate
+            </h4>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="colleague@company.com"
+                className="flex h-9 flex-1 rounded-md border border-slate-200 bg-transparent px-3 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 dark:border-slate-700"
+              />
+              <select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as TeamRole)}
+                className="h-9 rounded-md border border-slate-200 bg-transparent px-3 text-sm dark:border-slate-700"
+              >
+                <option value="viewer">Viewer</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button
+                onClick={handleInvite}
+                disabled={isInviting || !inviteEmail.trim()}
+                className="inline-flex h-9 items-center justify-center rounded-md bg-black px-4 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+              >
+                {isInviting ? 'Sending...' : 'Send Invite'}
+              </button>
+              <button
+                onClick={() => setShowInviteForm(false)}
+                className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+            </div>
+          </Card>
+        )}
+
+        <div className="space-y-3">
+          {teamMembers.length === 0 && currentTier !== 'free_trial' && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              No team members yet. Invite someone to get started.
+            </p>
+          )}
+          {teamMembers.map((member) => (
             <Card
-              key={i}
+              key={member.id}
               className="bg-card flex flex-col justify-between gap-3 border-slate-200 p-4 sm:flex-row sm:items-center dark:border-slate-700"
             >
               <div className="flex items-center gap-3">
                 <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold text-white ${avatarColors[member.color]}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold text-white ${avatarColors[member.color] || 'bg-slate-600'}`}
                 >
                   {member.avatar}
                 </div>
@@ -420,19 +563,21 @@ export default function Settings({
                 </div>
               </div>
               <div className="flex items-center gap-3 sm:ml-auto">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm capitalize text-slate-500 dark:text-slate-400">
                   {member.role}
                 </span>
-                <button className="focus-visible:ring-ring inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800">
-                  Edit
-                </button>
+                {member.role !== 'owner' && (
+                  <button className="focus-visible:ring-ring inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                    Edit
+                  </button>
+                )}
               </div>
             </Card>
-          );
-        })}
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderAgentPermissionsTab = () => (
     <div className="space-y-6">
