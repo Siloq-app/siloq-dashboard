@@ -376,7 +376,7 @@ class GscService {
     const res = await fetchWithAuth('/api/v1/gsc/auth-url/');
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to get GSC auth URL');
-    return data;
+    return { url: data.auth_url || data.url };
   }
 
   async getSites(): Promise<GscSite[]> {
