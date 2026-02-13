@@ -391,6 +391,7 @@ export default function Dashboard({
       {showGenerateModal && (
         <GenerateModal 
           silos={silos}
+          siteId={selectedSite?.id}
           onClose={() => setShowGenerateModal(false)} 
         />
       )}

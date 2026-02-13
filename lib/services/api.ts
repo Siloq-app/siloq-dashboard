@@ -600,6 +600,17 @@ class DashboardService {
     return data
   }
 
+  async generateContent(siteId: number | string, params: { target_page_id: number; content_type: string; topic: string }): Promise<any> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/generate-content/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || data.detail || 'Failed to generate content')
+    return data
+  }
+
   async getContentSuggestions(siteId: number | string): Promise<ContentSuggestionsResponse> {
     const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content-suggestions/`)
     const data = await res.json()

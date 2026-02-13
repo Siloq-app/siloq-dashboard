@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import { X, Zap, Loader2 } from 'lucide-react'
 import { CannibalizationIssue, Silo, PendingChange } from '@/app/dashboard/types'
+import { dashboardService } from '@/lib/services/api'
 
 interface Props {
   silos: Silo[]
   onClose: () => void
   onGenerate?: (siloId: number, contentType: string, entityCluster: string) => Promise<void>
+  siteId?: number | string
 }
 
-export default function GenerateModal({ silos, onClose, onGenerate }: Props) {
+export default function GenerateModal({ silos, onClose, onGenerate, siteId }: Props) {
   const [selectedSiloId, setSelectedSiloId] = useState<number>(silos[0]?.id || 0)
   const [contentType, setContentType] = useState('Supporting Article')
   const [entityCluster, setEntityCluster] = useState('')
@@ -23,20 +25,43 @@ export default function GenerateModal({ silos, onClose, onGenerate }: Props) {
       return
     }
     
-    if (onGenerate) {
-      setIsGenerating(true)
-      setError(null)
-      try {
+    setIsGenerating(true)
+    setError(null)
+    try {
+      if (onGenerate) {
         await onGenerate(selectedSiloId, contentType, entityCluster)
-        onClose()
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to generate content')
-      } finally {
-        setIsGenerating(false)
+      } else if (siteId) {
+        // Find the target page for this silo
+        const silo = silos.find(s => s.id === selectedSiloId)
+        if (!silo) throw new Error('Please select a silo')
+        
+        // Map content type to API format
+        const typeMap: Record<string, string> = {
+          'Supporting Article': 'supporting_article',
+          'FAQ Page': 'faq',
+          'How-to Guide': 'how_to',
+          'Comparison Page': 'comparison',
+        }
+        
+        const result = await dashboardService.generateContent(siteId, {
+          target_page_id: selectedSiloId, // silo id maps to target page id
+          content_type: typeMap[contentType] || 'supporting_article',
+          topic: entityCluster,
+        })
+        
+        if (result.success) {
+          // Show the generated content (could open in a new modal or copy to clipboard)
+          const generated = result.generated
+          alert(`✅ Content Generated!\n\nTitle: ${generated.title}\nWords: ${generated.word_count}\n\nThe content has been generated. Check your WordPress dashboard to import it.`)
+        }
+      } else {
+        alert('Content generation requires a site to be selected.')
       }
-    } else {
-      alert('Content generation coming soon! This will create a new supporting page targeting: ' + entityCluster)
       onClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to generate content')
+    } finally {
+      setIsGenerating(false)
     }
   }
 
