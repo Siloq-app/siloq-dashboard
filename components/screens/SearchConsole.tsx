@@ -71,6 +71,11 @@ interface SpokeRewritePage {
   newH2s: string[];
   internalLink: string;
   keywordShift: { from: string; to: string };
+  urlChange?: {
+    oldSlug: string;
+    newSlug: string;
+    rationale: string;
+  } | null;
 }
 
 interface SpokeRewrite {
@@ -1053,6 +1058,24 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                         <span className="px-2 py-[3px] rounded bg-[#34C75915] text-[#34C759] font-[family-name:var(--font-jetbrains-mono)]">{page.keywordShift.to}</span>
                                       </div>
                                     </div>
+
+                                    {page.urlChange && (
+                                      <div className="mb-2.5">
+                                        <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1">URL CHANGE</div>
+                                        <div className="flex items-center gap-2 text-[11px] mb-1.5">
+                                          <span className="px-2 py-[3px] rounded bg-[#FF3B3015] text-[#FF6B6B] font-[family-name:var(--font-jetbrains-mono)] line-through">{page.urlChange.oldSlug}</span>
+                                          <span className="text-[#FFA62B] font-bold">→</span>
+                                          <span className="px-2 py-[3px] rounded bg-[#34C75915] text-[#34C759] font-[family-name:var(--font-jetbrains-mono)]">{page.urlChange.newSlug}</span>
+                                        </div>
+                                        <div className="text-[10px] text-[#8892b0] leading-relaxed px-0.5">
+                                          {page.urlChange.rationale}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 mt-1.5">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-[#FF9500]" />
+                                          <span className="text-[9px] text-[#FF9500] font-[family-name:var(--font-jetbrains-mono)]">301 REDIRECT: old → new (auto-created by WP plugin)</span>
+                                        </div>
+                                      </div>
+                                    )}
 
                                     <div className="px-3 py-2 rounded-lg bg-[#6C5CE708] border border-[#6C5CE715] flex items-start gap-2">
                                       <span className="text-xs mt-0.5">🔗</span>
