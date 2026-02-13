@@ -309,6 +309,7 @@ export default function Dashboard({
             onTriggerSync={handleTriggerSync}
             lastSyncedAt={selectedSite?.last_synced_at}
             siteName={selectedSite?.name}
+            siteId={selectedSite?.id}
           />
         )
       case 'silos':

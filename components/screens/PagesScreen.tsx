@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Star, ExternalLink, Check, Search, Filter, Sparkles, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react'
 
-import { Page as ApiPage, AnalysisResult, SyncTriggerResponse } from '@/lib/services/api'
+import { Page as ApiPage, AnalysisResult, SyncTriggerResponse, MoneyPageSuggestions, SuggestedMoneyPage, dashboardService } from '@/lib/services/api'
 import AnalysisResults from './AnalysisResults'
 
 interface Page extends ApiPage {}
@@ -18,6 +18,7 @@ interface Props {
   onTriggerSync?: () => Promise<SyncTriggerResponse>
   lastSyncedAt?: string | null
   siteName?: string
+  siteId?: number | string
 }
 
 export default function PagesScreen({ 
@@ -29,13 +30,72 @@ export default function PagesScreen({
   isAnalyzing,
   onTriggerSync,
   lastSyncedAt,
-  siteName
+  siteName,
+  siteId
 }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'money' | 'supporting'>('all')
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<MoneyPageSuggestions | null>(null)
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set())
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [savingSuggestions, setSavingSuggestions] = useState(false)
+
+  // Auto-load suggestions when pages exist but few money pages are marked
+  useEffect(() => {
+    const moneyCount = pages.filter(p => p.is_money_page).length
+    if (siteId && pages.length > 0 && moneyCount < 3 && !suggestions && !loadingSuggestions) {
+      loadSuggestions()
+    }
+  }, [siteId, pages.length])
+
+  const loadSuggestions = async () => {
+    if (!siteId) return
+    setLoadingSuggestions(true)
+    try {
+      const data = await dashboardService.getSuggestedMoneyPages(siteId)
+      setSuggestions(data)
+      // Pre-select all suggestions
+      const allIds = new Set<number>()
+      Object.values(data.suggestions).forEach(group => 
+        group.forEach(p => allIds.add(p.id))
+      )
+      setSelectedSuggestions(allIds)
+      if (data.total_suggested > 0) {
+        setShowSuggestions(true)
+      }
+    } catch (e) {
+      console.error('Failed to load suggestions:', e)
+    } finally {
+      setLoadingSuggestions(false)
+    }
+  }
+
+  const handleAcceptSuggestions = async () => {
+    if (!siteId || selectedSuggestions.size === 0) return
+    setSavingSuggestions(true)
+    try {
+      await dashboardService.bulkSetMoneyPages(siteId, Array.from(selectedSuggestions), true)
+      setShowSuggestions(false)
+      window.location.reload()
+    } catch (e) {
+      console.error('Failed to save money pages:', e)
+    } finally {
+      setSavingSuggestions(false)
+    }
+  }
+
+  const toggleSuggestion = (id: number) => {
+    setSelectedSuggestions(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const handleAnalyze = async () => {
     setShowAnalysis(true)
@@ -163,13 +223,119 @@ export default function PagesScreen({
           </div>
         )}
 
-        {/* Instructions */}
-        <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 mb-6">
-          <p className="text-indigo-300 text-sm">
-            <strong>💡 Tip:</strong> Click the star icon to mark your most important pages (homepage, service pages, product pages). 
-            Siloq will build your content strategy around these pages.
-          </p>
-        </div>
+        {/* Smart Money Page Suggestions */}
+        {showSuggestions && suggestions && suggestions.total_suggested > 0 && (
+          <div className="bg-gradient-to-r from-amber-500/10 to-indigo-500/10 border border-amber-500/30 rounded-lg p-6 mb-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-amber-400 text-lg flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Siloq Found Your Money Pages
+                </h3>
+                <p className="text-slate-400 text-sm mt-1">
+                  Based on your site structure, these pages are most likely your main revenue drivers. 
+                  Uncheck any that don't apply, then confirm.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowSuggestions(false)}
+                className="text-slate-500 hover:text-slate-300 text-sm"
+              >
+                ✕ Dismiss
+              </button>
+            </div>
+            
+            {/* Suggestion Groups */}
+            <div className="space-y-4">
+              {suggestions.suggestions.homepage.length > 0 && (
+                <SuggestionGroup 
+                  title="🏠 Homepage" 
+                  pages={suggestions.suggestions.homepage}
+                  selected={selectedSuggestions}
+                  onToggle={toggleSuggestion}
+                />
+              )}
+              {suggestions.suggestions.service_pages.length > 0 && (
+                <SuggestionGroup 
+                  title="⚡ Service Pages" 
+                  pages={suggestions.suggestions.service_pages}
+                  selected={selectedSuggestions}
+                  onToggle={toggleSuggestion}
+                />
+              )}
+              {suggestions.suggestions.product_categories.length > 0 && (
+                <SuggestionGroup 
+                  title="🏷️ Product Categories" 
+                  pages={suggestions.suggestions.product_categories}
+                  selected={selectedSuggestions}
+                  onToggle={toggleSuggestion}
+                />
+              )}
+              {suggestions.suggestions.location_pages.length > 0 && (
+                <SuggestionGroup 
+                  title="📍 Location Pages" 
+                  pages={suggestions.suggestions.location_pages}
+                  selected={selectedSuggestions}
+                  onToggle={toggleSuggestion}
+                />
+              )}
+              {suggestions.suggestions.key_products.length > 0 && (
+                <SuggestionGroup 
+                  title="🛍️ Key Products" 
+                  pages={suggestions.suggestions.key_products}
+                  selected={selectedSuggestions}
+                  onToggle={toggleSuggestion}
+                />
+              )}
+            </div>
+            
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-700">
+              <p className="text-sm text-slate-400">
+                {selectedSuggestions.size} of {suggestions.total_suggested} pages selected
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSuggestions(false)}
+                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-sm"
+                >
+                  I'll do it manually
+                </button>
+                <button
+                  onClick={handleAcceptSuggestions}
+                  disabled={savingSuggestions || selectedSuggestions.size === 0}
+                  className="px-6 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-900 rounded-lg font-medium text-sm flex items-center gap-2"
+                >
+                  {savingSuggestions ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Confirm Money Pages ({selectedSuggestions.size})
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Only show tip if suggestions aren't showing */}
+        {!showSuggestions && (
+          <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 mb-6">
+            <p className="text-indigo-300 text-sm">
+              <strong>💡 Tip:</strong> Click the star icon to mark your most important pages (homepage, service pages, product pages). 
+              Siloq will build your content strategy around these pages.
+              {siteId && !loadingSuggestions && (
+                <button onClick={loadSuggestions} className="ml-2 underline hover:text-indigo-200">
+                  Or let Siloq detect them automatically →
+                </button>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Search and Filter */}
         <div className="flex gap-4 mb-6">
@@ -365,6 +531,58 @@ export default function PagesScreen({
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// Suggestion Group Component
+function SuggestionGroup({ 
+  title, 
+  pages, 
+  selected, 
+  onToggle 
+}: { 
+  title: string
+  pages: SuggestedMoneyPage[]
+  selected: Set<number>
+  onToggle: (id: number) => void
+}) {
+  if (pages.length === 0) return null
+  
+  return (
+    <div>
+      <h4 className="text-sm font-medium text-slate-300 mb-2">{title}</h4>
+      <div className="space-y-1">
+        {pages.map(page => (
+          <label
+            key={page.id}
+            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+              selected.has(page.id)
+                ? 'bg-amber-500/10 border border-amber-500/30'
+                : 'bg-slate-800/50 border border-slate-700/50 hover:border-slate-600'
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={selected.has(page.id)}
+              onChange={() => onToggle(page.id)}
+              className="w-4 h-4 rounded border-slate-600 text-amber-500 focus:ring-amber-500"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm truncate">{page.title}</div>
+              <div className="text-xs text-slate-500 truncate">{page.url}</div>
+            </div>
+            <div className="text-xs text-slate-400 hidden sm:block max-w-[200px] truncate">
+              {page.reason}
+            </div>
+            {page.is_money_page && (
+              <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">
+                Already marked
+              </span>
+            )}
+          </label>
+        ))}
+      </div>
     </div>
   )
 }

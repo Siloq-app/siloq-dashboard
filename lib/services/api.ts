@@ -425,6 +425,31 @@ export interface AnalysisResult {
   missing_links_count: number
 }
 
+export interface SuggestedMoneyPage {
+  id: number
+  url: string
+  title: string
+  page_type: string
+  post_type: string
+  is_money_page: boolean
+  reason: string
+}
+
+export interface MoneyPageSuggestions {
+  site_id: number
+  total_pages: number
+  total_suggested: number
+  already_marked: number
+  suggestions: {
+    homepage: SuggestedMoneyPage[]
+    service_pages: SuggestedMoneyPage[]
+    product_categories: SuggestedMoneyPage[]
+    key_products: SuggestedMoneyPage[]
+    location_pages: SuggestedMoneyPage[]
+  }
+  message: string
+}
+
 class DashboardService {
   async getHealthSummary(siteId: number | string): Promise<HealthSummary> {
     const res = await fetchWithAuth(`/api/v1/sites/${siteId}/health-summary/`)
@@ -554,6 +579,24 @@ class DashboardService {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to set homepage')
+    return data
+  }
+
+  async getSuggestedMoneyPages(siteId: number | string): Promise<MoneyPageSuggestions> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/suggested-money-pages/`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load suggestions')
+    return data
+  }
+
+  async bulkSetMoneyPages(siteId: number | string, pageIds: number[], clearOthers: boolean = false): Promise<{ message: string; money_page_count: number }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/bulk-set-money-pages/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page_ids: pageIds, clear_others: clearOthers }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to set money pages')
     return data
   }
 

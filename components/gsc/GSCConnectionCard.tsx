@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { gscService, GSCStatus } from '@/lib/services/api'
+import { fetchWithAuth } from '@/lib/auth-headers'
 import { Search, CheckCircle2, AlertCircle, Loader2, ExternalLink } from 'lucide-react'
 
 interface Props {
@@ -63,6 +64,20 @@ export default function GSCConnectionCard({ siteId, onConnected }: Props) {
     )
   }
 
+  const handleDisconnect = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/disconnect/`, { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to disconnect')
+      setStatus({ connected: false, gsc_site_url: null, connected_at: null })
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (status?.connected) {
     return (
       <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
@@ -76,10 +91,23 @@ export default function GSCConnectionCard({ siteId, onConnected }: Props) {
           <p className="text-sm text-muted-foreground mb-3">
             Connected to: <span className="font-medium text-foreground">{status.gsc_site_url}</span>
           </p>
-          {status.connected_at && (
-            <p className="text-xs text-muted-foreground">
-              Connected {new Date(status.connected_at).toLocaleDateString()}
-            </p>
+          <div className="flex items-center gap-3">
+            {status.connected_at && (
+              <p className="text-xs text-muted-foreground">
+                Connected {new Date(status.connected_at).toLocaleDateString()}
+              </p>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleDisconnect}
+              className="text-xs"
+            >
+              Disconnect & Reconnect
+            </Button>
+          </div>
+          {error && (
+            <p className="text-xs text-red-500 mt-2">{error}</p>
           )}
         </CardContent>
       </Card>
