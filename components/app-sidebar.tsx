@@ -81,7 +81,7 @@ const data = {
     },
     {
       title: 'Search Console',
-      url: '#',
+      url: '/dashboard?tab=search-console',
       icon: Search,
       items: [
         {
