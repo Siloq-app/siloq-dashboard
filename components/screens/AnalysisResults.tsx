@@ -91,27 +91,82 @@ function SeverityBadge({ severity }: { severity: 'high' | 'medium' | 'low' }) {
   )
 }
 
-function CannibalizationCard({ issue }: { issue: CannibalizationIssue }) {
+function ValidationBadge({ status, gscConnected }: { status: 'gsc_validated' | 'potential'; gscConnected?: boolean }) {
+  if (status === 'gsc_validated') {
+    return (
+      <span className="px-2 py-0.5 rounded-full text-xs font-medium border bg-emerald-500/20 text-emerald-400 border-emerald-500/30 flex items-center gap-1">
+        <CheckCircle className="w-3 h-3" />
+        GSC Validated
+      </span>
+    )
+  }
+  return (
+    <span className="px-2 py-0.5 rounded-full text-xs font-medium border bg-slate-600/30 text-slate-400 border-slate-600/50" title={!gscConnected ? 'Connect Google Search Console to validate this conflict' : 'Awaiting GSC validation'}>
+      Potential Conflict
+    </span>
+  )
+}
+
+function CannibalizationCard({ issue, gscConnected }: { issue: CannibalizationIssue; gscConnected?: boolean }) {
   const [expanded, setExpanded] = useState(false)
+  const isValidated = issue.validation_status === 'gsc_validated'
+  const gscData = issue.gsc_data
   
   return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4">
+    <div className={`bg-slate-800/50 border rounded-lg p-4 ${isValidated ? 'border-emerald-500/30' : 'border-slate-700/50'}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <SeverityBadge severity={issue.severity} />
+            <ValidationBadge status={issue.validation_status} gscConnected={gscConnected} />
             <span className="text-sm text-slate-400">
               {issue.competing_pages.length} pages competing
             </span>
+            {gscData && (
+              <span className="text-xs text-slate-500">
+                {gscData.total_impressions.toLocaleString()} impressions
+              </span>
+            )}
           </div>
+          
+          {/* Conflict type label */}
+          <div className="text-xs text-slate-500 mb-1.5 uppercase tracking-wide">
+            {issue.type?.replace(/_/g, ' ') || 'Unknown Type'}
+          </div>
+          
           <h4 className="font-medium text-white">
             <span className="font-mono bg-slate-700 px-2 py-0.5 rounded text-sm">
               {issue.keyword}
             </span>
           </h4>
+          
+          {/* Explanation */}
+          {issue.explanation && (
+            <p className="text-sm text-slate-400 mt-2">{issue.explanation}</p>
+          )}
+          
+          {/* GSC impression split */}
+          {gscData && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs text-slate-500">Split:</span>
+              {gscData.all_competing_pages.slice(0, 4).map((p, i) => (
+                <span key={i} className={`text-xs px-1.5 py-0.5 rounded ${i === 0 ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-700 text-slate-400'}`}>
+                  {p.share}
+                </span>
+              ))}
+            </div>
+          )}
+          
           {issue.suggested_king && (
             <p className="text-sm text-slate-400 mt-2">
               Suggested winner: <span className="text-indigo-400">{issue.suggested_king.title}</span>
+            </p>
+          )}
+          
+          {/* Connect GSC prompt for potential issues */}
+          {!isValidated && !gscConnected && (
+            <p className="text-xs text-slate-500 mt-2 italic">
+              Connect Google Search Console to validate this conflict with real search data.
             </p>
           )}
         </div>
@@ -125,20 +180,35 @@ function CannibalizationCard({ issue }: { issue: CannibalizationIssue }) {
       
       {expanded && (
         <div className="mt-4 pt-4 border-t border-slate-700">
+          {/* Recommendation */}
+          {issue.recommendation && (
+            <div className="bg-indigo-500/10 rounded-lg p-3 mb-3 text-sm text-slate-300">
+              <span className="text-indigo-400 font-medium">Fix: </span>{issue.recommendation}
+            </div>
+          )}
+          
           <p className="text-sm text-slate-400 mb-3">Competing pages:</p>
           <div className="space-y-2">
-            {issue.competing_pages.map((page) => (
-              <div key={page.id} className="flex items-center gap-2 text-sm">
-                <span className="text-slate-500">•</span>
+            {issue.competing_pages.map((page, idx) => (
+              <div key={page.id || idx} className="flex items-center gap-2 text-sm">
+                <span className="text-slate-500">{idx === 0 && isValidated ? '🏆' : '⚔️'}</span>
                 <a 
                   href={page.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-slate-300 hover:text-white truncate flex-1"
                 >
-                  {page.title}
+                  {page.title || page.url}
                 </a>
-                <ExternalLink className="w-3 h-3 text-slate-500" />
+                {page.page_type && (
+                  <span className="text-xs bg-slate-700 px-1.5 py-0.5 rounded text-slate-400">
+                    {page.page_type}
+                  </span>
+                )}
+                {page.impression_share && (
+                  <span className="text-xs text-slate-500">{page.impression_share}</span>
+                )}
+                <ExternalLink className="w-3 h-3 text-slate-500 flex-shrink-0" />
               </div>
             ))}
           </div>
@@ -148,7 +218,7 @@ function CannibalizationCard({ issue }: { issue: CannibalizationIssue }) {
               Fix Issue
             </button>
             <button className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg transition-colors">
-              Ignore
+              Dismiss
             </button>
           </div>
         </div>
@@ -312,13 +382,24 @@ export default function AnalysisResults({ results, isLoading, onAnalyze }: Props
             <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-full text-xs font-medium">
               {results.cannibalization_count} found
             </span>
+            {results.gsc_connected ? (
+              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-medium flex items-center gap-1">
+                <CheckCircle className="w-3 h-3" /> GSC Connected
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 bg-slate-600/30 text-slate-400 rounded-full text-xs font-medium">
+                GSC Not Connected
+              </span>
+            )}
           </div>
           <p className="text-slate-400 text-sm mb-4">
-            These pages are competing for the same keywords, diluting your search authority.
+            {results.gsc_connected
+              ? 'Validated conflicts confirmed by Google Search Console data.'
+              : 'Potential conflicts detected via URL/title analysis. Connect GSC to validate with real search data.'}
           </p>
           <div className="space-y-3">
             {results.cannibalization_issues.map((issue, index) => (
-              <CannibalizationCard key={index} issue={issue} />
+              <CannibalizationCard key={index} issue={issue} gscConnected={results.gsc_connected} />
             ))}
           </div>
         </div>

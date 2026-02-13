@@ -349,15 +349,34 @@ export interface CompetingPage {
   id: number
   url: string
   title: string
-  impression_share: number | null
+  page_type: string
+  impression_share: string | number | null
+  clicks: number | null
+  position: number | null
 }
 
 export interface CannibalizationIssue {
   id: number
+  type: string
   keyword: string
   severity: 'high' | 'medium' | 'low'
+  explanation: string
+  recommendation: string
   recommendation_type: 'consolidate' | 'differentiate' | 'redirect' | null
   total_impressions: number | null
+  validation_status: 'gsc_validated' | 'potential'
+  validation_source: 'google_search_console' | 'url_pattern'
+  gsc_data: {
+    total_impressions: number
+    pages_in_cluster: number
+    all_competing_pages: Array<{
+      url: string
+      clicks: number
+      impressions: number
+      position: number
+      share: string
+    }>
+  } | null
   competing_pages: CompetingPage[]
   suggested_king: TargetPage | null
   created_at: string
@@ -417,6 +436,7 @@ export interface AnalysisResult {
   }
   cannibalization_issues: CannibalizationIssue[]
   cannibalization_count: number
+  gsc_connected: boolean
   recommendations: ContentRecommendation[]
   recommendation_count: number
   page_count: number
