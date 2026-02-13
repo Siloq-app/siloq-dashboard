@@ -372,8 +372,9 @@ export interface GscData {
 }
 
 class GscService {
-  async getAuthUrl(): Promise<{ url: string }> {
-    const res = await fetchWithAuth('/api/v1/gsc/auth-url/');
+  async getAuthUrl(siteId?: number): Promise<{ url: string }> {
+    const params = siteId ? `?site_id=${siteId}` : '';
+    const res = await fetchWithAuth(`/api/v1/gsc/auth-url/${params}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || data.detail || 'Failed to get GSC auth URL');
     return { url: data.auth_url || data.url };

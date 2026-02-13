@@ -83,7 +83,7 @@ export default function SearchConsole({ selectedSite }: Props) {
     setConnectionError(null);
     setConnectionStep('loading');
     try {
-      const { url } = await gscService.getAuthUrl();
+      const { url } = await gscService.getAuthUrl(siteId ?? undefined);
       window.location.href = url;
     } catch (err: unknown) {
       setConnectionError(err instanceof Error ? err.message : 'Failed to start authorization');
