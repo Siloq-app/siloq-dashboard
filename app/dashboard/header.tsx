@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Shield, ChevronDown, Check, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AutomationMode } from './types';
-import { useDashboardData } from '@/lib/hooks/use-dashboard-data';
+import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -43,7 +43,7 @@ export default function Header({
 }: HeaderProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSiteDropdown, setShowSiteDropdown] = useState(false);
-  const { sites, selectedSite, selectSite } = useDashboardData();
+  const { sites, selectedSite, selectSite } = useDashboardContext();
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">

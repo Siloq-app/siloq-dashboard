@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/card';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { DashboardProvider } from '@/lib/hooks/dashboard-context';
 import Header from '@/app/dashboard/header';
 import { fetchWithAuth } from '@/lib/auth-headers';
 
@@ -160,6 +161,7 @@ export default function ApiKeysPage() {
   };
 
   return (
+    <DashboardProvider>
     <SidebarProvider>
       <Suspense fallback={null}>
         <AppSidebar />
@@ -399,5 +401,6 @@ export default function ApiKeysPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
+    </DashboardProvider>
   );
 }

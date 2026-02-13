@@ -11,7 +11,7 @@ import PagesScreen from '@/components/screens/PagesScreen';
 import GenerateModal from '@/components/modals/GenerateModal';
 import ApprovalModal from '@/components/modals/ApprovalModal';
 import CannibalizationModal from '@/components/modals/CannibalizationModal';
-import { useDashboardData } from '@/lib/hooks/use-dashboard-data';
+import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { TabType, AutomationMode } from './types';
 import InternalLinks from '@/components/screens/InternalLinks';
 import SearchConsole from '@/components/screens/SearchConsole';
@@ -42,7 +42,7 @@ export default function Dashboard({
     pendingChanges,
     linkOpportunities,
     isLoading,
-  } = useDashboardData();
+  } = useDashboardContext();
 
   const healthScore =
     (siteOverview?.health_score ?? selectedSite?.page_count)

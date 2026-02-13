@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { DashboardProvider } from '@/lib/hooks/dashboard-context';
 import Header from '@/app/dashboard/header';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.siloq.ai';
@@ -121,6 +122,7 @@ export default function SubscriptionPage() {
   };
 
   return (
+    <DashboardProvider>
     <SidebarProvider>
       <Suspense fallback={null}>
         <AppSidebar />
@@ -219,5 +221,6 @@ export default function SubscriptionPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
+    </DashboardProvider>
   );
 }
