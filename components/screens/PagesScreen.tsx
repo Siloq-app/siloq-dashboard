@@ -81,17 +81,16 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
         `/api/v1/pages/${pageId}/toggle_money_page/`,
         { method: 'POST' }
       );
+      if (!res.ok) {
+        throw new Error(`Failed to toggle money page status (${res.status})`);
+      }
       const data = await res.json();
       
-      if (data.success) {
-        setPages(prev =>
-          prev.map(p =>
-            p.id === pageId ? { ...p, is_money_page: data.is_money_page } : p
-          )
-        );
-      } else {
-        throw new Error(data.error || 'Failed to toggle money page status');
-      }
+      setPages(prev =>
+        prev.map(p =>
+          p.id === pageId ? { ...p, is_money_page: data.is_money_page } : p
+        )
+      );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to toggle');
     } finally {

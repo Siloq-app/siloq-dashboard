@@ -9,6 +9,12 @@ export function getAuthHeaders(): Record<string, string> {
   return { Authorization: `Bearer ${token}` };
 }
 
+const BACKEND_URL = (
+  typeof window !== 'undefined'
+    ? (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || 'https://api.siloq.ai')
+    : (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.siloq.ai')
+).replace(/\/+$/, '');
+
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {}
@@ -18,5 +24,7 @@ export async function fetchWithAuth(
   if (auth.Authorization) {
     headers.set('Authorization', auth.Authorization);
   }
-  return fetch(url, { ...options, headers });
+  // Prepend backend URL for relative API paths
+  const fullUrl = url.startsWith('/api/v1') ? `${BACKEND_URL}${url}` : url;
+  return fetch(fullUrl, { ...options, headers });
 }
