@@ -505,12 +505,14 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: type === 'merge' ? 'merge_plan' : 'spoke_rewrite',
+          action: type === 'merge' ? 'merge_plan' : type === 'spoke' ? 'spoke_rewrite' : type === 'merge_draft' ? 'merge_draft' : 'spoke_draft',
           conflict_id: conflictId,
           site_id: siteId,
         }),
       });
-      const plan = await response.json();
+      const data = await response.json();
+      // API returns { plan: {...}, id, action, ... } — extract the nested plan
+      const plan = data.plan || data;
       setAiPlans(prev => ({ ...prev, [key]: plan }));
       setGenerated(prev => ({ ...prev, [key]: true }));
     } catch {
@@ -977,8 +979,11 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                 </div>
 
                                 <div className="flex gap-2">
-                                  <button className="flex-1 px-4 py-2.5 rounded-lg border-none cursor-pointer bg-gradient-to-br from-[#a855f7] to-[#6C5CE7] text-white text-xs font-bold tracking-wide shadow-[0_4px_16px_#a855f730]">
-                                    Generate Full Draft →
+                                  <button
+                                    onClick={() => handleAction(conflict.id, 'merge_draft')}
+                                    disabled={generating}
+                                    className="flex-1 px-4 py-2.5 rounded-lg border-none cursor-pointer bg-gradient-to-br from-[#a855f7] to-[#6C5CE7] text-white text-xs font-bold tracking-wide shadow-[0_4px_16px_#a855f730] disabled:opacity-50">
+                                    {generating && String(activeAction?.type) === 'merge_draft' ? 'Generating...' : 'Generate Full Draft →'}
                                   </button>
                                   <button className="px-4 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] text-[#8892b0] text-xs font-semibold cursor-pointer">
                                     Export Plan
@@ -1060,8 +1065,11 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                 ))}
 
                                 <div className="flex gap-2 mt-3.5">
-                                  <button className="flex-1 px-4 py-2.5 rounded-lg border-none cursor-pointer bg-gradient-to-br from-[#FFA62B] to-[#FF9500] text-white text-xs font-bold tracking-wide shadow-[0_4px_16px_#FFA62B30]">
-                                    Generate Spoke Content →
+                                  <button
+                                    onClick={() => handleAction(conflict.id, 'spoke_draft')}
+                                    disabled={generating}
+                                    className="flex-1 px-4 py-2.5 rounded-lg border-none cursor-pointer bg-gradient-to-br from-[#FFA62B] to-[#FF9500] text-white text-xs font-bold tracking-wide shadow-[0_4px_16px_#FFA62B30] disabled:opacity-50">
+                                    {generating && String(activeAction?.type) === 'spoke_draft' ? 'Generating...' : 'Generate Spoke Content →'}
                                   </button>
                                   <button className="px-4 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] text-[#8892b0] text-xs font-semibold cursor-pointer">
                                     Export Plan
