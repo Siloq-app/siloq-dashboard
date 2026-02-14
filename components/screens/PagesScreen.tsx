@@ -34,9 +34,10 @@ interface Page {
 
 interface PagesScreenProps {
   onAnalyze?: (pageIds: number[]) => void;
+  siteId?: number | string;
 }
 
-export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
+export default function PagesScreen({ onAnalyze, siteId }: PagesScreenProps) {
   const [pages, setPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -54,7 +55,8 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
     setIsLoading(true);
     setError('');
     try {
-      const res = await fetchWithAuth('/api/v1/pages/');
+      const url = siteId ? `/api/v1/pages/?site_id=${siteId}` : '/api/v1/pages/';
+      const res = await fetchWithAuth(url);
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.message || data.detail || 'Failed to load pages');
@@ -68,7 +70,7 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [siteId]);
 
   useEffect(() => {
     loadPages();

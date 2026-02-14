@@ -116,6 +116,7 @@ export default function Dashboard({
       case 'pages':
         return (
           <PagesScreen
+            siteId={selectedSite?.id}
             onAnalyze={(pageIds) => {
               setSelectedPageIds(pageIds);
               setShowCannibalizationModal(true);
