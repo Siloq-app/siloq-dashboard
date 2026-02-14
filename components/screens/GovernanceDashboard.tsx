@@ -53,16 +53,16 @@ export default function GovernanceDashboard({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 lg:gap-4">
           {[
             {
-              title: 'Cannibalization Issues',
+              title: 'Competing Pages',
               value: cannibalizationIssues.length,
               change: '+12.5%',
               trend: 'up',
               description: 'Issues increasing',
-              subtext: 'Detected by Siloq',
+              subtext: 'Found by Siloq',
               color: 'text-red-400',
             },
             {
-              title: 'Silos Mapped',
+              title: 'Service Categories',
               value: silos.length,
               change: '+8%',
               trend: 'up',
@@ -254,10 +254,10 @@ export default function GovernanceDashboard({
             </span>
             <div className="leading-tight">
               <p className="text-sm font-semibold text-slate-900">
-                Reverse Silo Architecture
+                Content Organization
               </p>
               <p className="text-xs text-slate-500">
-                Money Pages and Supporting Content
+                Your service pages and supporting content
               </p>
             </div>
           </div>

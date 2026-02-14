@@ -64,7 +64,7 @@ export default function ApiKeysPage() {
       const res = await fetchWithAuth('/api/v1/api-keys');
       const data = await res.json();
       if (res.ok) {
-        setApiKeys(data.keys || []);
+        setApiKeys(data.results || data.keys || data || []);
       } else {
         setError(data.message || 'Failed to fetch API keys');
       }

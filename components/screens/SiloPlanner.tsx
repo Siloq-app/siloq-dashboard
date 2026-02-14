@@ -209,7 +209,7 @@ export default function SiloPlanner({
         </div>
       ))}
 
-      {/* Silo Architecture Tree View Modal */}
+      {/* Content Structure Modal */}
       <SiloTreeView
         silo={selectedSilo || displaySilos[0]}
         isOpen={isTreeViewOpen}

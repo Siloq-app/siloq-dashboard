@@ -117,7 +117,7 @@ function SiloHealthRing({ score, size = 100 }: { score: number; size?: number })
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span style={{ fontSize: size * 0.32, fontWeight: 800, color, letterSpacing: -2, lineHeight: 1 }}>{score}</span>
-        <span className="text-[8px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-[1.5px] mt-0.5">SILO HEALTH</span>
+        <span className="text-[8px] text-slate-500 font-mono tracking-[1.5px] mt-0.5">SILO HEALTH</span>
       </div>
     </div>
   );
@@ -371,7 +371,7 @@ function ClickShareBar({ pages }: { pages: ConflictPage[] }) {
         <div key={i} className="relative opacity-70 transition-all duration-500"
           style={{ width: `${p.clickShare}%`, background: PAGE_COLORS[i] }}>
           {p.clickShare > 12 && (
-            <span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold text-white font-[family-name:var(--font-jetbrains-mono)]">
+            <span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold text-white font-mono">
               {p.clickShare}%
             </span>
           )}
@@ -543,7 +543,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-[#07080f]">
+      <div className="flex items-center justify-center min-h-[60vh] bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-[#6C5CE7]" />
       </div>
     );
@@ -551,7 +551,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
 
   if (error && conflicts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] bg-[#07080f] gap-4">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] bg-white gap-4">
         <p className="text-sm text-red-400">{error}</p>
         <Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>
       </div>
@@ -559,7 +559,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
   }
 
   return (
-    <div className="font-[family-name:var(--font-outfit)] bg-[#07080f] text-[#e6e6e6] min-h-screen">
+    <div className="font-sans bg-white text-slate-900 min-h-screen">
       <style>{`
         @keyframes bf-pulse { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.4); opacity: 0.3; } }
         @keyframes bf-fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -568,41 +568,41 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
       `}</style>
 
       {/* TOP BAR */}
-      <div className="flex items-center justify-between px-6 py-3.5 border-b border-white/[0.03] bg-white/[0.01]">
+      <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-200 bg-slate-50">
         <div className="flex items-center gap-3.5">
           <div className="w-[34px] h-[34px] rounded-[9px] bg-gradient-to-br from-[#6C5CE7] to-[#a855f7] flex items-center justify-center font-black text-[15px] -tracking-wider shadow-[0_2px_16px_#6C5CE730]">
             S
           </div>
           <div>
             <span className="text-sm font-extrabold -tracking-wide">SILOQ</span>
-            <span className="text-[10px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] ml-2.5 tracking-wider">GSC PERFORMANCE</span>
+            <span className="text-[10px] text-slate-500 font-mono ml-2.5 tracking-wider">GSC PERFORMANCE</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex gap-[3px] bg-white/[0.02] rounded-[7px] p-[3px]">
+          <div className="flex gap-[3px] bg-slate-50 rounded-[7px] p-[3px]">
             {(['battlefield', 'list'] as const).map(v => (
               <button key={v} onClick={() => setViewMode(v)}
-                className={`px-3.5 py-[5px] rounded-[5px] border-none cursor-pointer text-[11px] font-semibold font-[family-name:var(--font-jetbrains-mono)] tracking-wide transition-all duration-200 ${
-                  viewMode === v ? 'bg-[#6C5CE718] text-[#a78bfa]' : 'bg-transparent text-[#5a6072]'
+                className={`px-3.5 py-[5px] rounded-[5px] border-none cursor-pointer text-[11px] font-semibold font-mono tracking-wide transition-all duration-200 ${
+                  viewMode === v ? 'bg-indigo-50 text-indigo-600' : 'bg-transparent text-slate-500'
                 }`}>
                 {v === 'battlefield' ? 'Battlefield' : 'Conflicts'}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-[5px] rounded-[7px] bg-[#34C75910] border border-[#34C75925]">
+          <div className="flex items-center gap-1.5 px-3 py-[5px] rounded-[7px] bg-green-50 border border-[#34C75925]">
             <div className="w-1.5 h-1.5 rounded-full bg-[#34C759] shadow-[0_0_8px_#34C759]" />
-            <span className="text-[10px] text-[#34C759] font-[family-name:var(--font-jetbrains-mono)] font-medium">SYNCED</span>
+            <span className="text-[10px] text-[#34C759] font-mono font-medium">SYNCED</span>
           </div>
         </div>
       </div>
 
       {/* SILO HEALTH + METRICS */}
-      <div className={`grid grid-cols-[auto_1fr] border-b border-white/[0.03] transition-all duration-500 ${animateIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-        <div className="px-6 py-4 border-r border-white/[0.03] flex items-center gap-4 bg-white/[0.01]">
+      <div className={`grid grid-cols-[auto_1fr] border-b border-slate-200 transition-all duration-500 ${animateIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+        <div className="px-6 py-4 border-r border-slate-200 flex items-center gap-4 bg-slate-50">
           <SiloHealthRing score={health.score} size={88} />
           <div>
-            <div className="text-[10px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1">SITE STATUS</div>
+            <div className="text-[10px] text-slate-500 font-mono tracking-wider mb-1">SITE STATUS</div>
             <div className="text-xs text-[#8892b0] leading-relaxed">
               <span className="text-[#FF6B6B] font-bold">{health.conflictedQueries}</span> cannibalized queries<br />
               <span className="text-[#34C759] font-semibold">{health.cleanQueries}</span> clean queries
@@ -618,8 +618,8 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
             { label: 'Avg Position', value: perf.avgPosition.value.toFixed(1), delta: perf.avgPosition.delta, prefix: '#', invertDelta: true },
             { label: 'Position Volatility', value: null as string | null, isVolatility: true },
           ].map((m, i) => (
-            <div key={i} className={`px-[18px] py-3.5 ${i < 4 ? 'border-r border-white/[0.02]' : ''} ${m.isVolatility ? 'bg-[#FF3B3006]' : 'bg-white/[0.01]'}`}>
-              <div className={`text-[9px] font-[family-name:var(--font-jetbrains-mono)] tracking-[1.2px] uppercase mb-1.5 flex items-center gap-1 ${m.isVolatility ? 'text-[#FF6B6B80]' : 'text-[#5a6072]'}`}>
+            <div key={i} className={`px-[18px] py-3.5 ${i < 4 ? 'border-r border-slate-200' : ''} ${m.isVolatility ? 'bg-red-50' : 'bg-slate-50'}`}>
+              <div className={`text-[9px] font-mono tracking-[1.2px] uppercase mb-1.5 flex items-center gap-1 ${m.isVolatility ? 'text-[#FF6B6B80]' : 'text-slate-500'}`}>
                 {m.isVolatility && <span className="text-[10px]">⚡</span>}
                 {m.label}
               </div>
@@ -627,9 +627,9 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                 <VolatilityPulse value={perf.positionVolatility.value} />
               ) : (
                 <div className="flex items-baseline gap-2">
-                  <span className="text-[22px] font-bold -tracking-wider text-[#e6e6e6]">{m.prefix}{m.value}</span>
+                  <span className="text-[22px] font-bold -tracking-wider text-slate-900">{m.prefix}{m.value}</span>
                   {m.delta !== undefined && (
-                    <span className={`text-[10px] font-semibold font-[family-name:var(--font-jetbrains-mono)] ${
+                    <span className={`text-[10px] font-semibold font-mono ${
                       (m.invertDelta ? m.delta < 0 : m.delta > 0) ? 'text-[#34C759]' : 'text-[#FF3B30]'
                     }`}>
                       {(m.invertDelta ? m.delta < 0 : m.delta > 0) ? '▲' : '▼'} {Math.abs(m.delta)}%
@@ -646,29 +646,29 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
       <div className="grid grid-cols-[220px_1fr] min-h-[calc(100vh-200px)]">
 
         {/* LEFT SIDEBAR */}
-        <div className="border-r border-white/[0.03] p-4 bg-white/[0.01] overflow-y-auto">
-          <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-[1.5px] mb-2.5">
+        <div className="border-r border-slate-200 p-4 bg-slate-50 overflow-y-auto">
+          <div className="text-[9px] text-slate-500 font-mono tracking-[1.5px] mb-2.5">
             SILOQ FILTERS
           </div>
 
           <div
             onClick={() => setShowOnlyCannibalized(!showOnlyCannibalized)}
             className={`flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer mb-1.5 transition-all duration-200 border ${
-              showOnlyCannibalized ? 'bg-[#6C5CE710] border-[#6C5CE730]' : 'bg-transparent border-white/[0.03]'
+              showOnlyCannibalized ? 'bg-[#6C5CE710] border-[#6C5CE730]' : 'bg-transparent border-slate-200'
             }`}>
             <div className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[9px] text-white font-bold transition-all duration-200 ${
               showOnlyCannibalized ? 'bg-[#6C5CE7]' : 'bg-white/[0.06]'
             }`}>
               {showOnlyCannibalized ? '✓' : ''}
             </div>
-            <span className={`text-[11px] font-medium ${showOnlyCannibalized ? 'text-[#a78bfa]' : 'text-[#8892b0]'}`}>
+            <span className={`text-[11px] font-medium ${showOnlyCannibalized ? 'text-indigo-600' : 'text-[#8892b0]'}`}>
               Cannibalized Only
             </span>
           </div>
 
-          <div className="h-px bg-white/[0.03] my-3" />
+          <div className="h-px bg-slate-50 my-3" />
 
-          <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-[1.5px] mb-2">
+          <div className="text-[9px] text-slate-500 font-mono tracking-[1.5px] mb-2">
             SEVERITY
           </div>
 
@@ -688,20 +688,20 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                     {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
                   </span>
                 </div>
-                <span className="text-[10px] font-[family-name:var(--font-jetbrains-mono)] text-[#5a6072]">{count}</span>
+                <span className="text-[10px] font-mono text-slate-500">{count}</span>
               </div>
             );
           })}
 
-          <div className="h-px bg-white/[0.03] my-3" />
+          <div className="h-px bg-slate-50 my-3" />
 
-          <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-[1.5px] mb-2">
+          <div className="text-[9px] text-slate-500 font-mono tracking-[1.5px] mb-2">
             GSC FILTERS
           </div>
           {['Last 28 days', 'United States', 'All Devices'].map((f, i) => (
-            <div key={i} className="px-2.5 py-[7px] rounded-[7px] mb-[3px] bg-white/[0.015] border border-white/[0.03] text-[11px] text-[#8892b0] cursor-pointer flex justify-between items-center">
+            <div key={i} className="px-2.5 py-[7px] rounded-[7px] mb-[3px] bg-white/[0.015] border border-slate-200 text-[11px] text-[#8892b0] cursor-pointer flex justify-between items-center">
               <span>{f}</span>
-              <span className="text-[8px] text-[#5a6072]">▾</span>
+              <span className="text-[8px] text-slate-500">▾</span>
             </div>
           ))}
         </div>
@@ -711,24 +711,24 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
 
           {/* Battlefield View */}
           {viewMode === 'battlefield' && (
-            <div className="p-5 px-6 border-b border-white/[0.03]" style={{ animation: 'bf-fadeUp 0.4s ease' }}>
+            <div className="p-5 px-6 border-b border-slate-200" style={{ animation: 'bf-fadeUp 0.4s ease' }}>
               <div className="flex justify-between items-center mb-3">
                 <div>
                   <div className="text-[13px] font-bold -tracking-wide">Cannibalization Battlefield</div>
-                  <div className="text-[10px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] mt-0.5">
+                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">
                     Clusters = pages fighting for the same query · Click a cluster to investigate
                   </div>
                 </div>
                 <div className="flex gap-3">
                   {PAGE_COLORS.slice(0, 4).map((c, i) => (
-                    <div key={i} className="flex items-center gap-1 text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)]">
+                    <div key={i} className="flex items-center gap-1 text-[9px] text-slate-500 font-mono">
                       <div className="w-2 h-2 rounded-sm" style={{ background: c }} />
                       {['Hub', 'Page 2', 'Page 3', 'Page 4'][i]}
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="bg-[#0a0c14] rounded-xl border border-white/[0.03] p-2">
+              <div className="bg-slate-100 rounded-xl border border-slate-200 p-2">
                 <BattlefieldChart conflicts={filtered} onSelect={setSelectedConflict} selectedId={selectedConflict} />
               </div>
             </div>
@@ -736,7 +736,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
 
           {/* Conflict List */}
           <div className="px-6 py-4 flex-1">
-            <div className="text-[11px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-[1.2px] mb-3">
+            <div className="text-[11px] text-slate-500 font-mono tracking-[1.2px] mb-3">
               {viewMode === 'battlefield' ? 'CONFLICT DETAILS' : 'CANNIBALIZED QUERIES'} ({filtered.length})
             </div>
 
@@ -756,33 +756,33 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                     style={{ gridTemplateColumns: '1fr 100px 80px 80px 140px 60px' }}>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[8px] font-bold tracking-[1.2px] px-1.5 py-0.5 rounded font-[family-name:var(--font-jetbrains-mono)]"
+                        <span className="text-[8px] font-bold tracking-[1.2px] px-1.5 py-0.5 rounded font-mono"
                           style={{ background: sev.bg, color: sev.color, border: `1px solid ${sev.color}25` }}>
                           {sev.label}
                         </span>
                         <span className="text-sm font-semibold -tracking-wide">&ldquo;{conflict.query}&rdquo;</span>
                       </div>
-                      <div className="text-[10px] text-[#5a6072] mt-[3px] font-[family-name:var(--font-jetbrains-mono)]">
+                      <div className="text-[10px] text-slate-500 mt-[3px] font-mono">
                         {conflict.pages.length} pages competing
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wide">CLICKS</div>
+                      <div className="text-[9px] text-slate-500 font-mono tracking-wide">CLICKS</div>
                       <div className="text-[15px] font-bold -tracking-wide">{conflict.totalClicks}</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wide">IMP</div>
+                      <div className="text-[9px] text-slate-500 font-mono tracking-wide">IMP</div>
                       <div className="text-[15px] font-bold -tracking-wide">{(conflict.totalImpressions / 1000).toFixed(1)}k</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wide">VOLATILITY</div>
+                      <div className="text-[9px] text-slate-500 font-mono tracking-wide">VOLATILITY</div>
                       <VolatilityPulse value={conflict.volatility} />
                     </div>
                     <div>
-                      <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wide mb-[3px]">CLICK SHARE</div>
+                      <div className="text-[9px] text-slate-500 font-mono tracking-wide mb-[3px]">CLICK SHARE</div>
                       <ClickShareBar pages={conflict.pages} />
                     </div>
-                    <div className="text-center text-base text-[#5a6072] transition-transform duration-300" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }}>
+                    <div className="text-center text-base text-slate-500 transition-transform duration-300" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }}>
                       ▾
                     </div>
                   </div>
@@ -791,14 +791,14 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                   {isOpen && (
                     <div className="px-4 pb-4" style={{ animation: 'bf-fadeUp 0.3s ease', borderTop: `1px solid ${sev.color}15` }}>
                       {/* Flip-Flop Chart */}
-                      <div className="my-3 p-3 bg-[#0a0c14] rounded-[10px] border border-white/[0.03]">
+                      <div className="my-3 p-3 bg-slate-100 rounded-[10px] border border-slate-200">
                         <div className="flex justify-between items-center mb-2">
-                          <div className="text-[10px] font-semibold text-[#8892b0] font-[family-name:var(--font-jetbrains-mono)] tracking-wide">
+                          <div className="text-[10px] font-semibold text-[#8892b0] font-mono tracking-wide">
                             ⚡ FLIP-FLOP DETECTION — 28 Day Position History
                           </div>
                           <div className="flex gap-2.5">
                             {conflict.pages.map((p, i) => (
-                              <div key={i} className="flex items-center gap-1 text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)]">
+                              <div key={i} className="flex items-center gap-1 text-[9px] text-slate-500 font-mono">
                                 <div className="w-2.5 h-[3px] rounded-sm" style={{ background: PAGE_COLORS[i] }} />
                                 {p.url.split('/').pop()?.slice(0, 18)}
                               </div>
@@ -823,15 +823,15 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
 
                               <div className="flex items-center gap-1.5 mb-2">
                                 <div className="w-2.5 h-2.5 rounded" style={{ background: PAGE_COLORS[i] }} />
-                                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded font-[family-name:var(--font-jetbrains-mono)] tracking-wider"
+                                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded font-mono tracking-wider"
                                   style={{ background: `${roleColor}15`, color: roleColor }}>
                                   {roleLabel}
                                 </span>
-                                {i === 0 && <span className="text-[8px] text-[#6C5CE7] font-[family-name:var(--font-jetbrains-mono)]">★ PRIMARY</span>}
+                                {i === 0 && <span className="text-[8px] text-[#6C5CE7] font-mono">★ PRIMARY</span>}
                               </div>
 
-                              <div className="text-xs font-semibold mb-0.5 text-[#e6e6e6] leading-tight">{page.title}</div>
-                              <div className="text-[10px] text-[#6C5CE7] font-[family-name:var(--font-jetbrains-mono)] mb-2.5 break-all">{page.url}</div>
+                              <div className="text-xs font-semibold mb-0.5 text-slate-900 leading-tight">{page.title}</div>
+                              <div className="text-[10px] text-[#6C5CE7] font-mono mb-2.5 break-all">{page.url}</div>
 
                               <div className="grid grid-cols-2 gap-2">
                                 {[
@@ -841,7 +841,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                   { label: 'Click Share', value: `${page.clickShare}%` },
                                 ].map((m, j) => (
                                   <div key={j}>
-                                    <div className="text-[8px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wide">{m.label}</div>
+                                    <div className="text-[8px] text-slate-500 font-mono tracking-wide">{m.label}</div>
                                     <div className="text-sm font-bold -tracking-wide text-[#c8ccd4]">{m.value}</div>
                                   </div>
                                 ))}
@@ -854,7 +854,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                       {/* Action Bar */}
                       <div className="mt-3 p-3 px-3.5 bg-[#6C5CE708] rounded-[10px] border border-[#6C5CE720]">
                         <div className="flex gap-2 items-center flex-wrap">
-                          <span className="text-[10px] text-[#8892b0] font-[family-name:var(--font-jetbrains-mono)] mr-1">ACTIONS:</span>
+                          <span className="text-[10px] text-[#8892b0] font-mono mr-1">ACTIONS:</span>
                           {[
                             { label: 'Set Primary', icon: '🔒', color: '#6C5CE7', type: 'lock' },
                             { label: '301 Map', icon: '↗', color: '#FF6B6B', type: '301' },
@@ -869,7 +869,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                   handleAction(conflict.id, action.type);
                                 }
                               }}
-                                className="flex items-center gap-[5px] px-3.5 py-1.5 rounded-[7px] text-[11px] font-semibold cursor-pointer font-[family-name:var(--font-outfit)] transition-all duration-200"
+                                className="flex items-center gap-[5px] px-3.5 py-1.5 rounded-[7px] text-[11px] font-semibold cursor-pointer font-sans transition-all duration-200"
                                 style={{
                                   border: `1px solid ${isActive ? action.color + '60' : action.color + '30'}`,
                                   background: isActive ? `${action.color}25` : `${action.color}10`,
@@ -882,31 +882,31 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                             );
                           })}
                           <div className="flex-1" />
-                          <div className="text-[10px] text-[#34C759] font-[family-name:var(--font-jetbrains-mono)] px-2.5 py-1 bg-[#34C75910] rounded-md">
+                          <div className="text-[10px] text-[#34C759] font-mono px-2.5 py-1 bg-green-50 rounded-md">
                             📈 Est. +{Math.round(conflict.totalClicks * 0.3)} clicks/mo after resolution
                           </div>
                         </div>
 
                         {/* Generating state */}
                         {generating && activeAction?.conflictId === conflict.id && (
-                          <div className="mt-3 p-5 rounded-[10px] bg-[#0a0c14] border border-white/[0.04]" style={{ animation: 'bf-fadeUp 0.3s ease' }}>
+                          <div className="mt-3 p-5 rounded-[10px] bg-slate-100 border border-slate-200" style={{ animation: 'bf-fadeUp 0.3s ease' }}>
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6C5CE730] to-[#a855f730] flex items-center justify-center text-base">
                                 {activeAction.type === 'merge' ? '✍️' : '🔄'}
                               </div>
                               <div className="flex-1">
-                                <div className="text-xs font-semibold text-[#a78bfa] mb-1">
+                                <div className="text-xs font-semibold text-indigo-600 mb-1">
                                   {activeAction.type === 'merge' ? 'Generating Merge Plan...' : 'Analyzing Spoke Rewrite Opportunities...'}
                                 </div>
-                                <div className="h-1 rounded-sm overflow-hidden bg-white/[0.03]">
+                                <div className="h-1 rounded-sm overflow-hidden bg-slate-50">
                                   <div className="h-full rounded-sm" style={{
                                     background: 'linear-gradient(90deg, transparent, #6C5CE7, transparent)',
                                     backgroundSize: '200% 100%',
                                     animation: 'bf-shimmer 1.5s ease infinite',
                                   }} />
                                 </div>
-                                <div className="text-[10px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] mt-1.5">
-                                  Analyzing {conflict.pages.length} pages · Comparing content overlap · Building Reverse Silo structure
+                                <div className="text-[10px] text-slate-500 font-mono mt-1.5">
+                                  Analyzing {conflict.pages.length} pages · Comparing content overlap · Building content structure
                                 </div>
                               </div>
                             </div>
@@ -923,33 +923,33 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                 <div className="flex items-center gap-2 mb-2">
                                   <span className="text-base">✍️</span>
                                   <span className="text-sm font-bold -tracking-wide">Merge Plan</span>
-                                  <span className="text-[9px] px-2 py-0.5 rounded bg-[#a855f720] text-[#a855f7] font-[family-name:var(--font-jetbrains-mono)] font-semibold tracking-wide">AI GENERATED</span>
+                                  <span className="text-[9px] px-2 py-0.5 rounded bg-[#a855f720] text-[#a855f7] font-mono font-semibold tracking-wide">AI GENERATED</span>
                                 </div>
                                 <div className="text-[11px] text-[#8892b0]">
-                                  Consolidate <span className="text-[#FF6B6B] font-semibold">{plan.mergeFrom.length} pages</span> into <span className="text-[#6C5CE7] font-[family-name:var(--font-jetbrains-mono)]">{plan.hubUrl}</span>
+                                  Consolidate <span className="text-[#FF6B6B] font-semibold">{plan.mergeFrom.length} pages</span> into <span className="text-[#6C5CE7] font-mono">{plan.hubUrl}</span>
                                 </div>
                               </div>
 
-                              <div className="p-[18px] bg-[#0a0c14]">
+                              <div className="p-[18px] bg-slate-100">
                                 <div className="mb-4">
-                                  <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-[1.2px] mb-1.5">RECOMMENDED TITLE TAG</div>
-                                  <div className="px-3.5 py-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] text-[13px] font-semibold text-[#e6e6e6] leading-snug">
+                                  <div className="text-[9px] text-slate-500 font-mono tracking-[1.2px] mb-1.5">RECOMMENDED TITLE TAG</div>
+                                  <div className="px-3.5 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[13px] font-semibold text-slate-900 leading-snug">
                                     {plan.newTitle}
                                   </div>
                                 </div>
 
                                 <div className="mb-4">
-                                  <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-[1.2px] mb-2">PROPOSED H2 STRUCTURE</div>
+                                  <div className="text-[9px] text-slate-500 font-mono tracking-[1.2px] mb-2">PROPOSED H2 STRUCTURE</div>
                                   {plan.newH2s.map((h2, i) => (
-                                    <div key={i} className={`flex items-center gap-2.5 py-1.5 ${i < plan.newH2s.length - 1 ? 'border-b border-white/[0.02]' : ''}`}>
-                                      <span className="text-[9px] text-[#6C5CE7] font-[family-name:var(--font-jetbrains-mono)] font-bold min-w-[20px]">H2</span>
+                                    <div key={i} className={`flex items-center gap-2.5 py-1.5 ${i < plan.newH2s.length - 1 ? 'border-b border-slate-200' : ''}`}>
+                                      <span className="text-[9px] text-[#6C5CE7] font-mono font-bold min-w-[20px]">H2</span>
                                       <span className="text-xs text-[#c8ccd4]">{h2}</span>
                                     </div>
                                   ))}
                                 </div>
 
                                 <div className="mb-4">
-                                  <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-[1.2px] mb-2">CONTENT ACTIONS</div>
+                                  <div className="text-[9px] text-slate-500 font-mono tracking-[1.2px] mb-2">CONTENT ACTIONS</div>
                                   {plan.contentNotes.map((note, i) => {
                                     const noteConfig: Record<string, { color: string; icon: string; label: string }> = {
                                       keep: { color: '#34C759', icon: '✓', label: 'KEEP' },
@@ -960,7 +960,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                     const nc = noteConfig[note.type] || noteConfig.keep;
                                     return (
                                       <div key={i} className="flex gap-2.5 px-3 py-2 mb-1 rounded-lg" style={{ background: `${nc.color}06`, border: `1px solid ${nc.color}15` }}>
-                                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded h-fit mt-0.5 font-[family-name:var(--font-jetbrains-mono)] tracking-wide"
+                                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded h-fit mt-0.5 font-mono tracking-wide"
                                           style={{ background: `${nc.color}20`, color: nc.color }}>{nc.icon} {nc.label}</span>
                                         <span className="text-[11px] text-[#8892b0] leading-relaxed">{note.text}</span>
                                       </div>
@@ -969,16 +969,16 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3 mb-3.5">
-                                  <div className="px-3.5 py-2.5 rounded-lg bg-white/[0.015] border border-white/[0.03]">
-                                    <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1.5">TARGET KEYWORDS</div>
+                                  <div className="px-3.5 py-2.5 rounded-lg bg-white/[0.015] border border-slate-200">
+                                    <div className="text-[9px] text-slate-500 font-mono tracking-wider mb-1.5">TARGET KEYWORDS</div>
                                     <div className="flex flex-wrap gap-1">
                                       {plan.targetKeywords.map((kw, i) => (
-                                        <span key={i} className="text-[10px] px-2 py-[3px] rounded bg-[#6C5CE715] text-[#a78bfa] font-[family-name:var(--font-jetbrains-mono)]">{kw}</span>
+                                        <span key={i} className="text-[10px] px-2 py-[3px] rounded bg-[#6C5CE715] text-indigo-600 font-mono">{kw}</span>
                                       ))}
                                     </div>
                                   </div>
-                                  <div className="px-3.5 py-2.5 rounded-lg bg-white/[0.015] border border-white/[0.03]">
-                                    <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1.5">ESTIMATED LENGTH</div>
+                                  <div className="px-3.5 py-2.5 rounded-lg bg-white/[0.015] border border-slate-200">
+                                    <div className="text-[9px] text-slate-500 font-mono tracking-wider mb-1.5">ESTIMATED LENGTH</div>
                                     <div className="text-xs text-[#c8ccd4] font-semibold">{plan.wordCount}</div>
                                   </div>
                                 </div>
@@ -990,7 +990,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                     className="flex-1 px-4 py-2.5 rounded-lg border-none cursor-pointer bg-gradient-to-br from-[#a855f7] to-[#6C5CE7] text-white text-xs font-bold tracking-wide shadow-[0_4px_16px_#a855f730] disabled:opacity-50">
                                     {generating && String(activeAction?.type) === 'merge_draft' ? 'Generating...' : 'Generate Full Draft →'}
                                   </button>
-                                  <button className="px-4 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] text-[#8892b0] text-xs font-semibold cursor-pointer">
+                                  <button className="px-4 py-2.5 rounded-lg border border-white/[0.08] bg-slate-50 text-[#8892b0] text-xs font-semibold cursor-pointer">
                                     Export Plan
                                   </button>
                                 </div>
@@ -1009,70 +1009,70 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                 <div className="flex items-center gap-2 mb-2">
                                   <span className="text-base">🔄</span>
                                   <span className="text-sm font-bold -tracking-wide">Spoke Rewrite Plan</span>
-                                  <span className="text-[9px] px-2 py-0.5 rounded bg-[#FFA62B20] text-[#FFA62B] font-[family-name:var(--font-jetbrains-mono)] font-semibold tracking-wide">REVERSE SILO</span>
+                                  <span className="text-[9px] px-2 py-0.5 rounded bg-amber-100 text-[#FFA62B] font-mono font-semibold tracking-wide">RESTRUCTURE</span>
                                 </div>
                                 <div className="text-[11px] text-[#8892b0]">
                                   Differentiate <span className="text-[#FFA62B] font-semibold">{rewrite.pages.length} competing pages</span> into supporting spokes for the hub
                                 </div>
                               </div>
 
-                              <div className="p-[18px] bg-[#0a0c14]">
+                              <div className="p-[18px] bg-slate-100">
                                 {rewrite.pages.map((page, pi) => (
-                                  <div key={pi} className={`${pi < rewrite.pages.length - 1 ? 'mb-3.5' : ''} p-3.5 px-4 rounded-[10px] bg-white/[0.015] border border-white/[0.04]`}>
-                                    <div className="text-[11px] text-[#FFA62B] font-[family-name:var(--font-jetbrains-mono)] font-semibold mb-2.5 flex items-center gap-1.5">
-                                      <span className="text-[8px] px-1.5 py-0.5 rounded bg-[#FFA62B20] tracking-wide">SPOKE {pi + 1}</span>
+                                  <div key={pi} className={`${pi < rewrite.pages.length - 1 ? 'mb-3.5' : ''} p-3.5 px-4 rounded-[10px] bg-white/[0.015] border border-slate-200`}>
+                                    <div className="text-[11px] text-[#FFA62B] font-mono font-semibold mb-2.5 flex items-center gap-1.5">
+                                      <span className="text-[8px] px-1.5 py-0.5 rounded bg-amber-100 tracking-wide">SPOKE {pi + 1}</span>
                                       {page.url}
                                     </div>
 
                                     <div className="grid gap-2.5 mb-3 items-start" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
-                                      <div className="px-3 py-2.5 rounded-lg bg-[#FF3B3008] border border-[#FF3B3015]">
-                                        <div className="text-[8px] text-[#FF6B6B] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1">CURRENT ANGLE</div>
+                                      <div className="px-3 py-2.5 rounded-lg bg-red-50 border border-[#FF3B3015]">
+                                        <div className="text-[8px] text-[#FF6B6B] font-mono tracking-wider mb-1">CURRENT ANGLE</div>
                                         <div className="text-[11px] text-[#8892b0] leading-relaxed">{page.currentAngle}</div>
                                       </div>
                                       <div className="text-lg text-[#FFA62B] mt-3.5 font-bold">→</div>
                                       <div className="px-3 py-2.5 rounded-lg bg-[#34C75908] border border-[#34C75915]">
-                                        <div className="text-[8px] text-[#34C759] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1">NEW ANGLE</div>
+                                        <div className="text-[8px] text-[#34C759] font-mono tracking-wider mb-1">NEW ANGLE</div>
                                         <div className="text-[11px] text-[#c8ccd4] leading-relaxed">{page.newAngle}</div>
                                       </div>
                                     </div>
 
                                     <div className="mb-2.5">
-                                      <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1">NEW TITLE</div>
-                                      <div className="text-xs font-semibold text-[#e6e6e6]">{page.newTitle}</div>
+                                      <div className="text-[9px] text-slate-500 font-mono tracking-wider mb-1">NEW TITLE</div>
+                                      <div className="text-xs font-semibold text-slate-900">{page.newTitle}</div>
                                     </div>
 
                                     <div className="mb-2.5">
-                                      <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1.5">PROPOSED H2s</div>
+                                      <div className="text-[9px] text-slate-500 font-mono tracking-wider mb-1.5">PROPOSED H2s</div>
                                       <div className="flex flex-wrap gap-1">
                                         {page.newH2s.map((h2, i) => (
-                                          <span key={i} className="text-[10px] px-2.5 py-1 rounded-[5px] bg-white/[0.02] border border-white/[0.04] text-[#c8ccd4]">{h2}</span>
+                                          <span key={i} className="text-[10px] px-2.5 py-1 rounded-[5px] bg-slate-50 border border-slate-200 text-[#c8ccd4]">{h2}</span>
                                         ))}
                                       </div>
                                     </div>
 
                                     <div className="mb-2.5">
-                                      <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1">KEYWORD PIVOT</div>
+                                      <div className="text-[9px] text-slate-500 font-mono tracking-wider mb-1">KEYWORD PIVOT</div>
                                       <div className="flex items-center gap-2 text-[11px]">
-                                        <span className="px-2 py-[3px] rounded bg-[#FF3B3015] text-[#FF6B6B] font-[family-name:var(--font-jetbrains-mono)] line-through">{page.keywordShift.from}</span>
+                                        <span className="px-2 py-[3px] rounded bg-[#FF3B3015] text-[#FF6B6B] font-mono line-through">{page.keywordShift.from}</span>
                                         <span className="text-[#FFA62B] font-bold">→</span>
-                                        <span className="px-2 py-[3px] rounded bg-[#34C75915] text-[#34C759] font-[family-name:var(--font-jetbrains-mono)]">{page.keywordShift.to}</span>
+                                        <span className="px-2 py-[3px] rounded bg-[#34C75915] text-[#34C759] font-mono">{page.keywordShift.to}</span>
                                       </div>
                                     </div>
 
                                     {page.urlChange && (
                                       <div className="mb-2.5">
-                                        <div className="text-[9px] text-[#5a6072] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-1">URL CHANGE</div>
+                                        <div className="text-[9px] text-slate-500 font-mono tracking-wider mb-1">URL CHANGE</div>
                                         <div className="flex items-center gap-2 text-[11px] mb-1.5">
-                                          <span className="px-2 py-[3px] rounded bg-[#FF3B3015] text-[#FF6B6B] font-[family-name:var(--font-jetbrains-mono)] line-through">{page.urlChange.oldSlug}</span>
+                                          <span className="px-2 py-[3px] rounded bg-[#FF3B3015] text-[#FF6B6B] font-mono line-through">{page.urlChange.oldSlug}</span>
                                           <span className="text-[#FFA62B] font-bold">→</span>
-                                          <span className="px-2 py-[3px] rounded bg-[#34C75915] text-[#34C759] font-[family-name:var(--font-jetbrains-mono)]">{page.urlChange.newSlug}</span>
+                                          <span className="px-2 py-[3px] rounded bg-[#34C75915] text-[#34C759] font-mono">{page.urlChange.newSlug}</span>
                                         </div>
                                         <div className="text-[10px] text-[#8892b0] leading-relaxed px-0.5">
                                           {page.urlChange.rationale}
                                         </div>
                                         <div className="flex items-center gap-1.5 mt-1.5">
                                           <div className="w-1.5 h-1.5 rounded-full bg-[#FF9500]" />
-                                          <span className="text-[9px] text-[#FF9500] font-[family-name:var(--font-jetbrains-mono)]">301 REDIRECT: old → new (auto-created by WP plugin)</span>
+                                          <span className="text-[9px] text-[#FF9500] font-mono">301 REDIRECT: old → new (auto-created by WP plugin)</span>
                                         </div>
                                       </div>
                                     )}
@@ -1080,7 +1080,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                     <div className="px-3 py-2 rounded-lg bg-[#6C5CE708] border border-[#6C5CE715] flex items-start gap-2">
                                       <span className="text-xs mt-0.5">🔗</span>
                                       <div>
-                                        <div className="text-[8px] text-[#6C5CE7] font-[family-name:var(--font-jetbrains-mono)] tracking-wider mb-0.5">INTERNAL LINK TO HUB</div>
+                                        <div className="text-[8px] text-[#6C5CE7] font-mono tracking-wider mb-0.5">INTERNAL LINK TO HUB</div>
                                         <div className="text-[11px] text-[#8892b0] leading-relaxed">{page.internalLink}</div>
                                       </div>
                                     </div>
@@ -1094,7 +1094,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
                                     className="flex-1 px-4 py-2.5 rounded-lg border-none cursor-pointer bg-gradient-to-br from-[#FFA62B] to-[#FF9500] text-white text-xs font-bold tracking-wide shadow-[0_4px_16px_#FFA62B30] disabled:opacity-50">
                                     {generating && String(activeAction?.type) === 'spoke_draft' ? 'Generating...' : 'Generate Spoke Content →'}
                                   </button>
-                                  <button className="px-4 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.02] text-[#8892b0] text-xs font-semibold cursor-pointer">
+                                  <button className="px-4 py-2.5 rounded-lg border border-white/[0.08] bg-slate-50 text-[#8892b0] text-xs font-semibold cursor-pointer">
                                     Export Plan
                                   </button>
                                 </div>
@@ -1110,7 +1110,7 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
             })}
 
             {filtered.length === 0 && (
-              <div className="text-center py-12 text-[#5a6072] text-sm">
+              <div className="text-center py-12 text-slate-500 text-sm">
                 No cannibalization conflicts detected. Your site structure looks clean! 🎉
               </div>
             )}

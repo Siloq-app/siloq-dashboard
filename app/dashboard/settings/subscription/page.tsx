@@ -16,8 +16,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardProvider } from '@/lib/hooks/dashboard-context';
 import Header from '@/app/dashboard/header';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.siloq.ai';
+import { fetchWithAuth } from '@/lib/auth-headers';
 
 export default function SubscriptionPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,10 +33,7 @@ export default function SubscriptionPage() {
   useEffect(() => {
     async function fetchSubscription() {
       try {
-        const res = await fetch(`${API_BASE}/api/v1/subscription`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const res = await fetchWithAuth('/api/v1/subscription');
         if (res.ok) {
           const data = await res.json();
           if (data.tier) setCurrentTier(data.tier);
@@ -60,7 +56,7 @@ export default function SubscriptionPage() {
     setIsLoading(true);
     try {
       // Create Stripe Checkout session via our API
-      const response = await fetch('/api/billing/checkout', {
+      const response = await fetchWithAuth('/api/v1/billing/checkout/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tier }),
@@ -74,18 +70,7 @@ export default function SubscriptionPage() {
         }
       }
 
-      // Fallback: try the old route
-      const fallback = await fetch('/api/billing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier }),
-      });
-      if (fallback.ok) {
-        const data = await fallback.json();
-        if (data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
-        }
-      }
+      // Fallback not needed with fetchWithAuth
     } catch (error) {
       console.error('Upgrade failed:', error);
     } finally {
@@ -96,7 +81,7 @@ export default function SubscriptionPage() {
   const handleChangeBillingMode = async (mode: AIBillingMode) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/billing', {
+      const response = await fetchWithAuth('/api/v1/billing/subscription/', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ aiBillingMode: mode }),
@@ -197,7 +182,7 @@ export default function SubscriptionPage() {
                   <button
                     onClick={async () => {
                       try {
-                        const res = await fetch('/api/billing/portal', {
+                        const res = await fetchWithAuth('/api/v1/billing/portal/', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ returnUrl: window.location.href }),
