@@ -241,26 +241,26 @@ export default function ContentHub() {
         if (recsResponse.ok) {
           const recsData = await recsResponse.json();
           // Map API data to component format
-          const mappedRecs: Recommendation[] = (recsData.results || recsData || []).map((r: any) => ({
+          const mappedRecs: Recommendation[] = (recsData.recommendations || recsData.results || recsData || []).map((r: any) => ({
             id: r.id,
             title: r.title || r.recommended_title || 'Untitled',
-            silo: r.silo_name || r.category || 'General',
+            silo: r.silo || r.silo_name || r.category || 'General',
             reason: r.reason || r.description || 'Content opportunity identified',
             priority: (r.priority || 'medium') as 'high' | 'medium' | 'low',
-            searches: r.search_volume || r.monthly_searches || 0,
+            searches: r.estimated_searches || r.search_volume || r.monthly_searches || 0,
           }));
           setRecommendations(mappedRecs);
         }
 
         // Load pages to derive published/pending
-        const pagesResponse = await fetchWithAuth(`/api/v1/sites/${selectedSite.id}/pages/`);
+        const pagesResponse = await fetchWithAuth(`/api/v1/pages/?site_id=${selectedSite.id}`);
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json();
           const pages = pagesData.results || pagesData || [];
           
           // Published: pages with status = 'published' or 'live'
           const publishedPages = pages
-            .filter((p: any) => p.status === 'published' || p.status === 'live')
+            .filter((p: any) => p.status === 'publish' || p.status === 'published' || p.status === 'live')
             .map((p: any, idx: number) => ({
               id: p.id || idx,
               title: p.title || 'Untitled',
