@@ -33,15 +33,17 @@ export default function SubscriptionPage() {
   useEffect(() => {
     async function fetchSubscription() {
       try {
-        const res = await fetchWithAuth('/api/v1/billing/subscription/');
+        const res = await fetchWithAuth('/api/v1/billing/subscription/current/');
         if (res.ok) {
           const data = await res.json();
           if (data.tier) setCurrentTier(data.tier);
-          if (data.billingMode) setBillingMode(data.billingMode);
-          if (data.trialPagesUsed !== undefined) setTrialPagesUsed(data.trialPagesUsed);
-          if (data.trialPagesLimit !== undefined) setTrialPagesLimit(data.trialPagesLimit);
-          if (data.sitesCount !== undefined) setSitesCount(data.sitesCount);
-          if (data.silosCount !== undefined) setSilosCount(data.silosCount);
+          if (data.billing_mode || data.billingMode) setBillingMode(data.billing_mode || data.billingMode);
+          const tpu = data.trial_pages_used ?? data.trialPagesUsed;
+          const tpl = data.trial_pages_limit ?? data.trialPagesLimit;
+          if (tpu !== undefined) setTrialPagesUsed(tpu);
+          if (tpl !== undefined) setTrialPagesLimit(tpl);
+          if (data.sites_count !== undefined) setSitesCount(data.sites_count);
+          else if (data.sitesCount !== undefined) setSitesCount(data.sitesCount);
         }
       } catch (err) {
         console.error('Failed to fetch subscription:', err);
@@ -56,10 +58,15 @@ export default function SubscriptionPage() {
     setIsLoading(true);
     try {
       // Create Stripe Checkout session via our API
-      const response = await fetchWithAuth('/api/v1/billing/checkout/', {
+      const origin = window.location.origin;
+      const response = await fetchWithAuth('/api/v1/billing/checkout/create_session/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({
+          tier,
+          success_url: `${origin}/dashboard/settings/subscription?upgraded=true`,
+          cancel_url: `${origin}/dashboard/settings/subscription?canceled=true`,
+        }),
       });
 
       if (response.ok) {
@@ -182,7 +189,7 @@ export default function SubscriptionPage() {
                   <button
                     onClick={async () => {
                       try {
-                        const res = await fetchWithAuth('/api/v1/billing/portal/', {
+                        const res = await fetchWithAuth('/api/v1/billing/portal/create_session/', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ returnUrl: window.location.href }),
