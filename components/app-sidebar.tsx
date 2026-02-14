@@ -33,11 +33,10 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 
-// This is sample data.
 const data = {
   user: {
-    name: 'shadcn',
-    email: 'm@example.com',
+    name: '',
+    email: '',
     avatar: '',
   },
   navMain: [
@@ -138,6 +137,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const searchParams = useSearchParams();
   const currentTab = searchParams.get('tab');
 
+  const [userData, setUserData] = React.useState(data.user);
+  React.useEffect(() => {
+    setUserData({
+      name: localStorage.getItem('userName') || 'User',
+      email: localStorage.getItem('userEmail') || '',
+      avatar: '',
+    });
+  }, []);
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -225,7 +233,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             );
           })}
         </SidebarMenu>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
