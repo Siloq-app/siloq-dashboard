@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { MockPage } from '../types';
 import { RefreshCw, Check, CloudOff, Search, Layers, Clock, Loader2, Hash, Cloud, User } from 'lucide-react';
+import { fetchWithApiKey } from '../lib/api-with-key';
+import { toast } from 'sonner';
 
 interface SyncViewProps {
   pages: MockPage[];
@@ -17,30 +19,96 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
   const [authorFilter, setAuthorFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'publish' | 'draft' | 'private'>('all');
 
-  const handleSync = (id: number) => {
+  const handleSync = async (id: number) => {
+    const page = pages.find(p => p.id === id);
+    if (!page) return;
+
     setSyncingId(id);
-    setTimeout(() => {
-      setPages(prev => prev.map(p => {
-        if (p.id === id) {
-          return { ...p, synced: true, lastSyncedAt: new Date().toLocaleString() };
-        }
-        return p;
-      }));
+    try {
+      const response = await fetchWithApiKey('/api/v1/pages/sync/', {
+        method: 'POST',
+        body: JSON.stringify({
+          pages: [{
+            wp_post_id: page.id,
+            title: page.title,
+            url: page.url || `http://localhost:10013/?p=${page.id}`,
+            content: page.excerpt || '',
+            status: page.status,
+            author: page.author,
+            date_published: page.date || new Date().toISOString(),
+          }]
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to sync page');
+      }
+
+      const data = await response.json();
+      
+      if (data.results && data.results[0]?.success) {
+        setPages(prev => prev.map(p => {
+          if (p.id === id) {
+            return { ...p, synced: true, lastSyncedAt: new Date().toLocaleString() };
+          }
+          return p;
+        }));
+        toast.success(`"${page.title}" synced successfully`);
+      } else {
+        throw new Error(data.results?.[0]?.error || 'Sync failed');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to sync page');
+    } finally {
       setSyncingId(null);
-    }, 1500);
+    }
   };
 
-  const handleBulkSync = () => {
+  const handleBulkSync = async () => {
+    const unsyncedPages = pages.filter(p => !p.synced);
+    if (unsyncedPages.length === 0) return;
+
     setIsBulkSyncing(true);
-    setTimeout(() => {
-      setPages(prev => prev.map(p => {
-        if (!p.synced) {
-          return { ...p, synced: true, lastSyncedAt: new Date().toLocaleString() };
-        }
-        return p;
-      }));
+    try {
+      const response = await fetchWithApiKey('/api/v1/pages/sync/', {
+        method: 'POST',
+        body: JSON.stringify({
+          pages: unsyncedPages.map(page => ({
+            wp_post_id: page.id,
+            title: page.title,
+            url: page.url || `http://localhost:10013/?p=${page.id}`,
+            content: page.excerpt || '',
+            status: page.status,
+            author: page.author,
+            date_published: page.date || new Date().toISOString(),
+          }))
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to sync pages');
+      }
+
+      const data = await response.json();
+      
+      if (data.synced_count > 0) {
+        setPages(prev => prev.map(p => {
+          if (!p.synced) {
+            return { ...p, synced: true, lastSyncedAt: new Date().toLocaleString() };
+          }
+          return p;
+        }));
+        toast.success(`${data.synced_count} pages synced successfully`);
+      } else {
+        toast.error('No pages were synced');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to sync pages');
+    } finally {
       setIsBulkSyncing(false);
-    }, 2000);
+    }
   };
 
   const counts = {
@@ -178,10 +246,17 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
                 </div>
                 <div className="col-span-2 text-right">
                   {page.synced ? (
-                    <div className="flex items-center justify-end gap-2 text-green-600">
-                      <Check size={16} />
-                      <span className="text-xs font-medium">Synced</span>
-                    </div>
+                    <button
+                      onClick={() => handleSync(page.id)}
+                      disabled={syncingId === page.id}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors disabled:opacity-50"
+                    >
+                      {syncingId === page.id ? (
+                        <><Loader2 size={14} className="animate-spin" /> Syncing...</>
+                      ) : (
+                        <><RefreshCw size={14} /> Re-sync</>
+                      )}
+                    </button>
                   ) : (
                     <button
                       onClick={() => handleSync(page.id)}

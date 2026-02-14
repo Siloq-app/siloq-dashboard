@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Check,
   Copy,
@@ -20,6 +20,8 @@ import {
 import { AutomationMode } from '@/app/dashboard/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { fetchWithAuth } from '@/lib/auth-headers';
+import { toast } from 'sonner';
 
 interface Props {
   automationMode?: AutomationMode;
@@ -74,6 +76,7 @@ export default function Settings({
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [apiKeys, setApiKeys] = useState([
     {
@@ -94,6 +97,36 @@ export default function Settings({
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [newKeyName, setNewKeyName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const [profile, setProfile] = useState({
+    name: '',
+    email: '',
+  });
+  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Load initial data from API
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await fetchWithAuth('/api/v1/settings/');
+        if (response.ok) {
+          const data = await response.json();
+          setProfile({
+            name: data.name || '',
+            email: data.email || '',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
 
   const toggleKeyVisibility = (id: string) => {
     const newVisible = new Set(visibleKeys);
@@ -142,14 +175,6 @@ export default function Settings({
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@company.com',
-  });
-  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-
   const validateProfile = () => {
     const newErrors: { name?: string; email?: string } = {};
 
@@ -173,14 +198,29 @@ export default function Settings({
     setIsSaving(true);
     setSaveSuccess(false);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetchWithAuth('/api/v1/settings/', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: profile.name,
+        }),
+      });
 
-    setIsSaving(false);
-    setSaveSuccess(true);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to save profile');
+      }
 
-    // Hide success message after 3 seconds
-    setTimeout(() => setSaveSuccess(false), 3000);
+      toast.success('Profile saved successfully');
+      setSaveSuccess(true);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const renderProfileTab = () => (

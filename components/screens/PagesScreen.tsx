@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Search,
   Filter,
@@ -37,6 +38,8 @@ interface PagesScreenProps {
 }
 
 export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
+  const searchParams = useSearchParams();
+  const siteId = searchParams.get('site_id');
   const [pages, setPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -54,7 +57,8 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
     setIsLoading(true);
     setError('');
     try {
-      const res = await fetchWithAuth('/api/v1/pages/');
+      const url = siteId ? `/api/v1/pages/?site_id=${siteId}` : '/api/v1/pages/';
+      const res = await fetchWithAuth(url);
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.message || data.detail || 'Failed to load pages');
@@ -68,7 +72,7 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [siteId]);
 
   useEffect(() => {
     loadPages();
@@ -178,8 +182,8 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Total Pages</p>
-                <p className="text-2xl font-semibold">{totalSynced}</p>
+                <p className="text-sm font-medium text-slate-600">Total Pages</p>
+                <p className="text-3xl font-bold text-slate-900">{totalSynced}</p>
               </div>
               <div className="p-2 bg-blue-100 rounded-lg">
                 <BarChart3 size={20} className="text-blue-600" />
@@ -191,8 +195,8 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Money Pages</p>
-                <p className="text-2xl font-semibold text-amber-600">
+                <p className="text-sm font-medium text-slate-600">Money Pages</p>
+                <p className="text-3xl font-bold text-slate-900">
                   {moneyPageCount}
                 </p>
               </div>
@@ -206,8 +210,8 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Selected</p>
-                <p className="text-2xl font-semibold text-indigo-600">
+                <p className="text-sm font-medium text-slate-600">Selected</p>
+                <p className="text-3xl font-bold text-slate-900">
                   {selectedPages.size}
                 </p>
               </div>
@@ -259,7 +263,7 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
               <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm bg-white"
+                className="px-3 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="all">All Status</option>
                 <option value="publish">Published</option>
@@ -269,7 +273,7 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
               <select
                 value={moneyPageFilter}
                 onChange={e => setMoneyPageFilter(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm bg-white"
+                className="px-3 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="all">All Pages</option>
                 <option value="money">Money Pages Only</option>
@@ -292,7 +296,7 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
       <Card>
         <CardHeader className="pb-0">
           <div className="flex items-center justify-between">
-            <CardTitle>All Pages</CardTitle>
+            <CardTitle className="text-lg font-semibold text-slate-900">All Pages</CardTitle>
             <Button variant="ghost" size="sm" onClick={handleSelectAll}>
               {paginatedPages.every(p => selectedPages.has(p.id))
                 ? 'Deselect All'
@@ -327,14 +331,14 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h3 className="font-medium text-slate-900 truncate">
+                          <h3 className="font-semibold text-slate-900 text-base truncate">
                             {page.title || 'Untitled'}
                           </h3>
                           <a
                             href={page.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1 mt-0.5"
+                            className="text-sm text-slate-600 hover:text-indigo-600 flex items-center gap-1 mt-1 font-normal"
                           >
                             {page.url}
                             <ExternalLink size={12} />
@@ -374,7 +378,7 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
                           </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
+                      <div className="flex items-center gap-4 mt-3 text-sm font-medium text-slate-600">
                         {page.seo_score !== null && (
                           <span className="flex items-center gap-1">
                             <BarChart3 size={14} />
