@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getBackendApiUrl, SITES_ENDPOINTS } from '@/lib/backend-api';
 
 function getAuthHeader(request: NextRequest): string | null {
-  return request.headers.get('authorization');
+  const auth = request.headers.get('authorization');
+  if (auth) return auth;
+  
+  const apiKey = request.headers.get('x-api-key');
+  if (apiKey) return `Bearer ${apiKey}`;
+  
+  return null;
 }
 
 export async function GET(request: NextRequest) {

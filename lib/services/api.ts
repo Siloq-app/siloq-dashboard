@@ -1,5 +1,7 @@
 import { fetchWithAuth } from '@/lib/auth-headers';
 
+export { fetchWithAuth };
+
 export interface Site {
   id: number;
   name: string;

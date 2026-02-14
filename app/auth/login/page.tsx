@@ -136,7 +136,7 @@ export default function LoginPage() {
                       <Label htmlFor="password">Password</Label>
                       <Link
                         href="/auth/forgot-password"
-                        className="ml-auto text-sm underline-offset-4 hover:underline"
+                        className="ml-auto inline-block text-sm underline"
                       >
                         Forgot your password?
                       </Link>
@@ -144,9 +144,10 @@ export default function LoginPage() {
                     <Input
                       id="password"
                       type="password"
-                      required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      placeholder="test123"
+                      required
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>

@@ -40,6 +40,7 @@ export const PAGES_ENDPOINTS = {
     siteId
       ? `${getBackendApiUrl()}/api/v1/pages/?site_id=${siteId}`
       : `${getBackendApiUrl()}/api/v1/pages/`,
+  create: () => `${getBackendApiUrl()}/api/v1/pages/`,
   detail: (id: number | string) => `${getBackendApiUrl()}/api/v1/pages/${id}/`,
   seo: (id: number | string) => `${getBackendApiUrl()}/api/v1/pages/${id}/seo/`,
 };

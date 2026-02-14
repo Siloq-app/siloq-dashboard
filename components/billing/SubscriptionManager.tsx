@@ -5,9 +5,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { CreditCard, Zap, Building2, Crown, Check, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fetchWithAuth } from '@/lib/services/api';
+import { toast } from 'sonner';
 import {
   SubscriptionTier,
   TierConfig,
@@ -59,6 +61,31 @@ export function SubscriptionManager({
   const config = TIER_CONFIGS[currentTier];
   const capabilities = formatTierCapabilities(currentTier);
   const recommendedTier = getUpgradeRecommendation(currentTier, sitesCount, silosCount);
+
+  const handleUpgrade = useCallback(async () => {
+    if (!selectedTier) return;
+    
+    setIsUpgrading(true);
+    try {
+      const response = await fetchWithAuth('/api/v1/billing/checkout/', {
+        method: 'POST',
+        body: JSON.stringify({ tier: selectedTier }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to initiate checkout');
+      }
+
+      const { checkout_url } = await response.json();
+      
+      // Redirect to Stripe checkout
+      window.location.href = checkout_url;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to initiate upgrade');
+      setIsUpgrading(false);
+    }
+  }, [selectedTier]);
 
   const tiers: SubscriptionTier[] = ['free_trial', 'pro', 'builder_plus', 'architect', 'empire'];
 
@@ -219,10 +246,7 @@ export function SubscriptionManager({
         {selectedTier && (
           <div className="mt-4 flex flex-col sm:flex-row justify-end">
             <button
-              onClick={() => {
-                setIsUpgrading(true);
-                onUpgrade(selectedTier);
-              }}
+              onClick={handleUpgrade}
               disabled={isUpgrading}
               className="w-full sm:w-auto rounded-lg bg-indigo-600 px-6 py-2 font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
             >
