@@ -570,9 +570,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
       {/* TOP BAR */}
       <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-200 bg-slate-50">
         <div className="flex items-center gap-3.5">
-          <div className="w-[34px] h-[34px] rounded-[9px] bg-gradient-to-br from-[#6C5CE7] to-[#a855f7] flex items-center justify-center font-black text-[15px] -tracking-wider shadow-[0_2px_16px_#6C5CE730]">
-            S
-          </div>
+          <img src="/symbol.png" alt="Siloq" className="w-[34px] h-[34px] rounded-[9px] object-contain" />
           <div>
             <span className="text-sm font-extrabold -tracking-wide">SILOQ</span>
             <span className="text-[10px] text-slate-500 font-mono ml-2.5 tracking-wider">GSC PERFORMANCE</span>
@@ -597,9 +595,9 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
           {onReconnect && (
             <button
               onClick={onReconnect}
-              className="text-[10px] text-slate-400 hover:text-indigo-600 font-medium transition-colors"
+              className="px-3 py-[5px] rounded-[7px] border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 text-[11px] text-slate-600 hover:text-indigo-600 font-semibold transition-colors"
             >
-              Reconnect
+              ↻ Reconnect GSC
             </button>
           )}
         </div>
