@@ -610,7 +610,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
           <div>
             <div className="text-[10px] text-slate-500 font-mono tracking-wider mb-1">SITE STATUS</div>
             <div className="text-xs text-[#8892b0] leading-relaxed">
-              <span className="text-[#FF6B6B] font-bold">{health.conflictedQueries}</span> cannibalized queries<br />
+              <span className="text-[#FF6B6B] font-bold">{health.conflictedQueries}</span> competing queries<br />
               <span className="text-[#34C759] font-semibold">{health.cleanQueries}</span> clean queries
             </div>
           </div>
@@ -668,7 +668,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
               {showOnlyCannibalized ? '✓' : ''}
             </div>
             <span className={`text-[11px] font-medium ${showOnlyCannibalized ? 'text-indigo-600' : 'text-[#8892b0]'}`}>
-              Cannibalized Only
+              Competing Only
             </span>
           </div>
 
@@ -720,9 +720,9 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
             <div className="p-5 px-6 border-b border-slate-200" style={{ animation: 'bf-fadeUp 0.4s ease' }}>
               <div className="flex justify-between items-center mb-3">
                 <div>
-                  <div className="text-[13px] font-bold -tracking-wide">Cannibalization Battlefield</div>
+                  <div className="text-[13px] font-bold -tracking-wide">Competing Pages</div>
                   <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                    Clusters = pages fighting for the same query · Click a cluster to investigate
+                    Pages competing for the same search query · Click to investigate
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -1117,7 +1117,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
 
             {filtered.length === 0 && (
               <div className="text-center py-12 text-slate-500 text-sm">
-                No cannibalization conflicts detected. Your site structure looks clean! 🎉
+                No competing pages detected. Your site structure looks clean! 🎉
               </div>
             )}
           </div>

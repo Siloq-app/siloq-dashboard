@@ -137,7 +137,7 @@ export default function GovernanceDashboard({
                 Siloq has analyzed your site
               </h3>
               <p className="text-xs font-medium text-gray-600 sm:text-sm dark:text-gray-400">
-                Found {cannibalizationIssues.length} cannibalization issues.
+                Found {cannibalizationIssues.length} competing page issues.
                 Generated {pendingChanges.length} recommended actions (
                 {safeCount} safe, {destructiveCount} destructive).
               </p>
@@ -152,7 +152,7 @@ export default function GovernanceDashboard({
         </div>
       </Card>
 
-      {/* Cannibalization Alerts */}
+      {/* Competing Page Alerts */}
       <div className="space-y-3">
         {cannibalizationIssues.map((issue) => (
           <Card key={issue.id} className="cursor-pointer p-4">
@@ -163,7 +163,7 @@ export default function GovernanceDashboard({
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <span className="text-sm font-medium text-amber-900">
-                    Cannibalization
+                    Competing
                   </span>
                 </div>
 

@@ -233,7 +233,7 @@ export default function PagesScreen({ onAnalyze, siteId }: PagesScreenProps) {
               </div>
               <Button onClick={handleAnalyze} size="sm">
                 <Sparkles size={16} className="mr-2" />
-                Analyze for Cannibalization
+                Check for Competing Pages
               </Button>
             </div>
           </CardContent>
