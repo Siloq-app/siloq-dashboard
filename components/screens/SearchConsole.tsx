@@ -1145,6 +1145,11 @@ export default function SearchConsole({ selectedSite }: Props) {
     const params = new URLSearchParams(window.location.search);
     if (params.get('gsc_callback') === 'true' || params.get('gsc_connected') === 'true') {
       if (params.get('gsc_connected') === 'true') {
+        // Preserve the connected site so it stays selected after reload
+        const connectedSiteId = params.get('site_id');
+        if (connectedSiteId) {
+          localStorage.setItem('siloq-selected-site-id', connectedSiteId);
+        }
         // Successful connection — reload to pick up new gsc_connected status
         const url = new URL(window.location.href);
         url.searchParams.delete('gsc_connected');

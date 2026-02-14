@@ -136,9 +136,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setSites(sitesList);
 
       if (sitesList.length > 0 && !selectedSite) {
-        const first = sitesList[0];
-        setSelectedSite(first);
-        await loadSiteData(first);
+        // Restore previously selected site from localStorage
+        const savedSiteId = localStorage.getItem('siloq-selected-site-id');
+        const restored = savedSiteId
+          ? sitesList.find(s => String(s.id) === savedSiteId)
+          : null;
+        const picked = restored || sitesList[0];
+        setSelectedSite(picked);
+        await loadSiteData(picked);
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load sites');
@@ -150,6 +155,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
   const selectSite = useCallback(async (site: Site) => {
     setSelectedSite(site);
+    localStorage.setItem('siloq-selected-site-id', String(site.id));
     await loadSiteData(site);
   }, [loadSiteData]);
 
