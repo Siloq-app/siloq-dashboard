@@ -110,9 +110,7 @@ export default function Dashboard({
       case 'sites':
         return <SitesScreen />;
       case 'content':
-        return (
-          <ContentHub onGenerateClick={() => setShowGenerateModal(true)} />
-        );
+        return <ContentHub />;
       case 'links':
         return <InternalLinks opportunities={linkOpportunities} />;
       case 'pages':

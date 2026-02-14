@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Inter, Outfit, JetBrains_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
+import { AppProviders } from './providers';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -51,7 +52,9 @@ export default function RootLayout({
         className="font-sans text-slate-200 antialiased"
         suppressHydrationWarning
       >
-        {children}
+        <AppProviders>
+          {children}
+        </AppProviders>
         <Toaster position="top-right" richColors />
       </body>
     </html>

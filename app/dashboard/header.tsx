@@ -5,6 +5,7 @@ import { Shield, ChevronDown, Check, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AutomationMode } from './types';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
+import { useTheme } from '@/lib/hooks/theme-context';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -44,6 +45,7 @@ export default function Header({
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSiteDropdown, setShowSiteDropdown] = useState(false);
   const { sites, selectedSite, selectSite } = useDashboardContext();
+  const { mode, setMode } = useTheme();
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -74,6 +76,26 @@ export default function Header({
 
       {/* Right side actions */}
       <div className="flex items-center gap-3 sm:gap-4">
+        {/* Theme Toggle */}
+        <button
+          onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
+          className="relative flex h-7 w-14 items-center rounded-full border bg-muted transition-all duration-300 hover:bg-muted/80"
+          style={{
+            backgroundColor: mode === 'light' ? '#e2e4eb' : '#2a2d3e',
+          }}
+        >
+          <div
+            className="absolute h-5 w-5 rounded-full transition-all duration-300 flex items-center justify-center text-xs"
+            style={{
+              left: mode === 'light' ? '2px' : '30px',
+              backgroundColor: mode === 'light' ? '#fff' : '#6C63FF',
+              boxShadow: mode === 'light' ? '0 1px 3px rgba(0,0,0,0.15)' : '0 0 8px rgba(108,99,255,0.6)',
+            }}
+          >
+            {mode === 'light' ? '☀️' : '🌙'}
+          </div>
+        </button>
+
         {/* Automation Mode Selector */}
         <div className="relative">
           <button
