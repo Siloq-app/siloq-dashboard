@@ -33,7 +33,7 @@ export default function SubscriptionPage() {
   useEffect(() => {
     async function fetchSubscription() {
       try {
-        const res = await fetchWithAuth('/api/v1/subscription');
+        const res = await fetchWithAuth('/api/v1/billing/subscription/');
         if (res.ok) {
           const data = await res.json();
           if (data.tier) setCurrentTier(data.tier);
