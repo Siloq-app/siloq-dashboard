@@ -400,7 +400,7 @@ function VolatilityPulse({ value }: { value: number }) {
 
 // ─── Battlefield UI (Connected State) ────────────────────────
 
-function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
+function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; onReconnect?: () => void }) {
   const siteId = selectedSite.id;
 
   // Data state
@@ -594,6 +594,14 @@ function BattlefieldView({ selectedSite }: { selectedSite: Site }) {
             <div className="w-1.5 h-1.5 rounded-full bg-[#34C759] shadow-[0_0_8px_#34C759]" />
             <span className="text-[10px] text-[#34C759] font-mono font-medium">SYNCED</span>
           </div>
+          {onReconnect && (
+            <button
+              onClick={onReconnect}
+              className="text-[10px] text-slate-400 hover:text-indigo-600 font-medium transition-colors"
+            >
+              Reconnect
+            </button>
+          )}
         </div>
       </div>
 
@@ -1130,16 +1138,35 @@ export default function SearchConsole({ selectedSite }: Props) {
   const [connectionStep, setConnectionStep] = useState<ConnectionStep>('idle');
   const [gscSites, setGscSites] = useState<GscSite[]>([]);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [showReconnect, setShowReconnect] = useState(false);
 
   const siteId = selectedSite?.id;
 
-  // Check URL for GSC callback
+  // Check URL for GSC callback or error
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('gsc_callback') === 'true') {
+    if (params.get('gsc_callback') === 'true' || params.get('gsc_connected') === 'true') {
+      if (params.get('gsc_connected') === 'true') {
+        // Successful connection — reload to pick up new gsc_connected status
+        const url = new URL(window.location.href);
+        url.searchParams.delete('gsc_connected');
+        url.searchParams.delete('site_id');
+        url.searchParams.set('tab', 'search-console');
+        window.history.replaceState({}, '', url.toString());
+        window.location.reload();
+        return;
+      }
       handleLoadProperties();
       const url = new URL(window.location.href);
       url.searchParams.delete('gsc_callback');
+      window.history.replaceState({}, '', url.toString());
+    }
+    if (params.get('gsc_error')) {
+      const detail = params.get('detail') || params.get('gsc_error') || 'Connection failed';
+      setConnectionError(`Google connection error: ${detail}`);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('gsc_error');
+      url.searchParams.delete('detail');
       window.history.replaceState({}, '', url.toString());
     }
   }, []);
@@ -1183,14 +1210,16 @@ export default function SearchConsole({ selectedSite }: Props) {
     }
   };
 
-  // Not connected → show connection UI
-  if (!isConnected) {
+  // Show connection UI if not connected OR if user chose to reconnect
+  if (!isConnected || showReconnect) {
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Search Console</h2>
           <p className="text-muted-foreground">
-            Connect Google Search Console to see your search performance data.
+            {showReconnect
+              ? 'Reconnect Google Search Console to refresh your authorization.'
+              : 'Connect Google Search Console to see your search performance data.'}
           </p>
         </div>
 
@@ -1199,10 +1228,13 @@ export default function SearchConsole({ selectedSite }: Props) {
             <div className="rounded-full bg-muted p-4">
               <Search className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold">Connect Google Search Console</h3>
+            <h3 className="text-lg font-semibold">
+              {showReconnect ? 'Reconnect Google Search Console' : 'Connect Google Search Console'}
+            </h3>
             <p className="text-center text-sm text-muted-foreground max-w-sm">
-              Link your GSC property to view queries, clicks, impressions, and
-              run cannibalization analysis powered by real search data.
+              {showReconnect
+                ? 'Your previous connection may have expired. Re-authorize to restore search data.'
+                : 'Link your GSC property to view queries, clicks, impressions, and run analysis powered by real search data.'}
             </p>
 
             {connectionError && (
@@ -1242,14 +1274,22 @@ export default function SearchConsole({ selectedSite }: Props) {
                 ? 'Connecting...'
                 : connectionStep === 'select-property'
                   ? 'Refresh Properties'
-                  : 'Connect with Google'}
+                  : showReconnect
+                    ? 'Reconnect with Google'
+                    : 'Connect with Google'}
             </Button>
+
+            {showReconnect && (
+              <Button variant="ghost" size="sm" onClick={() => setShowReconnect(false)}>
+                Cancel
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Connected → show Battlefield UI
-  return <BattlefieldView selectedSite={selectedSite!} />;
+  // Connected → show Battlefield UI with reconnect option
+  return <BattlefieldView selectedSite={selectedSite!} onReconnect={() => setShowReconnect(true)} />;
 }
