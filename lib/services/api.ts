@@ -331,6 +331,116 @@ class SilosService {
   }
 }
 
+// --- New v2 Anti-Cannibalization Services ---
+
+export interface ConflictResponse {
+  id: number;
+  keyword: string;
+  conflict_type: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  pages: Array<{
+    url: string;
+    title?: string;
+    impressions?: number;
+    clicks?: number;
+    position?: number;
+    is_noindex?: boolean;
+    has_redirect?: boolean;
+    redirect_type?: string;
+    redirect_target?: string;
+  }>;
+  recommendation: string;
+  recommendation_reasoning?: string;
+  winner_url?: string;
+  status: 'active' | 'resolved' | 'dismissed';
+  total_impressions: number;
+  total_clicks: number;
+  created_at: string;
+}
+
+export interface KeywordResponse {
+  id: number;
+  keyword: string;
+  page_url: string;
+  page_type: string;
+  silo_name?: string;
+  status: string;
+  impressions?: number;
+  clicks?: number;
+  position?: number;
+}
+
+export interface SiloHealthResponse {
+  id: number;
+  name: string;
+  health_score: number;
+  conflict_count: number;
+  page_count: number;
+  keyword_count: number;
+}
+
+class ConflictsService {
+  async list(siteId: number | string): Promise<ConflictResponse[]> {
+    const res = await fetchWithAuth(`/api/v1/conflicts/?site_id=${siteId}`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load conflicts');
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async resolve(conflictId: number | string): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/conflicts/${conflictId}/resolve/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || data.detail || 'Failed to resolve conflict');
+    }
+  }
+
+  async dismiss(conflictId: number | string): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/conflicts/${conflictId}/dismiss/`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || data.detail || 'Failed to dismiss conflict');
+    }
+  }
+}
+
+class KeywordsService {
+  async list(siteId: number | string): Promise<KeywordResponse[]> {
+    const res = await fetchWithAuth(`/api/v1/keywords/?site_id=${siteId}`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load keywords');
+    return Array.isArray(data) ? data : data.results || [];
+  }
+}
+
+class HealthScoresService {
+  async get(siteId: number | string): Promise<SiloHealthResponse[]> {
+    const res = await fetchWithAuth(`/api/v1/health/scores/?site_id=${siteId}`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load health scores');
+    return Array.isArray(data) ? data : data.results || [];
+  }
+}
+
+class SilosV2Service {
+  async list(siteId: number | string): Promise<SiloHealthResponse[]> {
+    const res = await fetchWithAuth(`/api/v1/silos/?site_id=${siteId}`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load silos');
+    return Array.isArray(data) ? data : data.results || [];
+  }
+}
+
 class RecommendationsService {
   async fetchRecommendations(siteId: number | string): Promise<RecommendationResponse> {
     const res = await fetchWithAuth(`/api/v1/sites/${siteId}/recommendations/`);
@@ -426,3 +536,7 @@ export const cannibalizationService = new CannibalizationService();
 export const silosService = new SilosService();
 export const recommendationsService = new RecommendationsService();
 export const gscService = new GscService();
+export const conflictsService = new ConflictsService();
+export const keywordsService = new KeywordsService();
+export const healthScoresService = new HealthScoresService();
+export const silosV2Service = new SilosV2Service();

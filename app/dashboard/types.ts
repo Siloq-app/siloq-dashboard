@@ -8,27 +8,68 @@ export type TabType =
   | 'pages'
   | 'settings'
   | 'sites'
-  | 'search-console';
+  | 'search-console'
+  | 'conflicts'
+  | 'keyword-registry'
+  | 'silo-health';
 export type AutomationMode = 'manual' | 'semi' | 'full';
 
-export interface CannibalizationPageDetail {
+export interface ConflictPage {
   url: string;
-  pageType?: 'Product' | 'Category' | 'Blog' | 'Service' | string;
-  indexStatus?: 'indexed' | 'noindex';
-  httpStatus?: number;
+  title?: string;
   impressions?: number;
   clicks?: number;
+  position?: number;
+  is_noindex?: boolean;
+  has_redirect?: boolean;
+  redirect_type?: string;
+  redirect_target?: string;
 }
 
 export interface CannibalizationIssue {
   id: number;
   keyword: string;
   pages: string[];
-  competing_pages?: CannibalizationPageDetail[];
   severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
   impressions: number;
   splitClicks: string;
   recommendation: string;
+}
+
+export interface Conflict {
+  id: number;
+  keyword: string;
+  conflict_type: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  pages: ConflictPage[];
+  recommendation: string;
+  recommendation_reasoning?: string;
+  winner_url?: string;
+  status: 'active' | 'resolved' | 'dismissed';
+  total_impressions: number;
+  total_clicks: number;
+  created_at: string;
+}
+
+export interface KeywordAssignment {
+  id: number;
+  keyword: string;
+  page_url: string;
+  page_type: string;
+  silo_name?: string;
+  status: string;
+  impressions?: number;
+  clicks?: number;
+  position?: number;
+}
+
+export interface SiloHealthData {
+  id: number;
+  name: string;
+  health_score: number;
+  conflict_count: number;
+  page_count: number;
+  keyword_count: number;
 }
 
 export interface SupportingPage {

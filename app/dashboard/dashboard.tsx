@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import GovernanceDashboard from '@/components/screens/GovernanceDashboard';
+import KeywordRegistry from '@/components/screens/KeywordRegistry';
+import SiloHealth from '@/components/screens/SiloHealth';
 import SiloPlanner from '@/components/screens/SiloPlanner';
 import ApprovalQueue from '@/components/screens/ApprovalQueue';
 import SitesScreen from '@/components/screens/SitesScreen';
@@ -97,6 +99,22 @@ export default function Dashboard({
             onShowApprovalModal={() => setShowApprovalModal(true)}
           />
         );
+      case 'conflicts':
+        return (
+          <GovernanceDashboard
+            healthScore={healthScore}
+            cannibalizationIssues={cannibalizationIssues}
+            silos={silos}
+            pendingChanges={pendingChanges}
+            onViewSilo={() => onTabChange?.('silos')}
+            onViewApprovals={() => onTabChange?.('approvals')}
+            onShowApprovalModal={() => setShowApprovalModal(true)}
+          />
+        );
+      case 'keyword-registry':
+        return <KeywordRegistry />;
+      case 'silo-health':
+        return <SiloHealth />;
       case 'silos':
         return (
           <SiloPlanner

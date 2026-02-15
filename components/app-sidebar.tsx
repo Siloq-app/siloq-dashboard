@@ -15,6 +15,9 @@ import {
   HelpCircle,
   Search,
   CreditCard,
+  Shield,
+  BookOpen,
+  Activity,
 } from 'lucide-react';
 
 import { NavUser } from '@/components/nav-user';
@@ -56,6 +59,25 @@ const data = {
         {
           title: 'Approvals',
           url: '/dashboard?tab=approvals',
+        },
+      ],
+    },
+    {
+      title: 'Anti-Cannibalization',
+      url: '#',
+      icon: Shield,
+      items: [
+        {
+          title: 'Conflicts',
+          url: '/dashboard?tab=conflicts',
+        },
+        {
+          title: 'Keyword Registry',
+          url: '/dashboard?tab=keyword-registry',
+        },
+        {
+          title: 'Silo Health',
+          url: '/dashboard?tab=silo-health',
         },
       ],
     },
@@ -127,6 +149,7 @@ const data = {
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Dashboard: LayoutDashboard,
+  'Anti-Cannibalization': Shield,
   Content: FileText,
   'Search Console': Search,
   Sites: Globe,

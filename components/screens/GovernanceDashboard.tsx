@@ -1,506 +1,438 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   AlertTriangle,
-  GitBranch,
-  ChevronRight,
   Zap,
   ArrowRight,
+  ExternalLink,
+  Filter,
+  RefreshCw,
   Eye,
   EyeOff,
-  BarChart3,
+  Loader2,
 } from 'lucide-react';
-import {
-  CannibalizationIssue,
-  CannibalizationPageDetail,
-  Silo,
-  PendingChange,
-} from '@/app/dashboard/types';
-import HealthScore from '../ui/HealthScore';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
-import { Switch } from '../ui/switch';
+import { useDashboardContext } from '@/lib/hooks/dashboard-context';
+import {
+  conflictsService,
+  type ConflictResponse,
+} from '@/lib/services/api';
+import type { Conflict } from '@/app/dashboard/types';
 
-/* ── severity helpers ── */
-const severityColor: Record<string, string> = {
-  critical: 'bg-red-600',
-  high: 'bg-orange-500',
-  medium: 'bg-yellow-500',
-  low: 'bg-blue-500',
-  info: 'bg-gray-400',
+// Severity colors from UX guide
+const SEVERITY_COLORS: Record<string, string> = {
+  critical: '#DC2626',
+  high: '#F5A623',
+  medium: '#D4A017',
+  low: '#27AE60',
+  info: '#2E75B6',
 };
 
-const severityBorderColor: Record<string, string> = {
-  critical: 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950',
-  high: 'border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950',
-  medium: 'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950',
-  low: 'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950',
-  info: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800',
+const SEVERITY_EMOJI: Record<string, string> = {
+  critical: '🔴',
+  high: '🟠',
+  medium: '🟡',
+  low: '🟢',
+  info: '🔵',
 };
 
-const severityTextColor: Record<string, string> = {
-  critical: 'text-red-900 dark:text-red-300',
-  high: 'text-orange-900 dark:text-orange-300',
-  medium: 'text-amber-900 dark:text-amber-300',
-  low: 'text-blue-900 dark:text-blue-300',
-  info: 'text-gray-900 dark:text-gray-300',
+const SEVERITY_HEADLINES: Record<string, (keyword: string, count: number) => string> = {
+  critical: (kw, n) => `Active cannibalization confirmed — "${kw}"\n${n} pages are splitting clicks and rankings for this keyword.`,
+  high: (kw, n) => `Strong keyword competition — "${kw}"\n${n} pages have significant overlap with measurable search visibility.`,
+  medium: (kw, n) => `Moderate overlap detected — "${kw}"\n${n} pages share keyword signals. Monitor and consider differentiation.`,
+  low: (kw, n) => `Minor similarity — "${kw}"\n${n} pages have some keyword overlap. Informational only.`,
+  info: (kw, n) => `Cosmetic similarity — "${kw}"\n${n} pages share surface-level attributes but likely don't compete in search.`,
 };
-
-const severityIconColor: Record<string, string> = {
-  critical: 'text-red-600 dark:text-red-400',
-  high: 'text-orange-600 dark:text-orange-400',
-  medium: 'text-amber-600 dark:text-amber-400',
-  low: 'text-blue-600 dark:text-blue-400',
-  info: 'text-gray-500 dark:text-gray-400',
-};
-
-/* ── page detail helpers ── */
-function getPageDetail(
-  issue: CannibalizationIssue,
-  pageUrl: string
-): CannibalizationPageDetail | undefined {
-  return issue.competing_pages?.find((p) => p.url === pageUrl);
-}
-
-function PageTypeBadge({ type }: { type?: string }) {
-  if (!type) return null;
-  const colors: Record<string, string> = {
-    Product: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-    Category: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300',
-    Blog: 'bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300',
-    Service: 'bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-300',
-  };
-  return (
-    <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${colors[type] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>
-      {type}
-    </span>
-  );
-}
-
-function IndexBadge({ status }: { status?: string }) {
-  if (!status) return null;
-  const isIndexed = status === 'indexed';
-  return (
-    <span
-      className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-        isIndexed
-          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
-          : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
-      }`}
-    >
-      {isIndexed ? 'Indexed' : 'Noindex'}
-    </span>
-  );
-}
 
 interface Props {
   healthScore: number;
-  cannibalizationIssues: CannibalizationIssue[];
-  silos: Silo[];
-  pendingChanges: PendingChange[];
-  onViewSilo: (silo: Silo) => void;
+  cannibalizationIssues: any[];
+  silos: any[];
+  pendingChanges: any[];
+  onViewSilo: (silo: any) => void;
   onViewApprovals: () => void;
   onShowApprovalModal: () => void;
 }
 
 export default function GovernanceDashboard({
   healthScore,
-  cannibalizationIssues,
+  cannibalizationIssues: _legacyIssues,
   silos,
   pendingChanges,
   onViewSilo,
   onViewApprovals,
   onShowApprovalModal,
 }: Props) {
-  const safeCount = pendingChanges.filter((c) => c.risk === 'safe').length;
-  const destructiveCount = pendingChanges.filter(
-    (c) => c.risk === 'destructive'
-  ).length;
+  const { selectedSite } = useDashboardContext();
+  const [conflicts, setConflicts] = useState<Conflict[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasScanned, setHasScanned] = useState(true);
 
-  /* ── filter state ── */
+  // Filter states
   const [hideNoindex, setHideNoindex] = useState(true);
-  const [hideResolved301, setHideResolved301] = useState(true);
-  const [onlyWithImpressions, setOnlyWithImpressions] = useState(false);
+  const [hideResolved, setHideResolved] = useState(true);
+  const [showOnlyWithImpressions, setShowOnlyWithImpressions] = useState(false);
 
-  /* ── compute counts & filtered list ── */
-  const { filtered, noindexCount, resolved301Count, noImpressionsCount } =
-    useMemo(() => {
-      let noindexCt = 0;
-      let resolved301Ct = 0;
-      let noImpressionsCt = 0;
+  const loadConflicts = useCallback(async () => {
+    if (!selectedSite) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await conflictsService.list(selectedSite.id);
+      setConflicts(data as Conflict[]);
+      setHasScanned(true);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to load conflicts';
+      if (msg.includes('not connected') || msg.includes('GSC')) {
+        setError('gsc_not_connected');
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedSite]);
 
-      const result = cannibalizationIssues.filter((issue) => {
-        const details = issue.competing_pages ?? [];
+  useEffect(() => {
+    loadConflicts();
+  }, [loadConflicts]);
 
-        const hasNoindex = details.some((p) => p.indexStatus === 'noindex');
-        const has301 = details.some((p) => p.httpStatus === 301);
-        const allZeroImpressions =
-          details.length > 0 && details.every((p) => !p.impressions);
+  // Apply filters
+  const noindexCount = conflicts.filter(c =>
+    c.pages?.some(p => p.is_noindex)
+  ).length;
+  const resolvedCount = conflicts.filter(c => c.status === 'resolved').length;
 
-        if (hasNoindex) noindexCt++;
-        if (has301) resolved301Ct++;
-        if (allZeroImpressions) noImpressionsCt++;
+  const filteredConflicts = conflicts.filter(c => {
+    if (hideNoindex && c.pages?.every(p => p.is_noindex)) return false;
+    if (hideResolved && c.status === 'resolved') return false;
+    if (showOnlyWithImpressions && c.total_impressions <= 0) return false;
+    if (c.status === 'dismissed') return false;
+    return true;
+  });
 
-        if (hideNoindex && hasNoindex) return false;
-        if (hideResolved301 && has301) return false;
-        if (onlyWithImpressions && allZeroImpressions) return false;
-        return true;
-      });
+  const activeConflicts = filteredConflicts.filter(c => c.status === 'active');
+  const allResolved = conflicts.length > 0 && conflicts.every(c => c.status === 'resolved' || c.status === 'dismissed');
 
-      return {
-        filtered: result,
-        noindexCount: noindexCt,
-        resolved301Count: resolved301Ct,
-        noImpressionsCount: noImpressionsCt,
-      };
-    }, [cannibalizationIssues, hideNoindex, hideResolved301, onlyWithImpressions]);
+  const handleResolve = async (conflictId: number) => {
+    try {
+      await conflictsService.resolve(conflictId);
+      await loadConflicts();
+    } catch (e) {
+      console.error('Failed to resolve conflict:', e);
+    }
+  };
+
+  const handleDismiss = async (conflictId: number) => {
+    try {
+      await conflictsService.dismiss(conflictId);
+      await loadConflicts();
+    } catch (e) {
+      console.error('Failed to dismiss conflict:', e);
+    }
+  };
+
+  // No site selected
+  if (!selectedSite) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <p className="text-sm text-muted-foreground">Select a site to view governance data and conflict detection.</p>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+        <p className="text-sm text-muted-foreground">Analyzing your site structure...</p>
+      </div>
+    );
+  }
+
+  // GSC not connected error
+  if (error === 'gsc_not_connected') {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <p className="text-sm text-muted-foreground mb-4">
+          Google Search Console is not connected. Connect GSC to enable impression-weighted scoring and conflict detection.
+        </p>
+        <Button variant="outline">Connect GSC →</Button>
+      </div>
+    );
+  }
+
+  // Generic error
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <AlertTriangle className="h-8 w-8 text-amber-500 mb-4" />
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <Button variant="outline" className="mt-4" onClick={loadConflicts}>
+          <RefreshCw className="h-4 w-4 mr-2" /> Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {/* Health Score + Quick Stats */}
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr] lg:gap-6">
-        <HealthScore score={healthScore} change={8} />
-
-        {/* Quick Stats Grid - Responsive */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
-          {[
-            {
-              title: 'Competing Pages',
-              value: cannibalizationIssues.length,
-              subtext: 'Found by Siloq',
-              color: 'text-red-400',
-            },
-            {
-              title: 'Service Categories',
-              value: silos.length,
-              subtext: `${silos.reduce((acc, s) => acc + s.supportingPages.length + 1, 0)} pages organized`,
-              color: 'text-blue-400',
-            },
-            {
-              title: 'Pending Actions',
-              value: pendingChanges.length,
-              subtext: 'Awaiting approval',
-              color: 'text-amber-400',
-            },
-          ].map((stat, i) => (
-            <Card key={i} className="p-4">
-              <div className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {stat.title}
-                </span>
-                <div
-                  className={`text-2xl font-semibold tabular-nums ${stat.color}`}
-                >
-                  {stat.value}
-                </div>
-                <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {stat.subtext}
-                </div>
-              </div>
-            </Card>
-          ))}
+    <div className="space-y-6">
+      {/* Filter toggles */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Filters:</span>
         </div>
+
+        <FilterToggle
+          label="Hide noindex pages"
+          checked={hideNoindex}
+          onChange={setHideNoindex}
+          badge={hideNoindex && noindexCount > 0 ? `${noindexCount} noindex pages hidden` : undefined}
+        />
+        <FilterToggle
+          label="Hide resolved redirects"
+          checked={hideResolved}
+          onChange={setHideResolved}
+          badge={hideResolved && resolvedCount > 0 ? `${resolvedCount} redirected pages hidden` : undefined}
+        />
+        <FilterToggle
+          label="Show only pages with impressions"
+          checked={showOnlyWithImpressions}
+          onChange={setShowOnlyWithImpressions}
+        />
+
+        <Button variant="ghost" size="sm" onClick={loadConflicts}>
+          <RefreshCw className="h-4 w-4" />
+        </Button>
       </div>
 
-      {/* Siloq Remediation Banner */}
-      <Card className="mb-4 p-3 sm:mb-6 sm:p-4">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex items-start gap-3 sm:items-center">
-            <div className="from-primary to-primary/70 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br sm:h-10 sm:w-10">
-              <Zap size={18} className="text-white sm:size-20" />
+      {/* Empty states */}
+      {!hasScanned ? (
+        <EmptyState
+          icon="⏳"
+          title="Scan in progress..."
+          message="Siloq is analyzing your site for competing pages. This typically takes 2-5 minutes depending on site size."
+        />
+      ) : allResolved ? (
+        <EmptyState
+          icon="✅"
+          title="All conflicts resolved!"
+          message="You've addressed every competing page issue. Siloq will alert you if new conflicts appear."
+        />
+      ) : filteredConflicts.length === 0 ? (
+        <EmptyState
+          icon="🎉"
+          title="No competing pages detected."
+          message="Your site structure looks clean! Siloq will continue monitoring for new conflicts."
+        />
+      ) : (
+        /* Conflict cards */
+        <div className="space-y-4">
+          {filteredConflicts.map((conflict) => (
+            <ConflictCard
+              key={conflict.id}
+              conflict={conflict}
+              onResolve={handleResolve}
+              onDismiss={handleDismiss}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilterToggle({
+  label,
+  checked,
+  onChange,
+  badge,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  badge?: string;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+        checked
+          ? 'border-primary/30 bg-primary/10 text-primary'
+          : 'border-border bg-background text-muted-foreground'
+      }`}
+    >
+      {checked ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+      {label}
+      {badge && (
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+}
+
+function EmptyState({ icon, title, message }: { icon: string; title: string; message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <span className="text-4xl mb-4">{icon}</span>
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground max-w-md">{message}</p>
+    </div>
+  );
+}
+
+function ConflictCard({
+  conflict,
+  onResolve,
+  onDismiss,
+}: {
+  conflict: Conflict;
+  onResolve: (id: number) => void;
+  onDismiss: (id: number) => void;
+}) {
+  const severity = conflict.severity || 'medium';
+  const color = SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium;
+  const emoji = SEVERITY_EMOJI[severity] || '🟡';
+  const headlineFn = SEVERITY_HEADLINES[severity] || SEVERITY_HEADLINES.medium;
+  const [headline, subline] = headlineFn(conflict.keyword, conflict.pages?.length || 0).split('\n');
+
+  return (
+    <Card className="overflow-hidden">
+      {/* Severity bar */}
+      <div className="h-1" style={{ backgroundColor: color }} />
+
+      <div className="p-4 space-y-4">
+        {/* Header */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="inline-flex items-center rounded px-2 py-0.5 text-xs font-bold uppercase text-white"
+                style={{ backgroundColor: color }}
+              >
+                {severity}
+              </span>
+              {conflict.conflict_type && (
+                <span className="text-xs text-muted-foreground bg-muted rounded px-2 py-0.5">
+                  {conflict.conflict_type}
+                </span>
+              )}
             </div>
-            <div className="min-w-0 space-y-1">
-              <h3 className="text-foreground text-sm font-semibold">
-                Siloq has analyzed your site
-              </h3>
-              <p className="text-xs font-medium text-gray-600 sm:text-sm dark:text-gray-400">
-                Found {cannibalizationIssues.length} competing page issues.
-                Generated {pendingChanges.length} recommended actions (
-                {safeCount} safe, {destructiveCount} destructive).
-              </p>
-            </div>
+            <p className="text-sm font-semibold">
+              {emoji} {headline}
+            </p>
+            {subline && (
+              <p className="text-xs text-muted-foreground">{subline}</p>
+            )}
           </div>
-          <Button
-            onClick={onViewApprovals}
-            className="w-full shrink-0 bg-black text-white hover:bg-gray-800 sm:w-auto"
-          >
-            Review Plan <ArrowRight size={16} />
-          </Button>
         </div>
-      </Card>
 
-      {/* ── Filter Toggles Bar ── */}
-      <Card className="mb-4 p-3 sm:p-4">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-          {/* Hide noindex */}
-          <label className="flex items-center gap-2 text-sm">
-            <Switch checked={hideNoindex} onCheckedChange={setHideNoindex} />
-            <span className="text-foreground font-medium">Hide noindex pages</span>
-            {hideNoindex && noindexCount > 0 && (
-              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                {noindexCount} hidden
-              </span>
-            )}
-          </label>
-
-          {/* Hide resolved 301 */}
-          <label className="flex items-center gap-2 text-sm">
-            <Switch checked={hideResolved301} onCheckedChange={setHideResolved301} />
-            <span className="text-foreground font-medium">Hide resolved (301)</span>
-            {hideResolved301 && resolved301Count > 0 && (
-              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                {resolved301Count} hidden
-              </span>
-            )}
-          </label>
-
-          {/* Only with impressions */}
-          <label className="flex items-center gap-2 text-sm">
-            <Switch checked={onlyWithImpressions} onCheckedChange={setOnlyWithImpressions} />
-            <span className="text-foreground font-medium">Only pages with impressions</span>
-            {onlyWithImpressions && noImpressionsCount > 0 && (
-              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                {noImpressionsCount} hidden
-              </span>
-            )}
-          </label>
-
-          {/* Result count */}
-          <span className="ml-auto text-xs font-medium text-gray-500 dark:text-gray-400">
-            Showing {filtered.length} of {cannibalizationIssues.length} issues
-          </span>
-        </div>
-      </Card>
-
-      {/* Competing Page Alerts */}
-      <div className="space-y-3">
-        {filtered.map((issue) => (
-          <Card key={issue.id} className="cursor-pointer p-4">
-            {/* Top Alert Bar */}
-            <div className={`mb-3 flex flex-col gap-2 rounded-lg border p-2 sm:flex-row sm:items-center sm:gap-3 ${severityBorderColor[issue.severity] ?? severityBorderColor.info}`}>
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <div className="flex flex-shrink-0 items-center gap-1.5">
-                  <AlertTriangle className={`h-4 w-4 ${severityIconColor[issue.severity] ?? severityIconColor.info}`} />
-                  <span className={`text-sm font-medium ${severityTextColor[issue.severity] ?? severityTextColor.info}`}>
-                    Competing
+        {/* Pages with GSC metrics */}
+        <div className="space-y-2">
+          {conflict.pages?.map((page, i) => (
+            <div
+              key={i}
+              className={`rounded-lg border p-3 text-sm ${
+                page.url === conflict.winner_url
+                  ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
+                  : 'border-border bg-muted/30'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  {page.url === conflict.winner_url && (
+                    <span className="shrink-0 rounded bg-green-600 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase">
+                      Winner
+                    </span>
+                  )}
+                  <span className="font-mono text-xs truncate" title={page.url}>
+                    {page.url}
                   </span>
                 </div>
-                <span className={`text-sm ${severityTextColor[issue.severity] ?? severityTextColor.info}`}>
-                  {issue.pages.length} pages competing
-                </span>
-              </div>
-              <Button
-                onClick={onShowApprovalModal}
-                className="flex w-full flex-shrink-0 items-center justify-center gap-1.5 bg-blue-600 text-white hover:bg-blue-700 sm:w-auto"
-              >
-                Fix Issue
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </div>
-
-            {/* Keyword Section */}
-            <div className="space-y-2">
-              {/* Keyword Badge + Title */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold uppercase text-white ${severityColor[issue.severity] ?? severityColor.info}`}
+                <a
+                  href={page.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 text-muted-foreground hover:text-foreground"
                 >
-                  {issue.severity}
-                </span>
-                <h3 className="font-small text-foreground font-mono font-bold">
-                  &ldquo;{issue.keyword}&rdquo;
-                </h3>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               </div>
-
-              {/* Metrics Line */}
-              <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-400">
-                <span className="font-medium text-red-600 dark:text-red-400">
-                  {issue.pages.length} pages
-                </span>
-                <span>competing •</span>
-                <span>
-                  {issue.impressions.toLocaleString()} monthly impressions
-                </span>
-                <span>•</span>
-                <span>Split: {issue.splitClicks}</span>
-              </div>
-
-              {/* URL Tags with enhanced detail */}
-              <div className="space-y-1.5">
-                {issue.pages.map((page, i) => {
-                  const detail = getPageDetail(issue, page);
-                  return (
-                    <div
-                      key={i}
-                      className="bg-muted border-border flex flex-wrap items-center gap-2 rounded border px-2.5 py-1.5"
-                    >
-                      <span className="text-foreground font-mono text-xs">
-                        {page}
-                      </span>
-                      <PageTypeBadge type={detail?.pageType} />
-                      <IndexBadge status={detail?.indexStatus} />
-                      {detail?.impressions != null && (
-                        <span className="flex items-center gap-1 text-[10px] font-medium text-gray-500 dark:text-gray-400">
-                          <BarChart3 className="h-3 w-3" />
-                          {detail.impressions.toLocaleString()} imp
-                          {detail.clicks != null && (
-                            <> · {detail.clicks.toLocaleString()} clicks</>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Siloq Recommendation */}
-              <div className="flex items-start gap-1.5 pt-1">
-                <Zap className="text-primary mt-0.5 h-4 w-4 flex-shrink-0" />
-                <p className="text-foreground text-sm">
-                  <span className="font-medium">Siloq recommendation:</span>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {' '}
-                    {issue.recommendation}
+              {page.title && (
+                <p className="text-xs text-muted-foreground mb-1 truncate">{page.title}</p>
+              )}
+              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                {page.impressions != null && (
+                  <span>{page.impressions.toLocaleString()} impressions</span>
+                )}
+                {page.clicks != null && (
+                  <span>{page.clicks.toLocaleString()} clicks</span>
+                )}
+                {page.position != null && (
+                  <span>Position #{page.position.toFixed(1)}</span>
+                )}
+                {page.is_noindex && (
+                  <span className="text-amber-600 font-medium">noindex</span>
+                )}
+                {page.has_redirect && (
+                  <span className="text-blue-600 font-medium">
+                    {page.redirect_type || '301'} → {page.redirect_target || 'redirected'}
                   </span>
-                </p>
+                )}
               </div>
             </div>
-          </Card>
-        ))}
+          ))}
+        </div>
 
-        {filtered.length === 0 && cannibalizationIssues.length > 0 && (
-          <Card className="p-8 text-center">
-            <EyeOff className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              All {cannibalizationIssues.length} issues are hidden by current filters.
-            </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-              Adjust the toggles above to see more results.
-            </p>
-          </Card>
+        {/* Recommendation */}
+        {conflict.recommendation && (
+          <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+            <Zap className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <div className="text-sm">
+              <span className="font-medium">Recommendation: </span>
+              <span className="text-muted-foreground">{conflict.recommendation}</span>
+              {conflict.recommendation_reasoning && (
+                <p className="text-xs text-muted-foreground mt-1">{conflict.recommendation_reasoning}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        {conflict.status === 'active' && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button
+              size="sm"
+              className="bg-blue-600 text-white hover:bg-blue-700"
+              onClick={() => onResolve(conflict.id)}
+            >
+              Redirect Loser → Winner
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onResolve(conflict.id)}
+            >
+              Differentiate
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-muted-foreground"
+              onClick={() => onDismiss(conflict.id)}
+            >
+              Dismiss
+            </Button>
+          </div>
         )}
       </div>
-
-      {/* Silo Overview */}
-      <div className="my-6 space-y-3">
-        {/* Header */}
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="bg-card text-card-foreground inline-flex items-center gap-2 rounded-full border p-4 shadow">
-            <span className="grid h-6 w-6 place-items-center rounded-md bg-slate-900 text-xs font-semibold text-white">
-              ↩︎
-            </span>
-            <div className="leading-tight">
-              <p className="text-sm font-semibold text-slate-900">
-                Content Organization
-              </p>
-              <p className="text-xs text-slate-500">
-                Your service pages and supporting content
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Cards grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {silos.map((silo) => (
-            <article
-              key={silo.id}
-              onClick={() => onViewSilo(silo)}
-              className="bg-card text-card-foreground group cursor-pointer rounded-xl border p-4 shadow transition"
-            >
-              {/* Card header */}
-              <header className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="truncate text-sm font-semibold text-slate-900">
-                    {silo.name}
-                  </h3>
-
-                  {/* Counts */}
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
-                      1 Target
-                    </span>
-                    <span className="inline-flex items-center text-slate-300">
-                      •
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-                      {silo.supportingPages.length} Supporting
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action */}
-                <button
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
-                  aria-label={`Open ${silo.name}`}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </header>
-
-              {/* Divider */}
-              <div className="mt-4 h-px w-full bg-slate-100"></div>
-
-              {/* List with timeline connector */}
-              <ul className="relative mt-4 space-y-2">
-                {/* Vertical connector line - positioned through center of badges (px-2.5 = 10px + half of 24px badge = 22px) */}
-                <div className="absolute bottom-0 left-[22px] top-0 w-px bg-slate-200"></div>
-
-                {/* Target */}
-                <li className="relative">
-                  <div className="relative z-10 flex items-center gap-3 rounded-xl px-2.5 py-2 transition hover:bg-slate-50">
-                    <span
-                      className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-slate-900 text-[11px] font-semibold text-white ring-4 ring-white"
-                      title="Target (Money Page)"
-                    >
-                      M
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-900">
-                        {silo.targetPage.title}
-                      </p>
-                    </div>
-                    <span className="ml-auto hidden rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 sm:inline-flex">
-                      Target
-                    </span>
-                  </div>
-                </li>
-
-                {/* Supporting Pages */}
-                {silo.supportingPages.map((page, i) => (
-                  <li key={i} className="relative">
-                    <div className="relative z-10 flex items-center gap-3 rounded-xl px-2.5 py-2 transition hover:bg-slate-50">
-                      <span
-                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-md text-[11px] font-semibold ring-4 ring-white ${
-                          page.status === 'published'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}
-                        title="Supporting Content"
-                      >
-                        S
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm text-slate-700">
-                          {page.title}
-                        </p>
-                      </div>
-                      {i === 0 && (
-                        <span className="ml-auto hidden rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100 sm:inline-flex">
-                          Supporting
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </div>
-    </>
+    </Card>
   );
 }
