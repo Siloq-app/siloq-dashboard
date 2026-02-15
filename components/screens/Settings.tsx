@@ -434,20 +434,30 @@ export default function Settings({
         </div>
       </Card>
 
-      {/* How to use */}
+      {/* Plugin download & how to use */}
       <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
         <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-          How to use:
+          Download &amp; Setup:
         </h4>
+        <div className="mb-4">
+          <a
+            href="https://github.com/Siloq-app/siloq-wordpress/releases/download/v1.5.3/siloq-connector.zip"
+            download
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700"
+          >
+            <Key size={16} />
+            Download Siloq Plugin (.zip)
+          </a>
+        </div>
         <ol className="list-inside list-decimal space-y-2 text-sm text-slate-600 dark:text-slate-400">
           <li>
             Go to <strong>Sites</strong> and add your WordPress site
           </li>
           <li>Generate a token for that site and copy it</li>
-          <li>Install the Siloq WordPress plugin on your site</li>
+          <li>Download and install the Siloq WordPress plugin (above)</li>
           <li>Go to WordPress Admin &gt; Settings &gt; Siloq</li>
-          <li>Enter your API key and save</li>
-          <li>Click "Test Connection" to verify</li>
+          <li>Enter your API key and click &quot;Test Connection&quot;</li>
+          <li>Sync your pages</li>
         </ol>
       </div>
     </div>

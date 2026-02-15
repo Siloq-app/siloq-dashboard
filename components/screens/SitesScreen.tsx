@@ -15,8 +15,7 @@ import {
   Download,
 } from 'lucide-react';
 
-const PLUGIN_DOWNLOAD_URL = 'https://github.com/Siloq-app/siloq-wordpress/releases/latest/download/siloq-connector.zip';
-const PLUGIN_GITHUB_URL = 'https://github.com/Siloq-app/siloq-wordpress';
+const PLUGIN_DOWNLOAD_URL = 'https://github.com/Siloq-app/siloq-wordpress/releases/download/v1.5.3/siloq-connector.zip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -446,42 +445,66 @@ export default function SitesScreen() {
           </CardHeader>
         </Card>
 
-        <Card className="bg-card border-border rounded-lg border">
+        <Card className={`rounded-lg border ${selectedSite.page_count === 0 ? 'border-blue-400 bg-blue-50/50 dark:border-blue-600 dark:bg-blue-950/30 ring-2 ring-blue-200 dark:ring-blue-800' : 'bg-card border-border'}`}>
           <CardHeader className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1.5">
-                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                  <Download className="h-4 w-4" />
-                  WordPress Plugin
-                </CardTitle>
-                <CardDescription className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Download and install the Siloq plugin on your WordPress site to sync content.
+            <div className="space-y-1.5">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Download className="h-4 w-4" />
+                {selectedSite.page_count === 0 ? 'Get Started — Connect Your WordPress Site' : 'WordPress Plugin'}
+              </CardTitle>
+              {selectedSite.page_count === 0 && (
+                <CardDescription className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  Follow these steps to connect your site and start syncing content.
                 </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" asChild>
-                  <a href={PLUGIN_GITHUB_URL} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-1 h-4 w-4" />
-                    View on GitHub
-                  </a>
-                </Button>
-                <Button size="sm" asChild>
-                  <a href={PLUGIN_DOWNLOAD_URL} download>
-                    <Download className="mr-1 h-4 w-4" />
-                    Download Plugin
-                  </a>
-                </Button>
-              </div>
+              )}
             </div>
           </CardHeader>
-          <CardContent className="p-4">
-            <ol className="list-inside list-decimal space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <li>Download the plugin zip file above</li>
-              <li>In WordPress, go to <strong>Plugins → Add New → Upload Plugin</strong></li>
-              <li>Upload the zip file and click <strong>Install Now</strong></li>
-              <li>Activate the plugin, then go to <strong>Settings → Siloq</strong></li>
-              <li>Paste your API key (generated below) and save</li>
-            </ol>
+          <CardContent className="p-4 pt-0">
+            <div className="space-y-4">
+              {/* Step 1: Download */}
+              <div className="flex items-start gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">1</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Download the Siloq plugin</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">WordPress plugin (.zip file) — installs in seconds</p>
+                  <a
+                    href={PLUGIN_DOWNLOAD_URL}
+                    download
+                    className="mt-2 inline-flex h-9 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download Plugin (.zip)
+                  </a>
+                </div>
+              </div>
+
+              {/* Step 2: Install */}
+              <div className="flex items-start gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-700 dark:bg-gray-700 dark:text-gray-300">2</span>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Install it in WordPress</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Go to <strong>Plugins → Add New → Upload Plugin</strong>, select the zip, and click <strong>Install Now</strong>. Then activate it.</p>
+                </div>
+              </div>
+
+              {/* Step 3: API Key */}
+              <div className="flex items-start gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-700 dark:bg-gray-700 dark:text-gray-300">3</span>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Enter your API key and click &quot;Test Connection&quot;</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">In WordPress, go to <strong>Settings → Siloq</strong>, paste your API key (generate one below), and test the connection.</p>
+                </div>
+              </div>
+
+              {/* Step 4: Sync */}
+              <div className="flex items-start gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-700 dark:bg-gray-700 dark:text-gray-300">4</span>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Sync your pages</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Click &quot;Sync Now&quot; in the plugin to push your pages to Siloq. You&apos;re all set!</p>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
