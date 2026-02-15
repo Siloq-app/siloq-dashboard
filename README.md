@@ -50,6 +50,10 @@ npm run lint     # Run ESLint
 - **release/v1.0** — Production application with CI/CD
 - **release/v1.1** — Development features
 
+## Development
+
+Use this branch as a clean starting point for new features and experiments.
+
 ## License
 
 Proprietary — All rights reserved.
