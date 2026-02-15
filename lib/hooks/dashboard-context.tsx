@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   sitesService,
   pagesService,
@@ -24,6 +24,13 @@ import type {
   LinkOpportunity,
 } from '@/app/dashboard/types';
 
+const CACHE_TTL_MS = 45_000; // 45 seconds
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
 export interface DashboardData {
   sites: Site[];
   selectedSite: Site | null;
@@ -38,6 +45,15 @@ export interface DashboardData {
   loadSites: () => Promise<void>;
   selectSite: (site: Site) => Promise<void>;
   refresh: () => Promise<void>;
+  // Lazy loaders for deferred data
+  loadCannibalization: () => Promise<void>;
+  loadSilos: () => Promise<void>;
+  loadRecommendations: () => Promise<void>;
+  loadLinkOpportunities: () => Promise<void>;
+  cannibalizationLoading: boolean;
+  silosLoading: boolean;
+  recommendationsLoading: boolean;
+  linkOpportunitiesLoading: boolean;
 }
 
 const DashboardContext = createContext<DashboardData | null>(null);
@@ -54,79 +70,176 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadSiteData = useCallback(async (site: Site) => {
-    const loadSiteOverview = async () => {
-      try {
-        const overview = await sitesService.getOverview(site.id);
-        setSiteOverview(overview);
-      } catch (e: unknown) {
-        console.error('Site overview error:', e);
-        setSiteOverview(null);
-      }
-    };
+  // Per-section loading states
+  const [cannibalizationLoading, setCannibalizationLoading] = useState(false);
+  const [silosLoading, setSilosLoading] = useState(false);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [linkOpportunitiesLoading, setLinkOpportunitiesLoading] = useState(false);
 
-    const loadPages = async () => {
-      try {
-        const pagesList = await pagesService.list(site.id);
-        setPages(pagesList);
-      } catch (e: unknown) {
-        console.error('Pages load error:', e);
-        setPages([]);
-      }
-    };
+  // Cache map: key -> { data, timestamp }
+  const cacheRef = useRef<Map<string, CacheEntry<unknown>>>(new Map());
+  // AbortController for in-flight requests (debounce site switching)
+  const abortRef = useRef<AbortController | null>(null);
 
-    const loadCannibalizationIssues = async () => {
-      try {
-        const response = await cannibalizationService.fetchIssues(site.id);
-        const mapped = mapCannibalizationIssues(response);
-        setCannibalizationIssues(mapped);
-      } catch (e: unknown) {
-        console.error('Cannibalization issues load error:', e);
-        setCannibalizationIssues([]);
-      }
-    };
+  function getCached<T>(key: string): T | null {
+    const entry = cacheRef.current.get(key);
+    if (entry && Date.now() - entry.timestamp < CACHE_TTL_MS) {
+      return entry.data as T;
+    }
+    return null;
+  }
 
-    const loadSilos = async () => {
-      try {
-        const response = await silosService.fetchSilos(site.id);
-        const mapped = mapSilos(response);
-        setSilos(mapped);
-      } catch (e: unknown) {
-        console.error('Silos load error:', e);
-        setSilos([]);
-      }
-    };
+  function setCache<T>(key: string, data: T) {
+    cacheRef.current.set(key, { data, timestamp: Date.now() });
+  }
 
-    const loadRecommendations = async () => {
-      try {
-        const response = await recommendationsService.fetchRecommendations(site.id);
-        const mapped = mapRecommendationsToPendingChanges(response);
-        setPendingChanges(mapped);
-      } catch (e: unknown) {
-        console.error('Recommendations load error:', e);
-        setPendingChanges([]);
+  function clearSiteCache(siteId: number) {
+    const prefix = `site:${siteId}:`;
+    for (const key of cacheRef.current.keys()) {
+      if (key.startsWith(prefix)) {
+        cacheRef.current.delete(key);
       }
-    };
+    }
+  }
 
-    const loadLinkOpportunities = async () => {
-      try {
-        const mapped = mapLinkOpportunities();
-        setLinkOpportunities(mapped);
-      } catch (e: unknown) {
-        console.error('Link opportunities load error:', e);
-        setLinkOpportunities([]);
-      }
-    };
+  // Load only critical data on site select: overview + pages
+  const loadCriticalSiteData = useCallback(async (site: Site, signal?: AbortSignal) => {
+    const overviewKey = `site:${site.id}:overview`;
+    const pagesKey = `site:${site.id}:pages`;
 
-    await Promise.all([
-      loadSiteOverview(),
-      loadPages(),
-      loadCannibalizationIssues(),
-      loadSilos(),
-      loadRecommendations(),
-      loadLinkOpportunities(),
-    ]);
+    const cachedOverview = getCached<SiteOverview>(overviewKey);
+    const cachedPages = getCached<Page[]>(pagesKey);
+
+    const tasks: Promise<void>[] = [];
+
+    if (cachedOverview) {
+      setSiteOverview(cachedOverview);
+    } else {
+      tasks.push(
+        (async () => {
+          try {
+            const overview = await sitesService.getOverview(site.id);
+            if (signal?.aborted) return;
+            setCache(overviewKey, overview);
+            setSiteOverview(overview);
+          } catch (e: unknown) {
+            if (signal?.aborted) return;
+            console.error('Site overview error:', e);
+            setSiteOverview(null);
+          }
+        })()
+      );
+    }
+
+    if (cachedPages) {
+      setPages(cachedPages);
+    } else {
+      tasks.push(
+        (async () => {
+          try {
+            const pagesList = await pagesService.list(site.id);
+            if (signal?.aborted) return;
+            setCache(pagesKey, pagesList);
+            setPages(pagesList);
+          } catch (e: unknown) {
+            if (signal?.aborted) return;
+            console.error('Pages load error:', e);
+            setPages([]);
+          }
+        })()
+      );
+    }
+
+    await Promise.all(tasks);
   }, []);
+
+  // Lazy loaders for deferred data — called by individual screens
+  const loadCannibalization = useCallback(async () => {
+    if (!selectedSite) return;
+    const key = `site:${selectedSite.id}:cannibalization`;
+    const cached = getCached<CannibalizationIssue[]>(key);
+    if (cached) {
+      setCannibalizationIssues(cached);
+      return;
+    }
+    setCannibalizationLoading(true);
+    try {
+      const response = await cannibalizationService.fetchIssues(selectedSite.id);
+      const mapped = mapCannibalizationIssues(response);
+      setCache(key, mapped);
+      setCannibalizationIssues(mapped);
+    } catch (e: unknown) {
+      console.error('Cannibalization issues load error:', e);
+      setCannibalizationIssues([]);
+    } finally {
+      setCannibalizationLoading(false);
+    }
+  }, [selectedSite]);
+
+  const loadSilosData = useCallback(async () => {
+    if (!selectedSite) return;
+    const key = `site:${selectedSite.id}:silos`;
+    const cached = getCached<Silo[]>(key);
+    if (cached) {
+      setSilos(cached);
+      return;
+    }
+    setSilosLoading(true);
+    try {
+      const response = await silosService.fetchSilos(selectedSite.id);
+      const mapped = mapSilos(response);
+      setCache(key, mapped);
+      setSilos(mapped);
+    } catch (e: unknown) {
+      console.error('Silos load error:', e);
+      setSilos([]);
+    } finally {
+      setSilosLoading(false);
+    }
+  }, [selectedSite]);
+
+  const loadRecommendations = useCallback(async () => {
+    if (!selectedSite) return;
+    const key = `site:${selectedSite.id}:recommendations`;
+    const cached = getCached<PendingChange[]>(key);
+    if (cached) {
+      setPendingChanges(cached);
+      return;
+    }
+    setRecommendationsLoading(true);
+    try {
+      const response = await recommendationsService.fetchRecommendations(selectedSite.id);
+      const mapped = mapRecommendationsToPendingChanges(response);
+      setCache(key, mapped);
+      setPendingChanges(mapped);
+    } catch (e: unknown) {
+      console.error('Recommendations load error:', e);
+      setPendingChanges([]);
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  }, [selectedSite]);
+
+  const loadLinkOpportunitiesData = useCallback(async () => {
+    if (!selectedSite) return;
+    const key = `site:${selectedSite.id}:links`;
+    const cached = getCached<LinkOpportunity[]>(key);
+    if (cached) {
+      setLinkOpportunities(cached);
+      return;
+    }
+    setLinkOpportunitiesLoading(true);
+    try {
+      const mapped = mapLinkOpportunities();
+      setCache(key, mapped);
+      setLinkOpportunities(mapped);
+    } catch (e: unknown) {
+      console.error('Link opportunities load error:', e);
+      setLinkOpportunities([]);
+    } finally {
+      setLinkOpportunitiesLoading(false);
+    }
+  }, [selectedSite]);
 
   const loadSites = useCallback(async () => {
     setIsLoading(true);
@@ -136,14 +249,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setSites(sitesList);
 
       if (sitesList.length > 0 && !selectedSite) {
-        // Restore previously selected site from localStorage
         const savedSiteId = localStorage.getItem('siloq-selected-site-id');
         const restored = savedSiteId
           ? sitesList.find(s => String(s.id) === savedSiteId)
           : null;
         const picked = restored || sitesList[0];
         setSelectedSite(picked);
-        await loadSiteData(picked);
+        await loadCriticalSiteData(picked);
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load sites');
@@ -151,19 +263,39 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedSite, loadSiteData]);
+  }, [selectedSite, loadCriticalSiteData]);
 
   const selectSite = useCallback(async (site: Site) => {
+    // Cancel any in-flight requests from previous site selection
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setSelectedSite(site);
     localStorage.setItem('siloq-selected-site-id', String(site.id));
-    await loadSiteData(site);
-  }, [loadSiteData]);
+
+    // Reset deferred data
+    setCannibalizationIssues([]);
+    setSilos([]);
+    setPendingChanges([]);
+    setLinkOpportunities([]);
+
+    await loadCriticalSiteData(site, controller.signal);
+  }, [loadCriticalSiteData]);
 
   const refresh = useCallback(async () => {
     if (selectedSite) {
-      await loadSiteData(selectedSite);
+      // Clear cache for this site to force re-fetch
+      clearSiteCache(selectedSite.id);
+      setCannibalizationIssues([]);
+      setSilos([]);
+      setPendingChanges([]);
+      setLinkOpportunities([]);
+      await loadCriticalSiteData(selectedSite);
     }
-  }, [selectedSite, loadSiteData]);
+  }, [selectedSite, loadCriticalSiteData]);
 
   useEffect(() => {
     loadSites();
@@ -186,6 +318,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         loadSites,
         selectSite,
         refresh,
+        loadCannibalization,
+        loadSilos: loadSilosData,
+        loadRecommendations,
+        loadLinkOpportunities: loadLinkOpportunitiesData,
+        cannibalizationLoading,
+        silosLoading,
+        recommendationsLoading,
+        linkOpportunitiesLoading,
       }}
     >
       {children}

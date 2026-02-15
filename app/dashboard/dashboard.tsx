@@ -1,22 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import GovernanceDashboard from '@/components/screens/GovernanceDashboard';
-import KeywordRegistry from '@/components/screens/KeywordRegistry';
-import SiloHealth from '@/components/screens/SiloHealth';
-import SiloPlanner from '@/components/screens/SiloPlanner';
-import ApprovalQueue from '@/components/screens/ApprovalQueue';
-import SitesScreen from '@/components/screens/SitesScreen';
-import ContentHub from '@/components/screens/ContentHub';
-import Settings from '@/components/screens/Settings';
-import PagesScreen from '@/components/screens/PagesScreen';
-import GenerateModal from '@/components/modals/GenerateModal';
-import ApprovalModal from '@/components/modals/ApprovalModal';
-import CannibalizationModal from '@/components/modals/CannibalizationModal';
+import React, { useState, Suspense, useEffect, lazy } from 'react';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { TabType, AutomationMode } from './types';
-import InternalLinks from '@/components/screens/InternalLinks';
-import SearchConsole from '@/components/screens/SearchConsole';
+import { ScreenSkeleton, DashboardSkeleton, TableSkeleton } from '@/components/ui/dashboard-skeleton';
+
+// Lazy-loaded screen components for code splitting
+const GovernanceDashboard = lazy(() => import('@/components/screens/GovernanceDashboard'));
+const KeywordRegistry = lazy(() => import('@/components/screens/KeywordRegistry'));
+const SiloHealth = lazy(() => import('@/components/screens/SiloHealth'));
+const SiloPlanner = lazy(() => import('@/components/screens/SiloPlanner'));
+const ApprovalQueue = lazy(() => import('@/components/screens/ApprovalQueue'));
+const SitesScreen = lazy(() => import('@/components/screens/SitesScreen'));
+const ContentHub = lazy(() => import('@/components/screens/ContentHub'));
+const Settings = lazy(() => import('@/components/screens/Settings'));
+const PagesScreen = lazy(() => import('@/components/screens/PagesScreen'));
+const InternalLinks = lazy(() => import('@/components/screens/InternalLinks'));
+const SearchConsole = lazy(() => import('@/components/screens/SearchConsole'));
+const GenerateModal = lazy(() => import('@/components/modals/GenerateModal'));
+const ApprovalModal = lazy(() => import('@/components/modals/ApprovalModal'));
+const CannibalizationModal = lazy(() => import('@/components/modals/CannibalizationModal'));
 
 interface DashboardProps {
   activeTab?: TabType;
@@ -44,7 +47,30 @@ export default function Dashboard({
     pendingChanges,
     linkOpportunities,
     isLoading,
+    loadCannibalization,
+    loadSilos,
+    loadRecommendations,
+    loadLinkOpportunities,
+    cannibalizationLoading,
+    silosLoading,
+    recommendationsLoading,
+    linkOpportunitiesLoading,
   } = useDashboardContext();
+
+  // Deferred data loading based on active tab
+  useEffect(() => {
+    const tabsNeedingCannibalization: TabType[] = ['dashboard', 'overview', 'conflicts'];
+    const tabsNeedingSilos: TabType[] = ['dashboard', 'overview', 'conflicts', 'silos'];
+    const tabsNeedingRecommendations: TabType[] = ['dashboard', 'overview', 'conflicts', 'approvals'];
+    const tabsNeedingLinks: TabType[] = ['links'];
+
+    if (selectedSite) {
+      if (tabsNeedingCannibalization.includes(activeTab)) loadCannibalization();
+      if (tabsNeedingSilos.includes(activeTab)) loadSilos();
+      if (tabsNeedingRecommendations.includes(activeTab)) loadRecommendations();
+      if (tabsNeedingLinks.includes(activeTab)) loadLinkOpportunities();
+    }
+  }, [activeTab, selectedSite, loadCannibalization, loadSilos, loadRecommendations, loadLinkOpportunities]);
 
   const healthScore =
     (siteOverview?.health_score ?? selectedSite?.page_count)
@@ -55,20 +81,11 @@ export default function Dashboard({
             100
         )
       : 72;
-  const totalIssues = siteOverview?.total_issues ?? 0;
-  const totalPages = siteOverview?.total_pages ?? selectedSite?.page_count ?? 0;
 
   const renderScreen = () => {
-    // Show loading state
+    // Show loading skeleton
     if (isLoading && !selectedSite) {
-      return (
-        <div className="flex h-full items-center justify-center">
-          <div className="text-center">
-            <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
-            <p className="text-sm text-muted-foreground">Loading dashboard...</p>
-          </div>
-        </div>
-      );
+      return <DashboardSkeleton />;
     }
 
     // Show empty state if no site selected
@@ -88,17 +105,6 @@ export default function Dashboard({
     switch (activeTab) {
       case 'dashboard':
       case 'overview':
-        return (
-          <GovernanceDashboard
-            healthScore={healthScore}
-            cannibalizationIssues={cannibalizationIssues}
-            silos={silos}
-            pendingChanges={pendingChanges}
-            onViewSilo={() => onTabChange?.('silos')}
-            onViewApprovals={() => onTabChange?.('approvals')}
-            onShowApprovalModal={() => setShowApprovalModal(true)}
-          />
-        );
       case 'conflicts':
         return (
           <GovernanceDashboard
@@ -152,24 +158,32 @@ export default function Dashboard({
 
   return (
     <div className="flex-1 p-4">
-      {renderScreen()}
+      <Suspense fallback={<ScreenSkeleton />}>
+        {renderScreen()}
+      </Suspense>
 
       {showGenerateModal && (
-        <GenerateModal
-          silos={silos}
-          onClose={() => setShowGenerateModal(false)}
-        />
+        <Suspense fallback={null}>
+          <GenerateModal
+            silos={silos}
+            onClose={() => setShowGenerateModal(false)}
+          />
+        </Suspense>
       )}
 
       {showApprovalModal && (
-        <ApprovalModal onClose={() => setShowApprovalModal(false)} />
+        <Suspense fallback={null}>
+          <ApprovalModal onClose={() => setShowApprovalModal(false)} />
+        </Suspense>
       )}
 
       {showCannibalizationModal && (
-        <CannibalizationModal
-          pageIds={selectedPageIds}
-          onClose={() => setShowCannibalizationModal(false)}
-        />
+        <Suspense fallback={null}>
+          <CannibalizationModal
+            pageIds={selectedPageIds}
+            onClose={() => setShowCannibalizationModal(false)}
+          />
+        </Suspense>
       )}
     </div>
   );
