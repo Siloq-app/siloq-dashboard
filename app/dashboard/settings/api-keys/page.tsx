@@ -22,8 +22,18 @@ import {
 } from '@/components/ui/card';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { DashboardProvider } from '@/lib/hooks/dashboard-context';
 import Header from '@/app/dashboard/header';
 import { fetchWithAuth } from '@/lib/auth-headers';
+
+interface MasterKey {
+  id: string;
+  name: string;
+  key?: string;
+  key_prefix: string;
+  created_at?: string;
+  is_active?: boolean;
+}
 
 interface ApiKey {
   id: string;
@@ -51,10 +61,16 @@ export default function ApiKeysPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [masterKeys, setMasterKeys] = useState<MasterKey[]>([]);
+  const [masterKeyName, setMasterKeyName] = useState('Master Key');
+  const [newlyCreatedMasterKey, setNewlyCreatedMasterKey] = useState<MasterKey | null>(null);
+  const [isGeneratingMaster, setIsGeneratingMaster] = useState(false);
+  const [isMasterLoading, setIsMasterLoading] = useState(false);
 
   useEffect(() => {
     fetchApiKeys();
     fetchSites();
+    fetchMasterKeys();
   }, []);
 
   const fetchApiKeys = async () => {
@@ -63,7 +79,7 @@ export default function ApiKeysPage() {
       const res = await fetchWithAuth('/api/v1/api-keys');
       const data = await res.json();
       if (res.ok) {
-        setApiKeys(data.keys || []);
+        setApiKeys(data.results || data.keys || data || []);
       } else {
         setError(data.message || 'Failed to fetch API keys');
       }
@@ -86,6 +102,68 @@ export default function ApiKeysPage() {
       }
     } catch (err) {
       console.error('Failed to fetch sites');
+    }
+  };
+
+  const fetchMasterKeys = async () => {
+    setIsMasterLoading(true);
+    try {
+      const res = await fetchWithAuth('/api/v1/account-keys/');
+      const data = await res.json();
+      if (res.ok) {
+        const keys = Array.isArray(data) ? data : (data.results || []);
+        setMasterKeys(keys);
+      }
+    } catch (err) {
+      console.error('Failed to fetch master keys');
+    } finally {
+      setIsMasterLoading(false);
+    }
+  };
+
+  const generateMasterKey = async () => {
+    if (!masterKeyName.trim()) {
+      toast.error('Please enter a name for the master key');
+      return;
+    }
+    setIsGeneratingMaster(true);
+    try {
+      const res = await fetchWithAuth('/api/v1/account-keys/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: masterKeyName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to generate master key');
+      }
+      setNewlyCreatedMasterKey(data.key);
+      setMasterKeyName('Master Key');
+      toast.success('Master API key generated successfully!');
+      fetchMasterKeys();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsGeneratingMaster(false);
+    }
+  };
+
+  const revokeMasterKey = async (keyId: string) => {
+    if (!confirm('Are you sure you want to revoke this master key? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      const res = await fetchWithAuth(`/api/v1/account-keys/${keyId}/`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to revoke master key');
+      }
+      toast.success('Master key revoked successfully');
+      fetchMasterKeys();
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
@@ -160,6 +238,7 @@ export default function ApiKeysPage() {
   };
 
   return (
+    <DashboardProvider>
     <SidebarProvider>
       <Suspense fallback={null}>
         <AppSidebar />
@@ -182,6 +261,131 @@ export default function ApiKeysPage() {
                   Manage API keys for your WordPress plugin and external integrations
                 </p>
               </div>
+
+              {/* Master API Key Card */}
+              <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    <Key className="h-5 w-5" />
+                    Master API Key
+                  </CardTitle>
+                  <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
+                    A master key works across all your sites. When you install the WordPress plugin and connect with a master key, Siloq automatically creates the site for you.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                      <Label htmlFor="masterKeyName" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Key Name
+                      </Label>
+                      <Input
+                        id="masterKeyName"
+                        placeholder="e.g., Master Key"
+                        value={masterKeyName}
+                        onChange={(e) => setMasterKeyName(e.target.value)}
+                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button
+                        onClick={generateMasterKey}
+                        disabled={isGeneratingMaster}
+                        className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600"
+                      >
+                        {isGeneratingMaster ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Key className="mr-2 h-4 w-4" />
+                            Generate Master Key
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Newly Created Master Key */}
+                  {newlyCreatedMasterKey && (
+                    <div className="mt-6 rounded-md border border-amber-500/50 bg-amber-500/5 p-4">
+                      <div className="flex items-center gap-2 font-semibold text-amber-900 dark:text-amber-100">
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                          <path fillRule="evenodd" clipRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+                        </svg>
+                        Copy your master API key now!
+                      </div>
+                      <p className="mb-2 mt-1 text-sm text-amber-700 dark:text-amber-300">It won&apos;t be shown again.</p>
+                      <div className="mt-2 flex items-center gap-2 rounded-lg bg-slate-800/80 p-3">
+                        <code className="flex-1 break-all font-mono text-sm text-slate-200">
+                          {newlyCreatedMasterKey.key}
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            newlyCreatedMasterKey.key &&
+                            copyToClipboard(newlyCreatedMasterKey.key, 'new-master')
+                          }
+                          className="text-slate-400 hover:text-slate-200"
+                        >
+                          {copiedId === 'new-master' ? (
+                            <Check className="h-4 w-4 text-emerald-400" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Existing Master Keys */}
+                  {isMasterLoading ? (
+                    <div className="mt-6 flex items-center justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                    </div>
+                  ) : masterKeys.length > 0 && (
+                    <div className="mt-6 space-y-3">
+                      <h4 className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Existing Master Keys</h4>
+                      {masterKeys.map((mk) => (
+                        <div
+                          key={mk.id}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700/50 dark:bg-slate-800/50"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="mb-1 flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-slate-900 dark:text-slate-200 truncate">
+                                {mk.name}
+                              </span>
+                              <span className="rounded bg-indigo-500/10 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400">
+                                Master
+                              </span>
+                            </div>
+                            <div className="font-mono text-sm text-slate-500 dark:text-slate-500">
+                              {mk.key_prefix}
+                            </div>
+                            {mk.created_at && (
+                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-600">
+                                Created {new Date(mk.created_at).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => revokeMasterKey(mk.id)}
+                            className="self-start sm:self-center text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Generate New Key Card */}
               <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
@@ -399,5 +603,6 @@ export default function ApiKeysPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
+    </DashboardProvider>
   );
 }

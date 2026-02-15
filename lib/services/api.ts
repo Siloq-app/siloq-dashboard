@@ -11,6 +11,7 @@ export interface Site {
   api_key_count: number;
   last_synced_at: string | null;
   created_at: string;
+  gsc_connected?: boolean;
 }
 
 export interface SiteOverview {
@@ -252,7 +253,176 @@ class ScansService {
   }
 }
 
+// Cannibalization Issues
+export interface CannibalizationIssueResponse {
+  issues: Array<{
+    id: number;
+    type: string;
+    keyword: string;
+    severity: 'high' | 'medium' | 'low';
+    total_impressions: number;
+    validation_status: string;
+    competing_pages: Array<{
+      url: string;
+      title?: string;
+      impressions?: number;
+      clicks?: number;
+    }>;
+    recommendation: string;
+  }>;
+  total: number;
+  gsc_connected: boolean;
+}
+
+export interface SiloResponse {
+  id: number;
+  name: string;
+  site: number;
+  target_page?: {
+    id: number;
+    url: string;
+    title: string;
+    entities?: string[];
+  };
+  supporting_pages: Array<{
+    id: number;
+    url: string;
+    title: string;
+    status: string;
+    has_link_to_target: boolean;
+    entities?: string[];
+  }>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecommendationResponse {
+  recommendations: Array<{
+    id: number;
+    type: string;
+    description: string;
+    priority: 'high' | 'medium' | 'low';
+    status: 'pending' | 'approved' | 'rejected' | 'applied';
+    impact: string;
+    risk_level: 'safe' | 'destructive';
+    doctrine?: string;
+    created_at: string;
+  }>;
+  total: number;
+}
+
+class CannibalizationService {
+  async fetchIssues(siteId: number | string): Promise<CannibalizationIssueResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/cannibalization-issues/`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load cannibalization issues');
+    return data;
+  }
+}
+
+class SilosService {
+  async fetchSilos(siteId: number | string): Promise<SiloResponse[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/silos/`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load silos');
+    return Array.isArray(data) ? data : data.silos || data.results || [];
+  }
+}
+
+class RecommendationsService {
+  async fetchRecommendations(siteId: number | string): Promise<RecommendationResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/recommendations/`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || 'Failed to load recommendations');
+    return data;
+  }
+}
+
+// --- GSC Types & Service ---
+
+export interface GscSite {
+  siteUrl: string;
+  permissionLevel: string;
+}
+
+export interface GscQueryRow {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+}
+
+export interface GscPageRow {
+  page: string;
+  clicks: number;
+  impressions: number;
+}
+
+export interface GscData {
+  queries: GscQueryRow[];
+  pages: GscPageRow[];
+  totals: {
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+  };
+}
+
+class GscService {
+  async getAuthUrl(siteId?: number): Promise<{ url: string }> {
+    const params = siteId ? `?site_id=${siteId}` : '';
+    const res = await fetchWithAuth(`/api/v1/gsc/auth-url/${params}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to get GSC auth URL');
+    return { url: data.auth_url || data.url };
+  }
+
+  async getSites(): Promise<GscSite[]> {
+    const res = await fetchWithAuth('/api/v1/gsc/sites/');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load GSC sites');
+    return data;
+  }
+
+  async connectSite(siteId: number | string, gscUrl: string): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/connect/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ site_url: gscUrl }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || data.detail || 'Failed to connect GSC property');
+    }
+  }
+
+  async getData(siteId: number | string): Promise<GscData> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/data/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load GSC data');
+    return data;
+  }
+
+  async analyze(siteId: number | string): Promise<{ message: string }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/gsc/analyze/`, {
+      method: 'POST',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to run GSC analysis');
+    return data;
+  }
+}
+
 export const sitesService = new SitesService();
 export const pagesService = new PagesService();
 export const apiKeysService = new ApiKeysService();
 export const scansService = new ScansService();
+export const cannibalizationService = new CannibalizationService();
+export const silosService = new SilosService();
+export const recommendationsService = new RecommendationsService();
+export const gscService = new GscService();

@@ -12,7 +12,11 @@ import {
   Trash2,
   Loader2,
   ExternalLink,
+  Download,
 } from 'lucide-react';
+
+const PLUGIN_DOWNLOAD_URL = 'https://github.com/Siloq-app/siloq-wordpress/releases/latest/download/siloq-connector.zip';
+const PLUGIN_GITHUB_URL = 'https://github.com/Siloq-app/siloq-wordpress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,9 +54,9 @@ interface ApiKey {
 const BACKEND_API_URL =
   typeof window !== 'undefined'
     ? (
-        process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000'
+        process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.siloq.ai'
       ).replace(/\/+$/, '')
-    : '';
+    : 'https://api.siloq.ai';
 
 export default function SitesScreen() {
   const [sites, setSites] = useState<Site[]>([]);
@@ -440,6 +444,45 @@ export default function SitesScreen() {
               </button>
             </div>
           </CardHeader>
+        </Card>
+
+        <Card className="bg-card border-border rounded-lg border">
+          <CardHeader className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1.5">
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                  <Download className="h-4 w-4" />
+                  WordPress Plugin
+                </CardTitle>
+                <CardDescription className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Download and install the Siloq plugin on your WordPress site to sync content.
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" asChild>
+                  <a href={PLUGIN_GITHUB_URL} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-1 h-4 w-4" />
+                    View on GitHub
+                  </a>
+                </Button>
+                <Button size="sm" asChild>
+                  <a href={PLUGIN_DOWNLOAD_URL} download>
+                    <Download className="mr-1 h-4 w-4" />
+                    Download Plugin
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4">
+            <ol className="list-inside list-decimal space-y-2 text-sm text-gray-600 dark:text-gray-400">
+              <li>Download the plugin zip file above</li>
+              <li>In WordPress, go to <strong>Plugins → Add New → Upload Plugin</strong></li>
+              <li>Upload the zip file and click <strong>Install Now</strong></li>
+              <li>Activate the plugin, then go to <strong>Settings → Siloq</strong></li>
+              <li>Paste your API key (generated below) and save</li>
+            </ol>
+          </CardContent>
         </Card>
 
         <Card className="bg-card border-border rounded-lg border">

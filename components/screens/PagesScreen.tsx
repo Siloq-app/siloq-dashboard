@@ -35,6 +35,7 @@ interface Page {
 
 interface PagesScreenProps {
   onAnalyze?: (pageIds: number[]) => void;
+  siteId?: number | string;
 }
 
 export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
@@ -85,17 +86,16 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
         `/api/v1/pages/${pageId}/toggle_money_page/`,
         { method: 'POST' }
       );
+      if (!res.ok) {
+        throw new Error(`Failed to toggle money page status (${res.status})`);
+      }
       const data = await res.json();
       
-      if (data.success) {
-        setPages(prev =>
-          prev.map(p =>
-            p.id === pageId ? { ...p, is_money_page: data.is_money_page } : p
-          )
-        );
-      } else {
-        throw new Error(data.error || 'Failed to toggle money page status');
-      }
+      setPages(prev =>
+        prev.map(p =>
+          p.id === pageId ? { ...p, is_money_page: data.is_money_page } : p
+        )
+      );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to toggle');
     } finally {
@@ -236,7 +236,7 @@ export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
               </div>
               <Button onClick={handleAnalyze} size="sm">
                 <Sparkles size={16} className="mr-2" />
-                Analyze for Cannibalization
+                Check for Competing Pages
               </Button>
             </div>
           </CardContent>
