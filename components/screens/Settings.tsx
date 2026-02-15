@@ -22,6 +22,19 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { fetchWithAuth } from '@/lib/auth-headers';
 import { toast } from 'sonner';
+import { SubscriptionTier, TIER_CONFIGS } from '@/lib/billing/types';
+
+type TeamRole = 'owner' | 'admin' | 'editor' | 'viewer';
+
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: TeamRole;
+  status: 'active' | 'pending';
+  avatar: string;
+  color: string;
+}
 
 interface Props {
   automationMode?: AutomationMode;

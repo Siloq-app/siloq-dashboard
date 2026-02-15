@@ -38,9 +38,7 @@ interface PagesScreenProps {
   siteId?: number | string;
 }
 
-export default function PagesScreen({ onAnalyze }: PagesScreenProps) {
-  const searchParams = useSearchParams();
-  const siteId = searchParams.get('site_id');
+export default function PagesScreen({ onAnalyze, siteId }: PagesScreenProps) {
   const [pages, setPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
