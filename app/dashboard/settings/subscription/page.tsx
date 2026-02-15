@@ -8,8 +8,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { CreditCard, Loader2 } from 'lucide-react';
 import { SubscriptionManager } from '@/components/billing/SubscriptionManager';
-import { AICostDisplay } from '@/components/billing/AICostDisplay';
-import { SubscriptionTier, AIBillingMode, AICostEstimate, TIER_CONFIGS } from '@/lib/billing/types';
+import { SubscriptionTier, AIBillingMode, TIER_CONFIGS } from '@/lib/billing/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -104,15 +103,6 @@ export default function SubscriptionPage() {
     }
   };
 
-  const mockCostEstimate: AICostEstimate = {
-    inputTokens: 1500,
-    outputTokens: 800,
-    providerCostUsd: 0.08,
-    siloqFeeUsd: 0.004,
-    totalCostUsd: 0.084,
-    billingMode: billingMode,
-  };
-
   return (
     <DashboardProvider>
     <SidebarProvider>
@@ -159,22 +149,6 @@ export default function SubscriptionPage() {
               />
 
               <Separator />
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">AI Cost Estimation</CardTitle>
-                  <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
-                    Example of how AI costs are calculated before content generation.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AICostDisplay
-                    estimate={mockCostEstimate}
-                    trialPagesUsed={billingMode === 'trial' ? trialPagesUsed : undefined}
-                    trialPagesLimit={billingMode === 'trial' ? trialPagesLimit : undefined}
-                  />
-                </CardContent>
-              </Card>
 
               <Separator />
 

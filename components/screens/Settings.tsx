@@ -160,22 +160,13 @@ export default function Settings({
     }
   };
 
-  const [apiKeys, setApiKeys] = useState([
-    {
-      id: '1',
-      name: 'Production Site',
-      key: 'prod_key_placeholder_abc123xyz',
-      created: 'Jan 30, 2026',
-      lastUsed: 'Feb 6, 2026',
-    },
-    {
-      id: '2',
-      name: 'Staging Site',
-      key: 'dev_key_placeholder_def456uvw',
-      created: 'Jan 15, 2026',
-      lastUsed: 'Feb 5, 2026',
-    },
-  ]);
+  const [apiKeys, setApiKeys] = useState<{
+    id: string;
+    name: string;
+    key: string;
+    created: string;
+    lastUsed: string;
+  }[]>([]);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [newKeyName, setNewKeyName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
