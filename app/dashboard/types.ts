@@ -11,11 +11,21 @@ export type TabType =
   | 'search-console';
 export type AutomationMode = 'manual' | 'semi' | 'full';
 
+export interface CannibalizationPageDetail {
+  url: string;
+  pageType?: 'Product' | 'Category' | 'Blog' | 'Service' | string;
+  indexStatus?: 'indexed' | 'noindex';
+  httpStatus?: number;
+  impressions?: number;
+  clicks?: number;
+}
+
 export interface CannibalizationIssue {
   id: number;
   keyword: string;
   pages: string[];
-  severity: 'high' | 'medium' | 'low';
+  competing_pages?: CannibalizationPageDetail[];
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
   impressions: number;
   splitClicks: string;
   recommendation: string;
