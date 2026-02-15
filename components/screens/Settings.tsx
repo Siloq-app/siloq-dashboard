@@ -196,6 +196,7 @@ export default function Settings({
         }
       } catch (error) {
         console.error('Failed to load settings:', error);
+        toast.error('Failed to load settings. Please refresh and try again.');
       } finally {
         setIsLoading(false);
       }
@@ -966,6 +967,15 @@ export default function Settings({
     'agent-permissions': renderAgentPermissionsTab,
     notifications: renderNotificationsTab,
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-600" />
+        <p className="text-sm text-slate-500 dark:text-slate-400">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { useTheme } from '@/lib/hooks/theme-context';
 import { fetchWithAuth } from '@/lib/auth-headers';
+import { LoadingState } from '@/components/ui/loading-state';
+import { ErrorState } from '@/components/ui/error-state';
+import { EmptyState } from '@/components/ui/empty-state';
+import { NoSiteSelected } from '@/components/ui/no-site-selected';
 
 const agentSteps = [
   "Scanning site architecture",
@@ -238,14 +242,14 @@ export default function ContentHub() {
   const [showCustom, setShowCustom] = useState(false);
   const [customTopic, setCustomTopic] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load data from API
-  useEffect(() => {
-    const loadData = async () => {
-      if (!selectedSite) return;
-      
-      setIsLoading(true);
-      try {
+  const loadData = async () => {
+    if (!selectedSite) return;
+    
+    setIsLoading(true);
+    setError(null);
+    try {
         // Load recommendations
         const recsResponse = await fetchWithAuth(`/api/v1/sites/${selectedSite.id}/content-recommendations/`);
         if (recsResponse.ok) {
@@ -296,9 +300,9 @@ export default function ContentHub() {
           setPublished(publishedPages);
           setPending(pendingPages);
         }
-      } catch (error) {
-        console.error('Error loading content hub data:', error);
-        // Set empty arrays on error
+      } catch (err) {
+        console.error('Error loading content hub data:', err);
+        setError('Unable to load content recommendations. Please try again.');
         setRecommendations([]);
         setPending([]);
         setPublished([]);
@@ -307,6 +311,8 @@ export default function ContentHub() {
       }
     };
 
+  // Load data from API
+  useEffect(() => {
     loadData();
   }, [selectedSite]);
 
@@ -425,23 +431,16 @@ export default function ContentHub() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 40, height: 40, border: `4px solid ${t.border}`, borderTop: `4px solid ${t.accent}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
-          <p style={{ color: t.textMuted, fontSize: 14 }}>Loading content recommendations...</p>
-        </div>
-      </div>
-    );
+  if (!selectedSite) {
+    return <NoSiteSelected message="Select a site to view content recommendations and manage your content pipeline." />;
   }
 
-  if (!selectedSite) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <p style={{ fontSize: 16, color: t.textMuted }}>Please select a site to view content recommendations</p>
-      </div>
-    );
+  if (isLoading) {
+    return <LoadingState message="Calculating content health scores..." />;
+  }
+
+  if (error && recommendations.length === 0 && pending.length === 0 && published.length === 0) {
+    return <ErrorState message={error} onRetry={loadData} />;
   }
 
   return (

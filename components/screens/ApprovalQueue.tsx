@@ -146,6 +146,19 @@ export default function ApprovalQueue({ pendingChanges }: Props) {
         </div>
       </div>
 
+      {/* Empty State */}
+      {pendingChanges.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-16 dark:border-slate-700 dark:bg-slate-800/50">
+          <Check size={48} className="text-emerald-400 mb-4" />
+          <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            No pending changes
+          </h3>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm text-center">
+            All caught up! Siloq will generate new recommendations when conflicts or optimization opportunities are detected.
+          </p>
+        </div>
+      )}
+
       {/* Change Cards */}
       <div className="space-y-4">
         {displayedChanges.map((change, index) => (

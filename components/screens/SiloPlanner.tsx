@@ -59,6 +59,18 @@ export default function SiloPlanner({
         </div>
       </div>
 
+      {displaySilos.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-16 dark:border-slate-700 dark:bg-slate-800/50">
+          <GitBranch size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
+          <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            No silos created yet
+          </h3>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm text-center">
+            Silos organize your content into topic clusters. Sync your pages first, then Siloq will automatically detect and suggest silo structures.
+          </p>
+        </div>
+      )}
+
       {displaySilos.map((silo) => (
         <div key={silo.id} className="space-y-4">
           {/* Money Page */}

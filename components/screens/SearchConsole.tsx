@@ -439,25 +439,38 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
         // Parse conflicts
         if (conflictsRes.status === 'fulfilled' && conflictsRes.value.ok) {
           const data = await conflictsRes.value.json();
-          const mapped: Conflict[] = (Array.isArray(data) ? data : data.results || []).map((item: Record<string, unknown>, idx: number) => ({
-            id: (item.id as number) || idx + 1,
-            query: (item.query as string) || '',
-            severity: (item.severity as string) || 'medium',
-            volatility: (item.volatility as number) || 0,
-            totalClicks: (item.total_clicks as number) || (item.totalClicks as number) || 0,
-            totalImpressions: (item.total_impressions as number) || (item.totalImpressions as number) || 0,
-            pages: ((item.pages as Record<string, unknown>[]) || []).map((p: Record<string, unknown>) => ({
-              url: (p.url as string) || '',
-              title: (p.title as string) || '',
-              pos: (p.position as number) || (p.pos as number) || 0,
-              clicks: (p.clicks as number) || 0,
-              impressions: (p.impressions as number) || 0,
-              ctr: (p.ctr as number) || 0,
-              clickShare: (p.click_share as number) || (p.clickShare as number) || 0,
-              trend: (p.position_trend as number[]) || (p.trend as number[]) || [],
-            })),
-          }));
+          // API returns { issues: [...] } with keyword/competing_pages fields
+          const items = Array.isArray(data) ? data : (data.issues || data.results || []);
+          const mapped: Conflict[] = items.map((item: Record<string, unknown>, idx: number) => {
+            const pages = (item.competing_pages || item.pages || []) as Record<string, unknown>[];
+            return {
+              id: (item.id as number) || idx + 1,
+              query: (item.keyword as string) || (item.query as string) || '',
+              severity: (item.severity as string) || 'medium',
+              volatility: (item.volatility as number) || 0,
+              totalClicks: (item.total_clicks as number) || (item.totalClicks as number) || 0,
+              totalImpressions: (item.total_impressions as number) || (item.totalImpressions as number) || 0,
+              pages: pages.map((p: Record<string, unknown>) => ({
+                url: (p.url as string) || '',
+                title: (p.title as string) || '',
+                pos: (p.position as number) || (p.pos as number) || 0,
+                clicks: (p.clicks as number) || 0,
+                impressions: (p.impressions as number) || 0,
+                ctr: (p.ctr as number) || 0,
+                clickShare: (p.impression_share as number) || (p.click_share as number) || (p.clickShare as number) || 0,
+                trend: (p.position_trend as number[]) || (p.trend as number[]) || [],
+              })),
+            };
+          });
           setConflicts(mapped);
+          // Update health with conflict counts from actual data
+          setSiteHealth(prev => ({
+            score: prev?.score ?? 50,
+            trend: prev?.trend ?? 0,
+            totalPages: prev?.totalPages ?? 0,
+            conflictedQueries: mapped.length,
+            cleanQueries: Math.max(0, (prev?.totalPages || 0) - mapped.length),
+          }));
         }
 
         // Parse GSC performance
@@ -473,16 +486,17 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
           });
         }
 
-        // Parse site overview/health
+        // Parse site overview/health — API returns health_score + total_pages
         if (overviewRes.status === 'fulfilled' && overviewRes.value.ok) {
           const data = await overviewRes.value.json();
-          setSiteHealth({
-            score: data.silo_health_score || data.health_score || 50,
+          const totalPages = data.total_pages || 0;
+          setSiteHealth(prev => ({
+            score: data.silo_health_score || data.health_score || prev?.score || 50,
             trend: data.health_trend || 0,
-            cleanQueries: data.clean_queries || 0,
-            conflictedQueries: data.conflicted_queries || 0,
-            totalPages: data.total_pages || 0,
-          });
+            cleanQueries: data.clean_queries || Math.max(0, totalPages - (prev?.conflictedQueries || 0)),
+            conflictedQueries: data.conflicted_queries || prev?.conflictedQueries || 0,
+            totalPages,
+          }));
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -543,8 +557,9 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-white">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] bg-white gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-[#6C5CE7]" />
+        <p className="text-sm text-slate-500">Syncing with Google Search Console...</p>
       </div>
     );
   }
@@ -552,8 +567,14 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
   if (error && conflicts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] bg-white gap-4">
-        <p className="text-sm text-red-400">{error}</p>
-        <Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+          <Search className="h-6 w-6 text-red-600" />
+        </div>
+        <div className="text-center space-y-1">
+          <p className="text-sm font-medium text-slate-900">Unable to load data</p>
+          <p className="text-sm text-red-400">{error}</p>
+        </div>
+        <Button variant="outline" onClick={() => window.location.reload()}>Try again</Button>
       </div>
     );
   }

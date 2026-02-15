@@ -20,6 +20,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchWithAuth } from '@/lib/auth-headers';
+import { LoadingState } from '@/components/ui/loading-state';
+import { ErrorState } from '@/components/ui/error-state';
+import { EmptyState } from '@/components/ui/empty-state';
+import { NoSiteSelected } from '@/components/ui/no-site-selected';
+import { FileText } from 'lucide-react';
 
 interface Page {
   id: number;
@@ -157,6 +162,30 @@ export default function PagesScreen({ onAnalyze, siteId }: PagesScreenProps) {
 
   const moneyPageCount = pages.filter(p => p.is_money_page).length;
   const totalSynced = pages.length;
+
+  if (!siteId) {
+    return <NoSiteSelected message="Select a site from the sidebar to view and manage its pages." />;
+  }
+
+  if (isLoading) {
+    return <LoadingState message="Analyzing your site structure..." />;
+  }
+
+  if (error && pages.length === 0) {
+    return <ErrorState message={error} onRetry={loadPages} />;
+  }
+
+  if (pages.length === 0) {
+    return (
+      <EmptyState
+        icon={<FileText className="h-7 w-7" />}
+        title="No pages synced yet"
+        description="Install the Siloq WordPress plugin and sync your pages to get started with content governance."
+        actionLabel="Refresh"
+        onAction={loadPages}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -303,14 +332,9 @@ export default function PagesScreen({ onAnalyze, siteId }: PagesScreenProps) {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {isLoading ? (
+          {paginatedPages.length === 0 ? (
             <div className="p-8 text-center text-slate-500">
-              <RefreshCw size={24} className="animate-spin mx-auto mb-2" />
-              Loading pages...
-            </div>
-          ) : paginatedPages.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">
-              No pages found. Sync pages from your WordPress site.
+              No pages match your current filters. Try adjusting your search or filters.
             </div>
           ) : (
             <div className="divide-y">
