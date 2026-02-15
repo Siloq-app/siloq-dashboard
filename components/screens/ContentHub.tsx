@@ -22,6 +22,15 @@ interface Recommendation {
   searches: number;
 }
 
+interface GeneratedContent {
+  title: string;
+  content: string;
+  meta_description: string;
+  suggested_slug: string;
+  word_count: number;
+  silo_id?: number;
+}
+
 interface PendingItem {
   id: number;
   title: string;
@@ -224,6 +233,7 @@ export default function ContentHub() {
   const [published, setPublished] = useState<PublishedItem[]>([]);
   const [generatingId, setGeneratingId] = useState<number | null>(null);
   const [completedId, setCompletedId] = useState<number | null>(null);
+  const [generatedContents, setGeneratedContents] = useState<Record<number, GeneratedContent>>({});
   const [successBanners, setSuccessBanners] = useState<Array<{ id: number; title: string }>>([]);
   const [showCustom, setShowCustom] = useState(false);
   const [customTopic, setCustomTopic] = useState("");
@@ -311,11 +321,21 @@ export default function ContentHub() {
       );
       
       if (response.ok) {
-        // Simulate agent console duration
-        setTimeout(() => {
-          setGeneratingId(null);
-          setCompletedId(id);
-        }, 4500);
+        const data = await response.json();
+        // Store generated content for review/approve
+        setGeneratedContents(prev => ({
+          ...prev,
+          [id]: {
+            title: data.title || '',
+            content: data.content || '',
+            meta_description: data.meta_description || '',
+            suggested_slug: data.suggested_slug || '',
+            word_count: data.word_count || 0,
+            silo_id: data.silo_id,
+          }
+        }));
+        setGeneratingId(null);
+        setCompletedId(id);
       } else {
         setGeneratingId(null);
         alert('Failed to generate content');
@@ -328,6 +348,7 @@ export default function ContentHub() {
 
   const handleApproveRec = async (id: number) => {
     const rec = recommendations.find(r => r.id === id);
+    const generated = generatedContents[id];
     if (!rec) return;
 
     try {
@@ -336,7 +357,13 @@ export default function ContentHub() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recommendation_id: id })
+          body: JSON.stringify({
+            title: generated?.title || rec.title,
+            content: generated?.content || '',
+            meta_description: generated?.meta_description || '',
+            slug: generated?.suggested_slug || '',
+            silo_id: generated?.silo_id,
+          })
         }
       );
 
