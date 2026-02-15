@@ -33,11 +33,10 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 
-// This is sample data.
 const data = {
   user: {
-    name: 'shadcn',
-    email: 'm@example.com',
+    name: '',
+    email: '',
     avatar: '',
   },
   navMain: [
@@ -80,6 +79,17 @@ const data = {
       ],
     },
     {
+      title: 'Search Console',
+      url: '/dashboard?tab=search-console',
+      icon: Search,
+      items: [
+        {
+          title: 'Performance',
+          url: '/dashboard?tab=search-console',
+        },
+      ],
+    },
+    {
       title: 'Sites',
       url: '#',
       icon: Globe,
@@ -103,8 +113,8 @@ const data = {
       icon: Settings,
     },
     {
-      title: 'Get Help',
-      url: '#',
+      title: 'Help Center',
+      url: '/dashboard/help',
       icon: HelpCircle,
     },
     {
@@ -118,6 +128,7 @@ const data = {
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Dashboard: LayoutDashboard,
   Content: FileText,
+  'Search Console': Search,
   Sites: Globe,
 };
 
@@ -125,6 +136,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get('tab');
+
+  const [userData, setUserData] = React.useState(data.user);
+  React.useEffect(() => {
+    setUserData({
+      name: localStorage.getItem('userName') || 'User',
+      email: localStorage.getItem('userEmail') || '',
+      avatar: '',
+    });
+  }, []);
 
   return (
     <Sidebar {...props}>
@@ -213,7 +233,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             );
           })}
         </SidebarMenu>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -2,13 +2,10 @@
 
 import {
   AlertTriangle,
-  TrendingUp,
   GitBranch,
   ChevronRight,
   Zap,
   ArrowRight,
-  TrendingDown,
-  Activity,
 } from 'lucide-react';
 import {
   CannibalizationIssue,
@@ -50,71 +47,36 @@ export default function GovernanceDashboard({
         <HealthScore score={healthScore} change={8} />
 
         {/* Quick Stats Grid - Responsive */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 lg:gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
           {[
             {
-              title: 'Cannibalization Issues',
+              title: 'Competing Pages',
               value: cannibalizationIssues.length,
-              change: '+12.5%',
-              trend: 'up',
-              description: 'Issues increasing',
-              subtext: 'Detected by Siloq',
+              subtext: 'Found by Siloq',
               color: 'text-red-400',
             },
             {
-              title: 'Silos Mapped',
+              title: 'Service Categories',
               value: silos.length,
-              change: '+8%',
-              trend: 'up',
-              description: 'Organization improving',
               subtext: `${silos.reduce((acc, s) => acc + s.supportingPages.length + 1, 0)} pages organized`,
               color: 'text-blue-400',
             },
             {
               title: 'Pending Actions',
               value: pendingChanges.length,
-              change: '-5%',
-              trend: 'down',
-              description: 'Queue decreasing',
               subtext: 'Awaiting approval',
               color: 'text-amber-400',
-            },
-            {
-              title: 'Content Coverage',
-              value: '87%',
-              change: '+5%',
-              trend: 'up',
-              description: 'Coverage improving',
-              subtext: 'Target entities covered',
-              color: 'text-emerald-400',
             },
           ].map((stat, i) => (
             <Card key={i} className="p-4">
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    {stat.title}
-                  </span>
-                  <span
-                    className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold uppercase text-white ${
-                      stat.trend === 'up' ? 'bg-emerald-500' : 'bg-red-600'
-                    }`}
-                  >
-                    {stat.trend === 'up' ? '↗' : '↘'} {stat.change}
-                  </span>
-                </div>
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {stat.title}
+                </span>
                 <div
                   className={`text-2xl font-semibold tabular-nums ${stat.color}`}
                 >
                   {stat.value}
-                </div>
-                <div className="text-foreground flex items-center gap-1.5 text-sm">
-                  {stat.trend === 'up' ? (
-                    <TrendingUp size={14} className="text-primary" />
-                  ) : (
-                    <TrendingDown size={14} className="text-red-500" />
-                  )}
-                  {stat.description}
                 </div>
                 <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   {stat.subtext}
@@ -137,7 +99,7 @@ export default function GovernanceDashboard({
                 Siloq has analyzed your site
               </h3>
               <p className="text-xs font-medium text-gray-600 sm:text-sm dark:text-gray-400">
-                Found {cannibalizationIssues.length} cannibalization issues.
+                Found {cannibalizationIssues.length} competing page issues.
                 Generated {pendingChanges.length} recommended actions (
                 {safeCount} safe, {destructiveCount} destructive).
               </p>
@@ -152,7 +114,7 @@ export default function GovernanceDashboard({
         </div>
       </Card>
 
-      {/* Cannibalization Alerts */}
+      {/* Competing Page Alerts */}
       <div className="space-y-3">
         {cannibalizationIssues.map((issue) => (
           <Card key={issue.id} className="cursor-pointer p-4">
@@ -163,7 +125,7 @@ export default function GovernanceDashboard({
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <span className="text-sm font-medium text-amber-900">
-                    Cannibalization
+                    Competing
                   </span>
                 </div>
 
@@ -254,10 +216,10 @@ export default function GovernanceDashboard({
             </span>
             <div className="leading-tight">
               <p className="text-sm font-semibold text-slate-900">
-                Reverse Silo Architecture
+                Content Organization
               </p>
               <p className="text-xs text-slate-500">
-                Money Pages and Supporting Content
+                Your service pages and supporting content
               </p>
             </div>
           </div>

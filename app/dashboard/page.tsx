@@ -6,6 +6,7 @@ import Dashboard, { TabType, AutomationMode } from './dashboard';
 import Header from './header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { DashboardProvider } from '@/lib/hooks/dashboard-context';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -49,19 +50,21 @@ function SidebarWithSearch() {
 
 export default function DashboardPage() {
   return (
-    <SidebarProvider>
-      <Suspense fallback={null}>
-        <SidebarWithSearch />
-      </Suspense>
-      <SidebarInset>
-        <Suspense
-          fallback={
-            <div className="flex h-16 items-center px-4">Loading...</div>
-          }
-        >
-          <DashboardContent />
+    <DashboardProvider>
+      <SidebarProvider>
+        <Suspense fallback={null}>
+          <SidebarWithSearch />
         </Suspense>
-      </SidebarInset>
-    </SidebarProvider>
+        <SidebarInset>
+          <Suspense
+            fallback={
+              <div className="flex h-16 items-center px-4">Loading...</div>
+            }
+          >
+            <DashboardContent />
+          </Suspense>
+        </SidebarInset>
+      </SidebarProvider>
+    </DashboardProvider>
   );
 }
