@@ -107,11 +107,11 @@ export default function Settings({
   useEffect(() => {
     async function fetchTeam() {
       try {
-        const res = await fetch('/api/v1/team/invite');
+        const res = await fetchWithAuth('/api/v1/auth/team/');
         if (res.ok) {
           const data = await res.json();
-          if (data.members && Array.isArray(data.members)) {
-            setTeamMembers(data.members);
+          if (data.team_members && Array.isArray(data.team_members)) {
+            setTeamMembers(data.team_members);
           }
         }
       } catch {
@@ -135,7 +135,7 @@ export default function Settings({
     }
 
     try {
-      const res = await fetch('/api/v1/team/invite', {
+      const res = await fetchWithAuth('/api/v1/auth/team/invite/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
@@ -276,8 +276,11 @@ export default function Settings({
     setSaveSuccess(false);
 
     try {
-      const response = await fetchWithAuth('/api/v1/settings/', {
+      const response = await fetchWithAuth('/api/v1/auth/me/', {
         method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           name: profile.name,
         }),
