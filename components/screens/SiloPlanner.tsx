@@ -17,6 +17,8 @@ import { cn } from '@/lib/utils';
 import { SiloTreeView } from '@/components/modals/SiloTreeView';
 import { PageTypeBadge } from '@/components/ui/page-type-badge';
 import { fetchWithAuth } from '@/lib/auth-headers';
+import { toast } from 'sonner';
+import type { PageClassificationType } from '@/app/dashboard/types';
 
 interface Props {
   silos: Silo[];
@@ -121,6 +123,23 @@ export default function SiloPlanner({
                     <PageTypeBadge
                       pageType={silo.targetPage.pageType || 'money'}
                       isOverride={silo.targetPage.pageTypeOverride}
+                      onChangeType={siteId && silo.targetPage.id ? async (newType: PageClassificationType) => {
+                        try {
+                          const res = await fetchWithAuth(
+                            `/api/v1/sites/${siteId}/pages/${silo.targetPage.id}/page-type/`,
+                            {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ page_type: newType }),
+                            }
+                          );
+                          if (!res.ok) throw new Error('Failed to update page type');
+                          toast.success('Page type updated');
+                          onRefresh?.();
+                        } catch {
+                          toast.error('Failed to update page type');
+                        }
+                      } : undefined}
                     />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">

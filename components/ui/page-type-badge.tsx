@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { Crown, ArrowUp, Settings, Target, Archive, ShoppingCart, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PageClassificationType } from '@/app/dashboard/types';
@@ -62,31 +63,77 @@ const PAGE_TYPE_CONFIG: Record<PageClassificationType, {
   },
 };
 
+const ALL_TYPES: PageClassificationType[] = ['money', 'supporting', 'utility', 'conversion', 'archive', 'product'];
+
 interface PageTypeBadgeProps {
   pageType: PageClassificationType;
   isOverride?: boolean;
   className?: string;
+  onChangeType?: (newType: PageClassificationType) => void;
 }
 
-export function PageTypeBadge({ pageType, isOverride, className }: PageTypeBadgeProps) {
+export function PageTypeBadge({ pageType, isOverride, className, onChangeType }: PageTypeBadgeProps) {
   const config = PAGE_TYPE_CONFIG[pageType] || PAGE_TYPE_CONFIG.supporting;
   const Icon = config.icon;
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-        config.bg,
-        config.text,
-        config.darkBg,
-        config.darkText,
-        className
+    <div className="relative inline-block" ref={ref}>
+      <span
+        onClick={onChangeType ? () => setOpen(o => !o) : undefined}
+        className={cn(
+          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+          config.bg,
+          config.text,
+          config.darkBg,
+          config.darkText,
+          onChangeType && 'cursor-pointer hover:opacity-80',
+          className
+        )}
+      >
+        <Icon size={10} />
+        {config.label}
+        {isOverride && <Lock size={8} className="ml-0.5 opacity-60" />}
+      </span>
+
+      {open && onChangeType && (
+        <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+          {ALL_TYPES.map((type) => {
+            const c = PAGE_TYPE_CONFIG[type];
+            const TypeIcon = c.icon;
+            return (
+              <button
+                key={type}
+                onClick={() => {
+                  onChangeType(type);
+                  setOpen(false);
+                }}
+                className={cn(
+                  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-slate-50 dark:hover:bg-slate-700',
+                  type === pageType && 'bg-slate-50 dark:bg-slate-700'
+                )}
+              >
+                <span className={cn('h-2 w-2 rounded-full', c.bg)} />
+                <TypeIcon size={12} className={c.text} />
+                <span className="text-slate-700 dark:text-slate-300">{c.label}</span>
+              </button>
+            );
+          })}
+        </div>
       )}
-    >
-      <Icon size={10} />
-      {config.label}
-      {isOverride && <Lock size={8} className="ml-0.5 opacity-60" />}
-    </span>
+    </div>
   );
 }
 
