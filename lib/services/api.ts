@@ -382,10 +382,11 @@ export interface SiloHealthResponse {
 class ConflictsService {
   async list(siteId: number | string): Promise<ConflictResponse[]> {
     const res = await fetchWithAuth(`/api/v1/conflicts/?site_id=${siteId}`);
-    const data = await res.json();
+    const responseData = await res.json();
     if (!res.ok)
-      throw new Error(data.message || data.detail || 'Failed to load conflicts');
-    return Array.isArray(data) ? data : data.results || [];
+      throw new Error(responseData.message || responseData.detail || 'Failed to load conflicts');
+    // API returns {data: [...], meta: {...}} format
+    return Array.isArray(responseData) ? responseData : responseData.data || responseData.results || [];
   }
 
   async resolve(conflictId: number | string): Promise<void> {
@@ -414,20 +415,22 @@ class ConflictsService {
 class KeywordsService {
   async list(siteId: number | string): Promise<KeywordResponse[]> {
     const res = await fetchWithAuth(`/api/v1/keywords/?site_id=${siteId}`);
-    const data = await res.json();
+    const responseData = await res.json();
     if (!res.ok)
-      throw new Error(data.message || data.detail || 'Failed to load keywords');
-    return Array.isArray(data) ? data : data.results || [];
+      throw new Error(responseData.message || responseData.detail || 'Failed to load keywords');
+    // API returns {data: [...], meta: {...}} format
+    return Array.isArray(responseData) ? responseData : responseData.data || responseData.results || [];
   }
 }
 
 class HealthScoresService {
   async get(siteId: number | string): Promise<SiloHealthResponse[]> {
     const res = await fetchWithAuth(`/api/v1/health/scores/?site_id=${siteId}`);
-    const data = await res.json();
+    const responseData = await res.json();
     if (!res.ok)
-      throw new Error(data.message || data.detail || 'Failed to load health scores');
-    return Array.isArray(data) ? data : data.results || [];
+      throw new Error(responseData.message || responseData.detail || 'Failed to load health scores');
+    // API returns {data: [...], meta: {...}} format
+    return Array.isArray(responseData) ? responseData : responseData.data || responseData.results || [];
   }
 }
 

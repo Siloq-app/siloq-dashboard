@@ -18,7 +18,7 @@ const agentSteps = [
 ];
 
 interface Recommendation {
-  id: number;
+  id: string;  // Changed from number to string - API returns rec_id as hash
   title: string;
   silo: string;
   reason: string;
@@ -103,11 +103,11 @@ function AgentConsole({ onComplete }: { onComplete?: () => void }) {
 
 interface RecommendationCardProps {
   rec: Recommendation;
-  onGenerate: (id: number) => void;
+  onGenerate: (id: string) => void;
   isGenerating: boolean;
   isComplete: boolean;
-  onApprove: (id: number) => void;
-  onDismiss: (id: number) => void;
+  onApprove: (id: string) => void;
+  onDismiss: (id: string) => void;
 }
 
 function RecommendationCard({ rec, onGenerate, isGenerating, isComplete, onApprove, onDismiss }: RecommendationCardProps) {
@@ -235,9 +235,9 @@ export default function ContentHub() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [pending, setPending] = useState<PendingItem[]>([]);
   const [published, setPublished] = useState<PublishedItem[]>([]);
-  const [generatingId, setGeneratingId] = useState<number | null>(null);
-  const [completedId, setCompletedId] = useState<number | null>(null);
-  const [generatedContents, setGeneratedContents] = useState<Record<number, GeneratedContent>>({});
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [completedId, setCompletedId] = useState<string | null>(null);
+  const [generatedContents, setGeneratedContents] = useState<Record<string, GeneratedContent>>({});
   const [successBanners, setSuccessBanners] = useState<Array<{ id: number; title: string }>>([]);
   const [showCustom, setShowCustom] = useState(false);
   const [customTopic, setCustomTopic] = useState("");
@@ -316,7 +316,7 @@ export default function ContentHub() {
     loadData();
   }, [selectedSite]);
 
-  const handleGenerate = async (id: number) => {
+  const handleGenerate = async (id: string) => {
     setGeneratingId(id);
     
     // Call generate API
@@ -354,7 +354,7 @@ export default function ContentHub() {
     }
   };
 
-  const handleApproveRec = async (id: number) => {
+  const handleApproveRec = async (id: string) => {
     const rec = recommendations.find(r => r.id === id);
     const generated = generatedContents[id];
     if (!rec) return;
