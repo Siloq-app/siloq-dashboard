@@ -283,6 +283,8 @@ export interface SiloResponse {
     url: string;
     title: string;
     entities?: string[];
+    page_type_classification?: string;
+    page_type_override?: boolean;
   };
   supporting_pages: Array<{
     id: number;
@@ -291,6 +293,8 @@ export interface SiloResponse {
     status: string;
     has_link_to_target: boolean;
     entities?: string[];
+    page_type_classification?: string;
+    page_type_override?: boolean;
   }>;
   created_at: string;
   updated_at: string;

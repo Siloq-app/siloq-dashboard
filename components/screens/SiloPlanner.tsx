@@ -10,24 +10,47 @@ import {
   FileText,
   ChevronRight,
   GitBranch,
+  RefreshCw,
 } from 'lucide-react';
 import { Silo } from '@/app/dashboard/types';
 import { cn } from '@/lib/utils';
 import { SiloTreeView } from '@/components/modals/SiloTreeView';
+import { PageTypeBadge } from '@/components/ui/page-type-badge';
+import { fetchWithAuth } from '@/lib/auth-headers';
 
 interface Props {
   silos: Silo[];
   selectedSilo: Silo | null;
   onGenerateClick: () => void;
+  siteId?: string | number;
+  onRefresh?: () => void;
 }
 
 export default function SiloPlanner({
   silos,
   selectedSilo,
   onGenerateClick,
+  siteId,
+  onRefresh,
 }: Props) {
   const [isTreeViewOpen, setIsTreeViewOpen] = useState(false);
+  const [isReclassifying, setIsReclassifying] = useState(false);
   const displaySilos = selectedSilo ? [selectedSilo] : silos;
+
+  const handleReclassify = async () => {
+    if (!siteId) return;
+    setIsReclassifying(true);
+    try {
+      const res = await fetchWithAuth(`/api/v1/sites/${siteId}/classify-all/`, { method: 'POST' });
+      if (res.ok) {
+        onRefresh?.();
+      }
+    } catch (e) {
+      console.error('Reclassify failed', e);
+    } finally {
+      setIsReclassifying(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -42,6 +65,16 @@ export default function SiloPlanner({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {siteId && (
+            <button
+              onClick={handleReclassify}
+              disabled={isReclassifying}
+              className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            >
+              <RefreshCw size={16} className={isReclassifying ? 'animate-spin' : ''} />
+              {isReclassifying ? 'Classifying...' : 'Reclassify Pages'}
+            </button>
+          )}
           <button
             onClick={() => setIsTreeViewOpen(true)}
             className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
@@ -85,10 +118,10 @@ export default function SiloPlanner({
 
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                      <Crown size={10} />
-                      Money Page
-                    </span>
+                    <PageTypeBadge
+                      pageType={silo.targetPage.pageType || 'money'}
+                      isOverride={silo.targetPage.pageTypeOverride}
+                    />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                     {silo.targetPage.title}

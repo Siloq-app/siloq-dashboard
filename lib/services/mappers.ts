@@ -53,10 +53,13 @@ export function mapSilos(response: SiloResponse[]): Silo[] {
     id: silo.id || 0,
     name: silo.name || 'Untitled Silo',
     targetPage: {
+      id: silo.target_page?.id,
       title: silo.target_page?.title || 'Untitled',
       url: silo.target_page?.url || '',
       status: 'published',
       entities: silo.target_page?.entities || [],
+      pageType: (silo.target_page?.page_type_classification || 'money') as import('@/app/dashboard/types').PageClassificationType,
+      pageTypeOverride: silo.target_page?.page_type_override || false,
     },
     supportingPages: (silo.supporting_pages || []).map((page) => ({
       title: page.title || '',

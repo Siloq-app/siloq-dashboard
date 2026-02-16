@@ -80,14 +80,19 @@ export interface SupportingPage {
   entities: string[];
 }
 
+export type PageClassificationType = 'money' | 'supporting' | 'utility' | 'conversion' | 'archive' | 'product';
+
 export interface Silo {
   id: number;
   name: string;
   targetPage: {
+    id?: number;
     title: string;
     url: string;
     status: string;
     entities: string[];
+    pageType?: PageClassificationType;
+    pageTypeOverride?: boolean;
   };
   supportingPages: SupportingPage[];
 }

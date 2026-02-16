@@ -34,6 +34,9 @@ interface Page {
   published_at: string | null;
   last_synced_at: string | null;
   is_money_page: boolean;
+  is_noindex: boolean;
+  page_type_classification: string;
+  page_type_override: boolean;
   seo_score: number | null;
   issue_count: number;
 }
