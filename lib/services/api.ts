@@ -385,12 +385,36 @@ export interface SiloHealthResponse {
 
 class ConflictsService {
   async list(siteId: number | string): Promise<ConflictResponse[]> {
-    const res = await fetchWithAuth(`/api/v1/conflicts/?site_id=${siteId}`);
+    // Use live detection endpoint (analyzes pages in real-time) instead of stored conflicts
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/cannibalization-issues/`);
     const responseData = await res.json();
     if (!res.ok)
       throw new Error(responseData.message || responseData.detail || 'Failed to load conflicts');
-    // API returns {data: [...], meta: {...}} format
-    return Array.isArray(responseData) ? responseData : responseData.data || responseData.results || [];
+    
+    // Map cannibalization-issues response format to ConflictResponse format
+    const issues = responseData.issues || [];
+    return issues.map((issue: any, idx: number) => ({
+      id: issue.id || idx + 1,
+      keyword: issue.keyword || '',
+      conflict_type: issue.type || 'unknown',
+      severity: (issue.severity || 'low').toLowerCase(),
+      pages: (issue.competing_pages || []).map((p: any) => ({
+        url: p.url || '',
+        title: p.title || '',
+        impressions: p.impressions || 0,
+        clicks: p.clicks || 0,
+        position: p.position || null,
+        is_noindex: p.is_noindex || false,
+        has_redirect: false,
+      })),
+      recommendation: issue.recommendation || '',
+      recommendation_reasoning: issue.explanation || '',
+      winner_url: issue.suggested_king?.url || '',
+      status: 'active' as const,
+      total_impressions: issue.total_impressions || 0,
+      total_clicks: 0,
+      created_at: new Date().toISOString(),
+    }));
   }
 
   async resolve(conflictId: number | string): Promise<void> {
