@@ -104,6 +104,7 @@ export default function Settings({
   const [teamError, setTeamError] = useState<string | null>(null);
 
   // Fetch team members
+  // Bug fix: Wrap in try/catch to gracefully fail so profile tab still works
   useEffect(() => {
     async function fetchTeam() {
       try {
@@ -113,9 +114,17 @@ export default function Settings({
           if (data.team_members && Array.isArray(data.team_members)) {
             setTeamMembers(data.team_members);
           }
+        } else {
+          // Team endpoint might 404 if migration 0003 tables don't exist
+          // Set empty array so UI still renders
+          setTeamMembers([]);
         }
-      } catch {
-        // silent fail
+      } catch (err) {
+        // Gracefully fail - set empty team members array
+        console.warn('Team fetch failed (tables may not exist yet):', err);
+        setTeamMembers([]);
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchTeam();
@@ -155,9 +164,14 @@ export default function Settings({
         }]);
         setInviteEmail('');
         setShowInviteForm(false);
+      } else {
+        // Bug fix: Show user-friendly error if endpoint fails
+        setTeamError('Unable to send invite. Team features may not be available yet. Please try again later.');
       }
-    } catch {
-      setTeamError('Failed to send invite. Please try again.');
+    } catch (err) {
+      // Bug fix: Graceful error handling
+      console.error('Invite error:', err);
+      setTeamError('Unable to send invite. Team features may not be available yet. Please try again later.');
     } finally {
       setIsInviting(false);
     }

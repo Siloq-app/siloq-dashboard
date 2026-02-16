@@ -20,6 +20,7 @@ import {
   type ConflictResponse,
 } from '@/lib/services/api';
 import type { Conflict } from '@/app/dashboard/types';
+import { toast } from 'sonner';
 
 // Severity colors from UX guide
 const SEVERITY_COLORS: Record<string, string> = {
@@ -75,6 +76,9 @@ export default function GovernanceDashboard({
   const [hideNoindex, setHideNoindex] = useState(true);
   const [hideResolved, setHideResolved] = useState(true);
   const [showOnlyWithImpressions, setShowOnlyWithImpressions] = useState(false);
+  
+  // Bug fix: Local dismissed list for live-detected conflicts
+  const [dismissedKeywords, setDismissedKeywords] = useState<Set<string>>(new Set());
 
   const loadConflicts = useCallback(async () => {
     if (!selectedSite) return;
@@ -111,28 +115,33 @@ export default function GovernanceDashboard({
     if (hideResolved && c.status === 'resolved') return false;
     if (showOnlyWithImpressions && c.total_impressions <= 0) return false;
     if (c.status === 'dismissed') return false;
+    // Bug fix: Filter out locally dismissed conflicts (by keyword)
+    if (dismissedKeywords.has(c.keyword)) return false;
     return true;
   });
 
   const activeConflicts = filteredConflicts.filter(c => c.status === 'active');
   const allResolved = conflicts.length > 0 && conflicts.every(c => c.status === 'resolved' || c.status === 'dismissed');
 
-  const handleResolve = async (conflictId: number) => {
-    try {
-      await conflictsService.resolve(conflictId);
-      await loadConflicts();
-    } catch (e) {
-      console.error('Failed to resolve conflict:', e);
-    }
+  // Bug fix: These are live-detected conflicts (no DB ID), so buttons need to work differently
+  const handleDifferentiate = (conflict: Conflict) => {
+    toast.info(
+      'To differentiate these pages, update their page types in the Pages tab so they serve different purposes.',
+      { duration: 5000 }
+    );
   };
 
-  const handleDismiss = async (conflictId: number) => {
-    try {
-      await conflictsService.dismiss(conflictId);
-      await loadConflicts();
-    } catch (e) {
-      console.error('Failed to dismiss conflict:', e);
-    }
+  const handleRedirect = (conflict: Conflict) => {
+    toast.info(
+      'Redirect support coming soon. For now, set up a 301 redirect in your CMS from the losing URL to the winning URL.',
+      { duration: 5000 }
+    );
+  };
+
+  const handleDismiss = (conflict: Conflict) => {
+    // Add keyword to dismissed list so it disappears from current session
+    setDismissedKeywords(prev => new Set(prev).add(conflict.keyword));
+    toast.success(`Dismissed conflict for "${conflict.keyword}"`);
   };
 
   // No site selected
@@ -237,7 +246,8 @@ export default function GovernanceDashboard({
             <ConflictCard
               key={conflict.id}
               conflict={conflict}
-              onResolve={handleResolve}
+              onDifferentiate={handleDifferentiate}
+              onRedirect={handleRedirect}
               onDismiss={handleDismiss}
             />
           ))}
@@ -290,12 +300,14 @@ function EmptyState({ icon, title, message }: { icon: string; title: string; mes
 
 function ConflictCard({
   conflict,
-  onResolve,
+  onDifferentiate,
+  onRedirect,
   onDismiss,
 }: {
   conflict: Conflict;
-  onResolve: (id: number) => void;
-  onDismiss: (id: number) => void;
+  onDifferentiate: (conflict: Conflict) => void;
+  onRedirect: (conflict: Conflict) => void;
+  onDismiss: (conflict: Conflict) => void;
 }) {
   const severity = conflict.severity || 'medium';
   const color = SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium;
@@ -411,14 +423,14 @@ function ConflictCard({
             <Button
               size="sm"
               className="bg-blue-600 text-white hover:bg-blue-700"
-              onClick={() => onResolve(conflict.id)}
+              onClick={() => onRedirect(conflict)}
             >
               Redirect Loser → Winner
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onResolve(conflict.id)}
+              onClick={() => onDifferentiate(conflict)}
             >
               Differentiate
             </Button>
@@ -426,7 +438,7 @@ function ConflictCard({
               size="sm"
               variant="ghost"
               className="text-muted-foreground"
-              onClick={() => onDismiss(conflict.id)}
+              onClick={() => onDismiss(conflict)}
             >
               Dismiss
             </Button>
