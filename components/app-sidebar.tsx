@@ -91,6 +91,10 @@ const data = {
           url: '/dashboard?tab=content',
         },
         {
+          title: 'Content Upload',
+          url: '/dashboard?tab=content-upload',
+        },
+        {
           title: 'Pages',
           url: '/dashboard?tab=pages',
         },

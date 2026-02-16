@@ -11,7 +11,8 @@ export type TabType =
   | 'search-console'
   | 'conflicts'
   | 'keyword-registry'
-  | 'silo-health';
+  | 'silo-health'
+  | 'content-upload';
 export type AutomationMode = 'manual' | 'semi' | 'full';
 
 export interface ConflictPage {

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { useTheme } from '@/lib/hooks/theme-context';
 import { fetchWithAuth } from '@/lib/auth-headers';
+import ContentUpload from './ContentUpload';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -243,6 +244,7 @@ export default function ContentHub() {
   const [customTopic, setCustomTopic] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'hub' | 'upload'>('hub');
 
   const loadData = async () => {
     if (!selectedSite) return;
@@ -445,6 +447,10 @@ export default function ContentHub() {
     return <ErrorState message={error} onRetry={loadData} />;
   }
 
+  if (activeView === 'upload') {
+    return <ContentUpload onBack={() => setActiveView('hub')} />;
+  }
+
   return (
     <>
       <style>{`
@@ -455,6 +461,21 @@ export default function ContentHub() {
       `}</style>
 
       <div style={{ padding: "0", maxWidth: 960, fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+        {/* Upload Your Own Button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <button
+            onClick={() => setActiveView('upload')}
+            style={{
+              padding: '10px 20px', borderRadius: 10, border: `1px solid ${t.accent}35`,
+              background: t.accentGlow || `${t.accent}10`, color: t.accent,
+              fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s',
+            }}
+          >
+            📤 Upload Your Own
+          </button>
+        </div>
+
         {successBanners.map(b => (
           <SuccessBanner key={b.id} title={b.title} onDismiss={() => setSuccessBanners(p => p.filter(x => x.id !== b.id))} />
         ))}
