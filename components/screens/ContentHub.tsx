@@ -344,7 +344,9 @@ export default function ContentHub() {
         setCompletedId(id);
       } else {
         setGeneratingId(null);
-        alert('Failed to generate content');
+        const errData = await response.json().catch(() => ({}));
+        const msg = errData.error || errData.detail || errData.message || `Failed to generate content (${response.status})`;
+        alert(msg);
       }
     } catch (error) {
       console.error('Generate error:', error);
