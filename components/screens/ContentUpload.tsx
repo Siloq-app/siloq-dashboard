@@ -21,11 +21,12 @@ interface PreflightResult {
 function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
+    .replace(/[^\w\s\-\/]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+    .replace(/\/+/g, '/')
     .trim()
-    .replace(/^-+|-+$/g, '');
+    .replace(/^[-\/]+|[-\/]+$/g, '');
 }
 
 export default function ContentUpload({ onBack }: { onBack?: () => void }) {
@@ -56,6 +57,7 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
 
   const handleSlugChange = (val: string) => {
     setSlugManual(true);
+    // Preserve forward slashes for nested URL paths (e.g., service-area/blue-springs-mo)
     setSlug(slugify(val));
   };
 
