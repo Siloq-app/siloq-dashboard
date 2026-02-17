@@ -88,8 +88,35 @@ export default function Settings({
   automationMode,
   onAutomationChange,
   onNavigateToSites,
-  currentTier = 'free_trial',
+  currentTier: currentTierProp = 'free_trial',
 }: Props) {
+  // Independent tier fetch — don't rely solely on parent prop
+  const [resolvedTier, setResolvedTier] = useState<SubscriptionTier>(currentTierProp);
+
+  useEffect(() => {
+    setResolvedTier(currentTierProp);
+  }, [currentTierProp]);
+
+  useEffect(() => {
+    // Fetch tier from billing endpoint (same one Subscription page uses)
+    fetchWithAuth('/api/v1/billing/subscription/current/')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.tier) setResolvedTier(data.tier as SubscriptionTier);
+      })
+      .catch(() => {});
+    // Also try /auth/me as backup
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      fetch('/api/v1/auth/me', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.user?.subscription_tier) setResolvedTier(data.user.subscription_tier as SubscriptionTier);
+          if (data?.user?.is_superuser || data?.user?.is_staff) setResolvedTier('empire' as SubscriptionTier);
+        })
+        .catch(() => {});
+    }
+  }, []);
   const router = useRouter();
   const settingsParams = useSearchParams();
   const sectionParam = settingsParams.get('section');
@@ -101,7 +128,7 @@ export default function Settings({
   const [isLoading, setIsLoading] = useState(true);
 
   // Team state
-  const tierConfig = TIER_CONFIGS[currentTier];
+  const tierConfig = TIER_CONFIGS[resolvedTier];
   const maxTeammates = tierConfig.maxTeammates;
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -542,12 +569,12 @@ export default function Settings({
               Team Members
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {currentTier === 'free_trial'
+              {resolvedTier === 'free_trial'
                 ? 'Upgrade to Pro to add teammates'
                 : `${nonOwnerCount}/${maxTeammates} teammates`}
             </p>
           </div>
-          {currentTier !== 'free_trial' && (
+          {resolvedTier !== 'free_trial' && (
             <button
               onClick={() => setShowInviteForm(true)}
               disabled={atLimit}
@@ -558,7 +585,7 @@ export default function Settings({
           )}
         </div>
 
-        {currentTier === 'free_trial' && (
+        {resolvedTier === 'free_trial' && (
           <Card className="border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-950/20">
             <div className="flex items-center gap-3">
               <Users className="text-amber-600 dark:text-amber-400" size={20} />
@@ -574,7 +601,7 @@ export default function Settings({
           </Card>
         )}
 
-        {atLimit && currentTier !== 'free_trial' && (
+        {atLimit && resolvedTier !== 'free_trial' && (
           <Card className="border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/20">
             <p className="text-sm text-amber-800 dark:text-amber-300">
               You&apos;ve reached the {maxTeammates} teammate limit for {tierConfig.name}.{' '}
@@ -632,7 +659,7 @@ export default function Settings({
         )}
 
         <div className="space-y-3">
-          {teamMembers.length === 0 && currentTier !== 'free_trial' && (
+          {teamMembers.length === 0 && resolvedTier !== 'free_trial' && (
             <p className="text-sm text-slate-500 dark:text-slate-400">
               No team members yet. Invite someone to get started.
             </p>
