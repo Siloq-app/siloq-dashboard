@@ -183,7 +183,6 @@ export default function GovernanceDashboard({
         pages: conflict.pages?.map(p => ({
           url: p.url,
           title: p.title,
-          page_type: p.page_type,
         })) || [],
         keyword: conflict.keyword,
         conflict_type: conflict.conflict_type,
@@ -616,7 +615,164 @@ export default function GovernanceDashboard({
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Differentiation Modal */}
+      <Sheet open={differentiationModal.open} onOpenChange={(open) => !differentiationModal.loading && setDifferentiationModal(prev => ({ ...prev, open }))}>
+        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>AI-Powered Page Differentiation</SheetTitle>
+            <SheetDescription>
+              Review AI recommendations to make each page unique. Edit suggestions as needed, then apply changes.
+            </SheetDescription>
+          </SheetHeader>
+
+          {differentiationModal.loading && !differentiationModal.recommendations ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+              <p className="text-sm text-muted-foreground">Analyzing pages...</p>
+            </div>
+          ) : differentiationModal.recommendations ? (
+            <div className="space-y-6 mt-6">
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4">
+                <div className="flex items-start gap-2">
+                  <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                      Competing for: <span className="font-bold">{differentiationModal.conflict?.keyword}</span>
+                    </p>
+                    <p className="text-blue-700 dark:text-blue-300 mt-1">
+                      Each page below gets a unique angle to target different search intents.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {differentiationModal.recommendations.map((rec, idx) => (
+                <div key={rec.url} className="space-y-4 rounded-lg border p-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id={`page-${idx}`}
+                      checked={differentiationModal.selectedPages.has(rec.url)}
+                      onCheckedChange={() => togglePageSelection(rec.url)}
+                    />
+                    <div className="flex-1 space-y-4">
+                      <div>
+                        <Label htmlFor={`page-${idx}`} className="text-sm font-semibold cursor-pointer">
+                          {rec.url}
+                        </Label>
+                        <div className="mt-1 inline-flex items-center gap-2 text-xs">
+                          <span className="rounded bg-primary/10 text-primary px-2 py-0.5 font-medium">
+                            Target: {rec.primary_keyword}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Title */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-muted-foreground">Title</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <span className="text-xs text-muted-foreground">Current</span>
+                            <div className="rounded bg-muted p-2 text-sm text-muted-foreground">
+                              {rec.current_title || 'No title'}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-xs text-green-600 font-medium">Suggested</span>
+                            <Input
+                              value={rec.new_title}
+                              onChange={(e) => updateRecommendation(rec.url, 'new_title', e.target.value)}
+                              className="border-green-200 bg-green-50 dark:bg-green-950"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Meta Description */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-muted-foreground">Meta Description</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <span className="text-xs text-muted-foreground">Current</span>
+                            <div className="rounded bg-muted p-2 text-sm text-muted-foreground min-h-[60px]">
+                              {rec.current_meta || 'No meta description'}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-xs text-green-600 font-medium">Suggested</span>
+                            <textarea
+                              value={rec.new_meta_description}
+                              onChange={(e) => updateRecommendation(rec.url, 'new_meta_description', e.target.value)}
+                              rows={3}
+                              className="w-full rounded-md border border-green-200 bg-green-50 dark:bg-green-950 px-3 py-2 text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* H1 */}
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium text-muted-foreground">H1 Heading</Label>
+                        <div className="rounded bg-green-50 dark:bg-green-950 border border-green-200 p-2 text-sm text-green-900 dark:text-green-100">
+                          {rec.new_h1}
+                        </div>
+                      </div>
+
+                      {/* Internal Linking */}
+                      {rec.internal_link_suggestion && (
+                        <div className="space-y-1">
+                          <Label className="text-xs font-medium text-muted-foreground">Internal Linking</Label>
+                          <div className="rounded bg-blue-50 dark:bg-blue-950 border border-blue-200 p-2 text-sm text-blue-900 dark:text-blue-100">
+                            {rec.internal_link_suggestion}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Reasoning */}
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium text-muted-foreground">Why these changes?</Label>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {rec.reasoning}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setDifferentiationModal(prev => ({ ...prev, open: false }))}
+                  disabled={differentiationModal.loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleApplyDifferentiation}
+                  disabled={differentiationModal.loading || differentiationModal.selectedPages.size === 0}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {differentiationModal.loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Applying...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Apply {differentiationModal.selectedPages.size > 0 ? `${differentiationModal.selectedPages.size} Change${differentiationModal.selectedPages.size > 1 ? 's' : ''}` : 'Changes'}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
     </div>
+    </>
   );
 }
 
