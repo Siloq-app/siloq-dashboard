@@ -61,6 +61,8 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
 
   const acceptedTypes = ['.txt', '.html', '.htm', '.doc', '.docx'];
 
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
   const handleFile = useCallback((file: File) => {
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();
     if (!acceptedTypes.includes(ext)) {
@@ -68,6 +70,18 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
       return;
     }
     setFileName(file.name);
+
+    // .docx/.doc files are binary (ZIP archives) — can't read as text
+    // Store the file and let the API extract the content server-side
+    if (ext === '.docx' || ext === '.doc') {
+      setPendingFile(file);
+      setContent('[Word document will be processed server-side]');
+      toast.success(`${file.name} ready for upload — content will be extracted on the server`);
+      return;
+    }
+
+    // .txt and .html can be read as text on the client
+    setPendingFile(null);
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
@@ -99,21 +113,40 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
     setPreflight(null);
 
     try {
-      const response = await fetchWithAuth(
-        `/api/v1/sites/${selectedSite.id}/content/upload/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: title.trim(),
-            content: content.trim(),
-            slug: slug || undefined,
-            target_keyword: targetKeyword.trim() || undefined,
-            meta_description: metaDescription.trim() || undefined,
-            excerpt: excerpt.trim() || undefined,
-          }),
-        }
-      );
+      let response;
+
+      if (pendingFile) {
+        // Send as multipart form data (for .docx/.doc files)
+        const formData = new FormData();
+        formData.append('file', pendingFile);
+        formData.append('title', title.trim());
+        if (slug) formData.append('slug', slug);
+        if (targetKeyword.trim()) formData.append('target_keyword', targetKeyword.trim());
+        if (metaDescription.trim()) formData.append('meta_description', metaDescription.trim());
+        if (excerpt.trim()) formData.append('excerpt', excerpt.trim());
+
+        response = await fetchWithAuth(
+          `/api/v1/sites/${selectedSite.id}/content/upload/`,
+          { method: 'POST', body: formData }
+          // Note: don't set Content-Type — browser sets it with boundary for multipart
+        );
+      } else {
+        response = await fetchWithAuth(
+          `/api/v1/sites/${selectedSite.id}/content/upload/`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: title.trim(),
+              content: content.trim(),
+              slug: slug || undefined,
+              target_keyword: targetKeyword.trim() || undefined,
+              meta_description: metaDescription.trim() || undefined,
+              excerpt: excerpt.trim() || undefined,
+            }),
+          }
+        );
+      }
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
@@ -158,7 +191,7 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
       // Reset form
       setTitle(''); setContent(''); setTargetKeyword(''); setSlug('');
       setSlugManual(false); setMetaDescription(''); setExcerpt('');
-      setFileName(''); setPreflight(null);
+      setFileName(''); setPendingFile(null); setPreflight(null);
     } catch (err: any) {
       toast.error(err.message || 'Approval failed');
     } finally {
