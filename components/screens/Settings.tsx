@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Check,
   Copy,
@@ -90,6 +90,7 @@ export default function Settings({
   onNavigateToSites,
   currentTier = 'free_trial',
 }: Props) {
+  const router = useRouter();
   const settingsParams = useSearchParams();
   const sectionParam = settingsParams.get('section');
   const initialTab = (sectionParam && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications'].includes(sectionParam)) 
@@ -466,6 +467,28 @@ export default function Settings({
                 API keys.
               </p>
             )}
+          </div>
+        </div>
+      </Card>
+
+      {/* Master API Key management */}
+      <Card className="border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-950/20">
+        <div className="flex flex-col gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+            <Key className="text-amber-600 dark:text-amber-400" size={20} />
+          </div>
+          <div className="flex-1">
+            <h4 className="mb-1 text-sm font-semibold text-amber-900 dark:text-amber-200">Master API Key</h4>
+            <p className="mb-4 text-sm text-amber-900 dark:text-amber-300">
+              Generate a master API key for full account-level access. Use it for backend integrations and automation.
+            </p>
+            <button
+              onClick={() => router.push('/dashboard/settings/api-keys')}
+              className="focus-visible:ring-ring inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-amber-600 px-3 py-2 text-xs font-medium text-white shadow transition-colors hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            >
+              <Key size={16} />
+              <span className="truncate">Manage API Keys &amp; Master Key</span>
+            </button>
           </div>
         </div>
       </Card>
