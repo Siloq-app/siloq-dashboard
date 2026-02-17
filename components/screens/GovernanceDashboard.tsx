@@ -11,12 +11,24 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Checkbox } from '../ui/checkbox';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '../ui/sheet';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import {
   conflictsService,
+  redirectsService,
   type ConflictResponse,
 } from '@/lib/services/api';
 import type { Conflict } from '@/app/dashboard/types';
@@ -80,6 +92,13 @@ export default function GovernanceDashboard({
   // Bug fix: Local dismissed list for live-detected conflicts
   const [dismissedKeywords, setDismissedKeywords] = useState<Set<string>>(new Set());
 
+  // Redirect modal state
+  const [redirectModalOpen, setRedirectModalOpen] = useState(false);
+  const [selectedConflict, setSelectedConflict] = useState<Conflict | null>(null);
+  const [winnerUrl, setWinnerUrl] = useState('');
+  const [selectedLosers, setSelectedLosers] = useState<Set<string>>(new Set());
+  const [isCreatingRedirects, setIsCreatingRedirects] = useState(false);
+
   const loadConflicts = useCallback(async () => {
     if (!selectedSite) return;
     setIsLoading(true);
@@ -123,19 +142,198 @@ export default function GovernanceDashboard({
   const activeConflicts = filteredConflicts.filter(c => c.status === 'active');
   const allResolved = conflicts.length > 0 && conflicts.every(c => c.status === 'resolved' || c.status === 'dismissed');
 
-  // Bug fix: These are live-detected conflicts (no DB ID), so buttons need to work differently
-  const handleDifferentiate = (conflict: Conflict) => {
-    toast.info(
-      'To differentiate these pages, update their page types in the Pages tab so they serve different purposes.',
-      { duration: 5000 }
-    );
+  // Differentiation modal state
+  const [differentiationModal, setDifferentiationModal] = useState<{
+    open: boolean;
+    conflict: Conflict | null;
+    loading: boolean;
+    recommendations: Array<{
+      url: string;
+      page_id: number | null;
+      new_title: string;
+      new_h1: string;
+      new_meta_description: string;
+      primary_keyword: string;
+      internal_link_suggestion: string;
+      reasoning: string;
+      // For editing
+      current_title?: string;
+      current_meta?: string;
+    }> | null;
+    selectedPages: Set<string>;
+  }>({
+    open: false,
+    conflict: null,
+    loading: false,
+    recommendations: null,
+    selectedPages: new Set(),
+  });
+
+  const handleDifferentiate = async (conflict: Conflict) => {
+    setDifferentiationModal({
+      open: true,
+      conflict,
+      loading: true,
+      recommendations: null,
+      selectedPages: new Set(),
+    });
+
+    try {
+      const result = await conflictsService.differentiate(selectedSite!.id, {
+        pages: conflict.pages?.map(p => ({
+          url: p.url,
+          title: p.title,
+          page_type: p.page_type,
+        })) || [],
+        keyword: conflict.keyword,
+        conflict_type: conflict.conflict_type,
+      });
+
+      // Enrich with current values for comparison
+      const enriched = result.recommendations.map(rec => ({
+        ...rec,
+        current_title: conflict.pages?.find(p => p.url === rec.url)?.title || '',
+        current_meta: '',
+      }));
+
+      setDifferentiationModal(prev => ({
+        ...prev,
+        loading: false,
+        recommendations: enriched,
+        selectedPages: new Set(enriched.map(r => r.url)),
+      }));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to generate recommendations');
+      setDifferentiationModal(prev => ({ ...prev, open: false, loading: false }));
+    }
+  };
+
+  const handleApplyDifferentiation = async () => {
+    const { recommendations, selectedPages } = differentiationModal;
+    if (!recommendations || !selectedSite) return;
+
+    const changes = recommendations
+      .filter(rec => selectedPages.has(rec.url))
+      .map(rec => ({
+        page_id: rec.page_id,
+        url: rec.url,
+        new_title: rec.new_title,
+        new_meta_description: rec.new_meta_description,
+        new_h1: rec.new_h1,
+      }));
+
+    if (changes.length === 0) {
+      toast.error('No pages selected');
+      return;
+    }
+
+    setDifferentiationModal(prev => ({ ...prev, loading: true }));
+
+    try {
+      const result = await conflictsService.applyDifferentiation(selectedSite.id, changes);
+      
+      if (result.successful > 0) {
+        toast.success(`Successfully updated ${result.successful} page(s)`);
+      }
+      if (result.failed > 0) {
+        toast.warning(`Failed to update ${result.failed} page(s)`);
+      }
+
+      // Close modal and refresh conflicts
+      setDifferentiationModal({
+        open: false,
+        conflict: null,
+        loading: false,
+        recommendations: null,
+        selectedPages: new Set(),
+      });
+      loadConflicts();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to apply changes');
+      setDifferentiationModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const togglePageSelection = (url: string) => {
+    setDifferentiationModal(prev => {
+      const newSelected = new Set(prev.selectedPages);
+      if (newSelected.has(url)) {
+        newSelected.delete(url);
+      } else {
+        newSelected.add(url);
+      }
+      return { ...prev, selectedPages: newSelected };
+    });
+  };
+
+  const updateRecommendation = (url: string, field: 'new_title' | 'new_meta_description', value: string) => {
+    setDifferentiationModal(prev => {
+      if (!prev.recommendations) return prev;
+      const updated = prev.recommendations.map(rec =>
+        rec.url === url ? { ...rec, [field]: value } : rec
+      );
+      return { ...prev, recommendations: updated };
+    });
   };
 
   const handleRedirect = (conflict: Conflict) => {
-    toast.info(
-      'Redirect support coming soon. For now, set up a 301 redirect in your CMS from the losing URL to the winning URL.',
-      { duration: 5000 }
-    );
+    // Set up modal state
+    setSelectedConflict(conflict);
+    
+    // Auto-select winner (highest impressions page)
+    const pages = conflict.pages || [];
+    const winnerPage = pages.reduce((best, current) => 
+      (current.impressions || 0) > (best.impressions || 0) ? current : best
+    , pages[0]);
+    
+    setWinnerUrl(winnerPage?.url || '');
+    
+    // Pre-select all losing pages
+    const losingUrls = pages
+      .filter(p => p.url !== winnerPage?.url)
+      .map(p => p.url);
+    setSelectedLosers(new Set(losingUrls));
+    
+    setRedirectModalOpen(true);
+  };
+
+  const handleCreateRedirects = async () => {
+    if (!selectedSite || !selectedConflict || selectedLosers.size === 0) {
+      toast.error('Please select at least one page to redirect');
+      return;
+    }
+
+    setIsCreatingRedirects(true);
+
+    try {
+      const redirectPromises = Array.from(selectedLosers).map(loserUrl =>
+        redirectsService.create(selectedSite.id, {
+          from_url: loserUrl,
+          to_url: winnerUrl,
+          reason: 'Cannibalization resolution',
+          conflict_keyword: selectedConflict.keyword,
+        })
+      );
+
+      await Promise.all(redirectPromises);
+
+      toast.success(
+        `Successfully created ${selectedLosers.size} redirect${selectedLosers.size > 1 ? 's' : ''} and pushed to WordPress`,
+        { duration: 5000 }
+      );
+
+      // Remove the conflict from the displayed list
+      setConflicts(prev => prev.filter(c => c.keyword !== selectedConflict.keyword));
+      
+      setRedirectModalOpen(false);
+      setSelectedConflict(null);
+      setWinnerUrl('');
+      setSelectedLosers(new Set());
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create redirects', { duration: 5000 });
+    } finally {
+      setIsCreatingRedirects(false);
+    }
   };
 
   const handleDismiss = (conflict: Conflict) => {
@@ -189,9 +387,10 @@ export default function GovernanceDashboard({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Filter toggles */}
-      <div className="flex flex-wrap items-center gap-3">
+    <>
+      <div className="space-y-6">
+        {/* Filter toggles */}
+        <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium text-muted-foreground">Filters:</span>
@@ -253,6 +452,170 @@ export default function GovernanceDashboard({
           ))}
         </div>
       )}
+
+      {/* Redirect Resolution Modal */}
+      <Sheet open={redirectModalOpen} onOpenChange={setRedirectModalOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Redirect Loser → Winner</SheetTitle>
+            <SheetDescription>
+              Create 301 redirects from losing pages to the winning page. This will be pushed to WordPress automatically.
+            </SheetDescription>
+          </SheetHeader>
+
+          {selectedConflict && (
+            <div className="space-y-6 mt-6">
+              {/* Competing Pages */}
+              <div>
+                <Label className="text-sm font-semibold mb-3 block">Competing Pages</Label>
+                <div className="space-y-3">
+                  {selectedConflict.pages?.map((page, i) => {
+                    const isWinner = page.url === winnerUrl;
+                    const isSelected = selectedLosers.has(page.url);
+
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded-lg border p-4 ${
+                          isWinner
+                            ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950'
+                            : 'border-border bg-muted/30'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* Winner/Loser selection */}
+                          <div className="flex flex-col items-center gap-2 pt-1">
+                            <input
+                              type="radio"
+                              name="winner"
+                              checked={isWinner}
+                              onChange={() => {
+                                setWinnerUrl(page.url);
+                                // Remove from losers if it was selected
+                                setSelectedLosers(prev => {
+                                  const next = new Set(prev);
+                                  next.delete(page.url);
+                                  return next;
+                                });
+                              }}
+                              className="w-4 h-4 cursor-pointer"
+                            />
+                            {!isWinner && (
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => {
+                                  setSelectedLosers(prev => {
+                                    const next = new Set(prev);
+                                    if (checked) {
+                                      next.add(page.url);
+                                    } else {
+                                      next.delete(page.url);
+                                    }
+                                    return next;
+                                  });
+                                }}
+                              />
+                            )}
+                          </div>
+
+                          {/* Page info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              {isWinner && (
+                                <span className="shrink-0 rounded bg-green-600 px-2 py-0.5 text-xs font-bold text-white uppercase">
+                                  Winner
+                                </span>
+                              )}
+                              <span className="font-mono text-sm truncate" title={page.url}>
+                                {page.url}
+                              </span>
+                            </div>
+                            {page.title && (
+                              <p className="text-xs text-muted-foreground mb-2 truncate">{page.title}</p>
+                            )}
+                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                              {page.impressions != null && (
+                                <span className="font-medium">{page.impressions.toLocaleString()} impressions</span>
+                              )}
+                              {page.clicks != null && (
+                                <span>{page.clicks.toLocaleString()} clicks</span>
+                              )}
+                              {page.position != null && (
+                                <span>Pos #{page.position.toFixed(1)}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Redirect Target URL */}
+              <div>
+                <Label htmlFor="redirect-target" className="text-sm font-semibold mb-2 block">
+                  Redirect Target URL
+                </Label>
+                <Input
+                  id="redirect-target"
+                  value={winnerUrl}
+                  onChange={(e) => setWinnerUrl(e.target.value)}
+                  placeholder="/winning-page-url/"
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  All selected losing pages will redirect to this URL
+                </p>
+              </div>
+
+              {/* Summary */}
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                      Creating {selectedLosers.size} redirect{selectedLosers.size !== 1 ? 's' : ''}
+                    </p>
+                    <p className="text-blue-700 dark:text-blue-300 mt-1">
+                      {selectedLosers.size > 0 ? (
+                        <>All selected pages will be set to 301 redirect to the winner. This will be pushed to WordPress.</>
+                      ) : (
+                        <>Select at least one losing page to redirect.</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  onClick={handleCreateRedirects}
+                  disabled={selectedLosers.size === 0 || !winnerUrl || isCreatingRedirects}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isCreatingRedirects ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>Create {selectedLosers.size} Redirect{selectedLosers.size !== 1 ? 's' : ''}</>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setRedirectModalOpen(false)}
+                  disabled={isCreatingRedirects}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

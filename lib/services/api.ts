@@ -438,6 +438,70 @@ class ConflictsService {
       throw new Error(data.message || data.detail || 'Failed to dismiss conflict');
     }
   }
+
+  async differentiate(siteId: number | string, payload: {
+    pages: Array<{ url: string; title?: string; page_type?: string }>;
+    keyword: string;
+    conflict_type?: string;
+  }): Promise<{
+    site_id: number;
+    keyword: string;
+    recommendations: Array<{
+      url: string;
+      page_id: number | null;
+      new_title: string;
+      new_h1: string;
+      new_meta_description: string;
+      primary_keyword: string;
+      internal_link_suggestion: string;
+      reasoning: string;
+    }>;
+  }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/conflicts/differentiate/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error?.message || data.message || 'Failed to generate differentiation');
+    }
+    return data.data;
+  }
+
+  async applyDifferentiation(siteId: number | string, changes: Array<{
+    page_id: number | null;
+    url: string;
+    new_title: string;
+    new_meta_description: string;
+    new_h1: string;
+  }>): Promise<{
+    site_id: number;
+    total_changes: number;
+    successful: number;
+    failed: number;
+    results: Array<{
+      url: string;
+      success: boolean;
+      error?: string;
+      updated_fields?: {
+        title: string;
+        meta_description: string;
+        h1: string;
+      };
+    }>;
+  }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/conflicts/apply-differentiation/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ changes }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error?.message || data.message || 'Failed to apply changes');
+    }
+    return data.data;
+  }
 }
 
 class KeywordsService {
@@ -559,6 +623,31 @@ class GscService {
   }
 }
 
+class RedirectsService {
+  async create(siteId: number | string, redirect: {
+    from_url: string;
+    to_url: string;
+    reason?: string;
+    conflict_keyword?: string;
+  }): Promise<any> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/redirects/create/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(redirect),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create redirect');
+    return data;
+  }
+
+  async list(siteId: number | string): Promise<any[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/redirects/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load redirects');
+    return data.redirects || [];
+  }
+}
+
 export const sitesService = new SitesService();
 export const pagesService = new PagesService();
 export const apiKeysService = new ApiKeysService();
@@ -571,3 +660,4 @@ export const conflictsService = new ConflictsService();
 export const keywordsService = new KeywordsService();
 export const healthScoresService = new HealthScoresService();
 export const silosV2Service = new SilosV2Service();
+export const redirectsService = new RedirectsService();
