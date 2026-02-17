@@ -36,7 +36,7 @@ export function mapCannibalizationIssues(
       id: issue.id,
       keyword: issue.keyword,
       pages: issue.competing_pages.map((p) => p.url),
-      severity: issue.severity,
+      severity: (issue.severity || 'low').toLowerCase() as any,
       impressions: issue.total_impressions,
       splitClicks,
       recommendation: issue.recommendation,

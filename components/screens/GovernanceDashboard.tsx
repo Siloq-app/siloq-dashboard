@@ -939,7 +939,7 @@ function ConflictCard({
         {/* Action buttons — hide Redirect/Differentiate for INFO (false positives) */}
         {conflict.status === 'active' && (
           <div className="flex flex-wrap gap-2 pt-1">
-            {conflict.severity !== 'INFO' && (
+            {conflict.severity !== 'info' && (
               <>
                 <Button
                   size="sm"
