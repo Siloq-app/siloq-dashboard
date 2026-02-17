@@ -200,17 +200,19 @@ export default function Settings({
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await fetchWithAuth('/api/v1/settings/');
+        const response = await fetchWithAuth('/api/v1/auth/me/');
         if (response.ok) {
           const data = await response.json();
+          const user = data.user || data;
+          const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.name || '';
           setProfile({
-            name: data.name || '',
-            email: data.email || '',
+            name: fullName,
+            email: user.email || '',
           });
         }
       } catch (error) {
-        console.error('Failed to load settings:', error);
-        toast.error('Failed to load settings. Please refresh and try again.');
+        console.error('Failed to load profile:', error);
+        toast.error('Failed to load profile. Please refresh and try again.');
       } finally {
         setIsLoading(false);
       }
