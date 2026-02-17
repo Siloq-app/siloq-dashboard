@@ -209,8 +209,8 @@ export default function Settings({
         setInviteEmail('');
         setShowInviteForm(false);
       } else {
-        // Bug fix: Show user-friendly error if endpoint fails
-        setTeamError('Unable to send invite. Team features may not be available yet. Please try again later.');
+        const errData = await res.json().catch(() => ({}));
+        setTeamError(errData.error || errData.detail || `Unable to send invite (${res.status}). Please try again.`);
       }
     } catch (err) {
       // Bug fix: Graceful error handling
