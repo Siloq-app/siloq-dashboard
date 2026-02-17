@@ -936,23 +936,27 @@ function ConflictCard({
           </div>
         )}
 
-        {/* Action buttons */}
+        {/* Action buttons — hide Redirect/Differentiate for INFO (false positives) */}
         {conflict.status === 'active' && (
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button
-              size="sm"
-              className="bg-blue-600 text-white hover:bg-blue-700"
-              onClick={() => onRedirect(conflict)}
-            >
-              Redirect Loser → Winner
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onDifferentiate(conflict)}
-            >
-              Differentiate
-            </Button>
+            {conflict.severity !== 'INFO' && (
+              <>
+                <Button
+                  size="sm"
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={() => onRedirect(conflict)}
+                >
+                  Redirect Loser → Winner
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onDifferentiate(conflict)}
+                >
+                  Differentiate
+                </Button>
+              </>
+            )}
             <Button
               size="sm"
               variant="ghost"
