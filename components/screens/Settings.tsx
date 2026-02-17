@@ -109,6 +109,16 @@ export default function Settings({
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [teamError, setTeamError] = useState<string | null>(null);
 
+  // Agent permissions state
+  const [agentPerms, setAgentPerms] = useState([
+    { label: 'Allow content generation', desc: 'Agents can create new content blocks', enabled: true },
+    { label: 'Allow internal linking', desc: 'Agents can add internal links between pages', enabled: true },
+    { label: 'Allow meta tag updates', desc: 'Agents can modify title and description tags', enabled: true },
+    { label: 'Allow URL redirects', desc: 'Agents can create 301 redirects', enabled: false },
+    { label: 'Allow page deletion', desc: 'Agents can delete or archive pages', enabled: false },
+    { label: 'Allow schema markup changes', desc: 'Agents can modify structured data', enabled: true },
+  ]);
+
   // Fetch team members
   // Bug fix: Wrap in try/catch to gracefully fail so profile tab still works
   useEffect(() => {
@@ -750,38 +760,7 @@ export default function Settings({
           Fine-grained Permissions
         </h4>
         <div className="space-y-3">
-          {[
-            {
-              label: 'Allow content generation',
-              desc: 'Agents can create new content blocks',
-              enabled: true,
-            },
-            {
-              label: 'Allow internal linking',
-              desc: 'Agents can add internal links between pages',
-              enabled: true,
-            },
-            {
-              label: 'Allow meta tag updates',
-              desc: 'Agents can modify title and description tags',
-              enabled: true,
-            },
-            {
-              label: 'Allow URL redirects',
-              desc: 'Agents can create 301 redirects',
-              enabled: false,
-            },
-            {
-              label: 'Allow page deletion',
-              desc: 'Agents can delete or archive pages',
-              enabled: false,
-            },
-            {
-              label: 'Allow schema markup changes',
-              desc: 'Agents can modify structured data',
-              enabled: true,
-            },
-          ].map((perm, i) => (
+          {agentPerms.map((perm, i) => (
             <div
               key={i}
               className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
@@ -795,6 +774,12 @@ export default function Settings({
                 </div>
               </div>
               <div
+                onClick={() => {
+                  const updated = [...agentPerms];
+                  updated[i] = { ...updated[i], enabled: !updated[i].enabled };
+                  setAgentPerms(updated);
+                  toast.success(`${perm.label} ${!perm.enabled ? 'enabled' : 'disabled'}`);
+                }}
                 className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
                   perm.enabled
                     ? 'bg-emerald-500'
