@@ -39,6 +39,9 @@ interface Page {
   page_type_override: boolean;
   seo_score: number | null;
   issue_count: number;
+  gsc_clicks: number;
+  gsc_impressions: number;
+  gsc_position: number | null;
 }
 
 interface PagesScreenProps {
@@ -404,9 +407,24 @@ export default function PagesScreen({ onAnalyze, siteId }: PagesScreenProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-4 mt-3 text-sm font-medium text-slate-600">
+                        {page.gsc_impressions > 0 && (
+                          <span className="flex items-center gap-1 text-blue-600">
+                            <BarChart3 size={14} />
+                            {page.gsc_impressions.toLocaleString()} impressions
+                          </span>
+                        )}
+                        {page.gsc_clicks > 0 && (
+                          <span className="flex items-center gap-1 text-green-600">
+                            {page.gsc_clicks.toLocaleString()} clicks
+                          </span>
+                        )}
+                        {page.gsc_position !== null && page.gsc_position > 0 && (
+                          <span className="flex items-center gap-1 text-purple-600">
+                            Avg pos: {page.gsc_position}
+                          </span>
+                        )}
                         {page.seo_score !== null && (
                           <span className="flex items-center gap-1">
-                            <BarChart3 size={14} />
                             SEO Score: {page.seo_score}
                           </span>
                         )}
