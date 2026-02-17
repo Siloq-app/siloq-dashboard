@@ -2,8 +2,8 @@
  * API client for WordPress plugin using API key authentication
  */
 
-// Store original fetch to avoid infinite loops
-const originalFetch = window.fetch;
+// Store original fetch to avoid infinite loops (lazy init for SSR compatibility)
+const getOriginalFetch = () => typeof window !== 'undefined' ? window.fetch.bind(window) : fetch;
 
 export async function fetchWithApiKey(url: string, options: RequestInit = {}) {
   // Get API key from WordPress plugin config
@@ -56,7 +56,7 @@ export async function fetchWithApiKey(url: string, options: RequestInit = {}) {
   console.log('=====================================');
 
   // Override fetch to ensure no interceptors
-  const response = await originalFetch(fullUrl, {
+  const response = await getOriginalFetch()(fullUrl, {
     ...options,
     headers: finalHeaders,
     // Ensure no credentials are sent
