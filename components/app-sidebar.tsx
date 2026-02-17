@@ -135,7 +135,7 @@ const data = {
     },
     {
       title: 'Settings',
-      url: '/dashboard/settings/api-keys',
+      url: '/dashboard?tab=settings',
       icon: Settings,
     },
     {
@@ -166,11 +166,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [userData, setUserData] = React.useState(data.user);
   React.useEffect(() => {
-    setUserData({
-      name: localStorage.getItem('userName') || 'User',
-      email: localStorage.getItem('userEmail') || '',
-      avatar: '',
-    });
+    // Start with localStorage cache
+    const cachedName = localStorage.getItem('userName') || 'User';
+    const cachedEmail = localStorage.getItem('userEmail') || '';
+    setUserData({ name: cachedName, email: cachedEmail, avatar: '' });
+
+    // Fetch fresh from API
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch('https://api.siloq.ai/api/v1/auth/me/', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.user) {
+            const name = data.user.name ||
+              [data.user.first_name, data.user.last_name].filter(Boolean).join(' ') ||
+              data.user.email || cachedName;
+            const email = data.user.email || cachedEmail;
+            localStorage.setItem('userName', name);
+            localStorage.setItem('userEmail', email);
+            setUserData({ name, email, avatar: '' });
+          }
+        })
+        .catch(() => {}); // Silently fail, keep cached values
+    }
   }, []);
 
   return (

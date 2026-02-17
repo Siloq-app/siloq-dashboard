@@ -7,6 +7,7 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  Users,
 } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -105,9 +106,13 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard/settings/api-keys'; }}>
+              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard?tab=settings'; }}>
                 <BadgeCheck />
                 Account
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard?tab=settings&section=team'; }}>
+                <Users />
+                Team
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => { window.location.href = '/dashboard/settings/subscription'; }}>
                 <CreditCard />

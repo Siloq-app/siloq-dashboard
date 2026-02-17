@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Check,
   Copy,
@@ -89,7 +90,12 @@ export default function Settings({
   onNavigateToSites,
   currentTier = 'free_trial',
 }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>('profile');
+  const settingsParams = useSearchParams();
+  const sectionParam = settingsParams.get('section');
+  const initialTab = (sectionParam && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications'].includes(sectionParam)) 
+    ? sectionParam as TabId 
+    : 'profile';
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

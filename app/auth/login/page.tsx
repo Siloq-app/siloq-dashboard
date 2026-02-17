@@ -56,7 +56,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/v1/auth/login', {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || 'https://api.siloq.ai';
+      const res = await fetch(`${apiBase}/api/v1/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -69,6 +70,14 @@ export default function LoginPage() {
       }
 
       localStorage.setItem('token', data.token);
+      // Save user name for sidebar display
+      if (data.user) {
+        const name = data.user.name || 
+          [data.user.first_name, data.user.last_name].filter(Boolean).join(' ') || 
+          data.user.email || '';
+        if (name) localStorage.setItem('userName', name);
+        if (data.user.email) localStorage.setItem('userEmail', data.user.email);
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
