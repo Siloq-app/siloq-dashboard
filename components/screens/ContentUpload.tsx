@@ -34,6 +34,7 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
   const { selectedSite } = useDashboardContext();
 
   const [title, setTitle] = useState('');
+  const [metaTitle, setMetaTitle] = useState('');
   const [content, setContent] = useState('');
   const [targetKeyword, setTargetKeyword] = useState('');
   const [slug, setSlug] = useState('');
@@ -45,6 +46,7 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [preflight, setPreflight] = useState<PreflightResult | null>(null);
+  const [images, setImages] = useState<{file: File, alt: string, caption: string, preview: string}[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,6 +66,34 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
   const acceptedTypes = ['.txt', '.html', '.htm', '.doc', '.docx'];
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // Image handling
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach(file => {
+      if (images.length >= 10) {
+        toast.error('Maximum 10 images allowed');
+        return;
+      }
+      const preview = URL.createObjectURL(file);
+      setImages(prev => [...prev, { file, alt: '', caption: '', preview }]);
+    });
+  };
+
+  const updateImageAlt = (index: number, alt: string) => {
+    setImages(prev => prev.map((img, i) => i === index ? { ...img, alt } : img));
+  };
+
+  const updateImageCaption = (index: number, caption: string) => {
+    setImages(prev => prev.map((img, i) => i === index ? { ...img, caption } : img));
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => {
+      URL.revokeObjectURL(prev[index].preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
 
   const handleFile = useCallback((file: File) => {
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();
@@ -117,15 +147,25 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
     try {
       let response;
 
-      if (pendingFile) {
-        // Send as multipart form data (for .docx/.doc files)
+      // Always use FormData if images are attached or if pendingFile exists
+      if (pendingFile || images.length > 0) {
+        // Send as multipart form data
         const formData = new FormData();
-        formData.append('file', pendingFile);
+        if (pendingFile) formData.append('file', pendingFile);
         formData.append('title', title.trim());
         if (slug) formData.append('slug', slug);
+        if (metaTitle.trim()) formData.append('meta_title', metaTitle.trim());
         if (targetKeyword.trim()) formData.append('target_keyword', targetKeyword.trim());
         if (metaDescription.trim()) formData.append('meta_description', metaDescription.trim());
         if (excerpt.trim()) formData.append('excerpt', excerpt.trim());
+        if (!pendingFile && content.trim()) formData.append('content', content.trim());
+
+        // Append images
+        images.forEach((img, idx) => {
+          formData.append('images[]', img.file);
+          formData.append('image_alts[]', img.alt);
+          formData.append('image_captions[]', img.caption);
+        });
 
         response = await fetchWithAuth(
           `/api/v1/sites/${selectedSite.id}/content/upload/`,
@@ -142,6 +182,7 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
               title: title.trim(),
               content: content.trim(),
               slug: slug || undefined,
+              meta_title: metaTitle.trim() || undefined,
               target_keyword: targetKeyword.trim() || undefined,
               meta_description: metaDescription.trim() || undefined,
               excerpt: excerpt.trim() || undefined,
@@ -162,7 +203,17 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
         can_approve: data.can_approve ?? !(data.checks || data.preflight || []).some((c: PreflightCheck) => c.status === 'block'),
       };
       setPreflight(result);
-      toast.success('Content uploaded — review preflight results below');
+
+      // Feature 3: Smart parser auto-populate
+      if (data.smart_parsed && data.parsed_fields) {
+        const parsed = data.parsed_fields;
+        if (parsed.slug) setSlug(parsed.slug);
+        if (parsed.meta_title) setMetaTitle(parsed.meta_title);
+        if (parsed.meta_description) setMetaDescription(parsed.meta_description);
+        toast.success('Smart parser detected city page format — fields auto-populated!');
+      } else {
+        toast.success('Content uploaded — review preflight results below');
+      }
     } catch (err: any) {
       toast.error(err.message || 'Upload failed');
     } finally {
@@ -180,7 +231,15 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content_id: preflight.content_id }),
+          body: JSON.stringify({
+            content_id: preflight.content_id,
+            title,
+            content,
+            slug,
+            meta_title: metaTitle || title,
+            meta_description: metaDescription,
+            excerpt,
+          }),
         }
       );
 
@@ -191,9 +250,11 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
 
       toast.success('Content approved and sent to WordPress!');
       // Reset form
-      setTitle(''); setContent(''); setTargetKeyword(''); setSlug('');
+      setTitle(''); setMetaTitle(''); setContent(''); setTargetKeyword(''); setSlug('');
       setSlugManual(false); setMetaDescription(''); setExcerpt('');
       setFileName(''); setPendingFile(null); setPreflight(null);
+      images.forEach(img => URL.revokeObjectURL(img.preview));
+      setImages([]);
     } catch (err: any) {
       toast.error(err.message || 'Approval failed');
     } finally {
@@ -274,6 +335,20 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your article title" style={inputStyle} />
       </div>
 
+      {/* Meta Title */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={labelStyle}>Meta Title (for search results)</label>
+        <input
+          value={metaTitle}
+          onChange={(e) => { if (e.target.value.length <= 70) setMetaTitle(e.target.value); }}
+          placeholder="Leave blank to use page title"
+          style={inputStyle}
+        />
+        <div style={{ fontSize: 12, marginTop: 4, color: metaTitle.length > 60 ? (t.orange || '#f59e0b') : (t.textDim || t.textMuted) }}>
+          {metaTitle.length}/60 characters {metaTitle.length > 60 && '— exceeds ideal length'}
+        </div>
+      </div>
+
       {/* Content */}
       <div style={{ marginBottom: 16 }}>
         <label style={labelStyle}>Content <span style={{ color: t.red || '#ef4444' }}>*</span></label>
@@ -284,6 +359,90 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
           rows={14}
           style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
         />
+      </div>
+
+      {/* Image Upload Section */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={labelStyle}>Add Images (up to 10)</label>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleImageUpload}
+          style={{ display: 'none' }}
+          id="image-upload"
+        />
+        <label
+          htmlFor="image-upload"
+          style={{
+            display: 'inline-block',
+            padding: '8px 16px',
+            borderRadius: 8,
+            border: `1px solid ${t.border}`,
+            background: t.card,
+            color: t.text,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            marginBottom: 12,
+          }}
+        >
+          📷 Choose Images
+        </label>
+        {images.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+            {images.map((img, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  padding: 12,
+                  borderRadius: 8,
+                  border: `1px solid ${t.border}`,
+                  background: t.card,
+                  alignItems: 'flex-start',
+                }}
+              >
+                <img
+                  src={img.preview}
+                  alt=""
+                  style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
+                />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <input
+                    value={img.alt}
+                    onChange={(e) => updateImageAlt(idx, e.target.value)}
+                    placeholder="Alt text (required for SEO)"
+                    style={{ ...inputStyle, marginBottom: 0 }}
+                  />
+                  <input
+                    value={img.caption}
+                    onChange={(e) => updateImageCaption(idx, e.target.value)}
+                    placeholder="Caption (optional)"
+                    style={{ ...inputStyle, marginBottom: 0 }}
+                  />
+                </div>
+                <button
+                  onClick={() => removeImage(idx)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    border: 'none',
+                    background: t.red || '#ef4444',
+                    color: '#fff',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Target Keyword */}
