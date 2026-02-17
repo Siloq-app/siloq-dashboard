@@ -40,6 +40,28 @@ export default function Dashboard({
   const [showCannibalizationModal, setShowCannibalizationModal] = useState(false);
   const [selectedPageIds, setSelectedPageIds] = useState<number[]>([]);
 
+  const [userTier, setUserTier] = useState<string>('free_trial');
+
+  // Fetch user tier from /auth/me/
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) return;
+    fetch('https://api.siloq.ai/api/v1/auth/me/', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.user?.subscription_tier) {
+          setUserTier(data.user.subscription_tier);
+        }
+        // Superusers/staff get empire access regardless
+        if (data?.user?.is_superuser || data?.user?.is_staff) {
+          setUserTier('empire');
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const {
     siteOverview,
     selectedSite,
@@ -153,7 +175,7 @@ export default function Dashboard({
       case 'search-console':
         return <SearchConsole selectedSite={selectedSite} />;
       case 'settings':
-        return <Settings onNavigateToSites={() => onTabChange?.('sites')} />;
+        return <Settings onNavigateToSites={() => onTabChange?.('sites')} currentTier={userTier as any} />;
       default:
         return null;
     }
