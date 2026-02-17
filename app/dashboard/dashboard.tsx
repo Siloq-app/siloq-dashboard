@@ -47,7 +47,7 @@ export default function Dashboard({
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) return;
-    fetchWithAuth('/api/v1/auth/me/')
+    fetch('/api/v1/auth/me/', { headers: { 'Authorization': `Bearer ${token}` } })
       .then(res => res.ok ? res.json() : Promise.reject(`Auth/me failed: ${res.status}`))
       .then(data => {
         if (data?.user?.subscription_tier) {
