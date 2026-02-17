@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense, useEffect, lazy } from 'react';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
+import { fetchWithAuth } from '@/lib/auth-headers';
 import { TabType, AutomationMode } from './types';
 import { ScreenSkeleton, DashboardSkeleton, TableSkeleton } from '@/components/ui/dashboard-skeleton';
 
@@ -46,10 +47,8 @@ export default function Dashboard({
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) return;
-    fetch('https://api.siloq.ai/api/v1/auth/me/', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => res.ok ? res.json() : null)
+    fetchWithAuth('/api/v1/auth/me/')
+      .then(res => res.ok ? res.json() : Promise.reject(`Auth/me failed: ${res.status}`))
       .then(data => {
         if (data?.user?.subscription_tier) {
           setUserTier(data.user.subscription_tier);
@@ -59,7 +58,7 @@ export default function Dashboard({
           setUserTier('empire');
         }
       })
-      .catch(() => {});
+      .catch((err) => { console.error('[Dashboard] Failed to fetch user tier:', err); });
   }, []);
 
   const {
