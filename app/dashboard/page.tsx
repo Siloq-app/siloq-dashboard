@@ -36,6 +36,7 @@ function DashboardContent() {
       <div className="flex flex-1 flex-col gap-4 p-4">
         <Dashboard
           activeTab={activeTab}
+          onTabChange={(tab: TabType) => { setActiveTab(tab); router.push(`/dashboard?tab=${tab}`); }}
           automationMode={automationMode}
           onAutomationChange={setAutomationMode}
         />
