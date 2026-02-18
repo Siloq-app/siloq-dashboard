@@ -5,6 +5,7 @@ import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { useTheme } from '@/lib/hooks/theme-context';
 import { fetchWithAuth } from '@/lib/auth-headers';
 import ContentUpload from './ContentUpload';
+import ContentPreviewModal from '@/components/modals/ContentPreviewModal';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -19,7 +20,7 @@ const agentSteps = [
 ];
 
 interface Recommendation {
-  id: string;  // Changed from number to string - API returns rec_id as hash
+  id: string;
   title: string;
   silo: string;
   reason: string;
@@ -53,6 +54,17 @@ interface PublishedItem {
   type: string;
   status: string;
   date: string;
+}
+
+interface PreviewModalData {
+  title: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  body: string;
+  wordCount: number;
+  targetKeyword?: string;
+  suggestedSlug?: string;
+  siloId?: number;
 }
 
 function PriorityBadge({ priority }: { priority: 'high' | 'medium' | 'low' }) {
@@ -106,20 +118,17 @@ interface RecommendationCardProps {
   rec: Recommendation;
   onGenerate: (id: string) => void;
   isGenerating: boolean;
-  isComplete: boolean;
-  onApprove: (id: string) => void;
   onDismiss: (id: string) => void;
 }
 
-function RecommendationCard({ rec, onGenerate, isGenerating, isComplete, onApprove, onDismiss }: RecommendationCardProps) {
+function RecommendationCard({ rec, onGenerate, isGenerating, onDismiss }: RecommendationCardProps) {
   const { theme: t } = useTheme();
   const [hovered, setHovered] = useState(false);
-  const preview = `This comprehensive guide covers everything homeowners need to know about ${rec.title.toLowerCase()}. From identifying the signs to understanding your options, this page will help establish your authority on this critical topic...`;
 
   return (
     <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} style={{
       background: t.card, borderRadius: 12, padding: "20px 24px",
-      border: `1px solid ${isGenerating ? t.accent + "50" : isComplete ? t.green + "40" : t.border}`,
+      border: `1px solid ${isGenerating ? t.accent + "50" : t.border}`,
       boxShadow: hovered ? t.shadowHover : t.shadow,
       transition: "all 0.2s", position: "relative", overflow: "hidden"
     }}>
@@ -137,7 +146,7 @@ function RecommendationCard({ rec, onGenerate, isGenerating, isComplete, onAppro
           </div>
           <p style={{ margin: 0, fontSize: 13, color: t.textMuted, lineHeight: 1.55 }}>{rec.reason}</p>
         </div>
-        {!isGenerating && !isComplete && (
+        {!isGenerating && (
           <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 16 }}>
             <button onClick={() => onDismiss(rec.id)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.textMuted, fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}>Dismiss</button>
             <button onClick={() => onGenerate(rec.id)} style={{
@@ -152,37 +161,17 @@ function RecommendationCard({ rec, onGenerate, isGenerating, isComplete, onAppro
       </div>
 
       {isGenerating && <AgentConsole />}
-
-      {isComplete && (
-        <div style={{ marginTop: 14, padding: 16, background: t.consoleBar, borderRadius: 10, border: `1px solid ${t.green}25` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <span style={{ color: t.green, fontSize: 16 }}>✓</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: t.green }}>Draft Generated — Ready for Review</span>
-            <span style={{ fontSize: 12, color: t.textDim, marginLeft: "auto" }}>~1,180 words</span>
-          </div>
-          <p style={{ margin: "0 0 12px", fontSize: 13, color: t.textMuted, lineHeight: 1.6, fontStyle: "italic" }}>"{preview}"</p>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, padding: "8px 12px", background: t.accentGlow, borderRadius: 8, border: `1px solid ${t.accent}20` }}>
-            <span style={{ fontSize: 12 }}>🔗</span>
-            <span style={{ fontSize: 12, color: t.textMuted }}>Internal link to <span style={{ color: t.accent, fontWeight: 600 }}>{rec.silo}</span> automatically included</span>
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button onClick={() => onApprove(rec.id)} style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: t.green, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>✓ Approve & Save as Draft</button>
-            <button style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.textSecondary, fontSize: 13, cursor: "pointer" }}>Preview Full Content</button>
-            <button style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.textSecondary, fontSize: 13, cursor: "pointer" }}>Edit First</button>
-            <button style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.textMuted, fontSize: 13, cursor: "pointer" }}>Reject</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
 interface PendingCardProps {
   item: PendingItem;
+  onPreview: (item: PendingItem) => void;
   onApprove: (id: number) => void;
 }
 
-function PendingCard({ item, onApprove }: PendingCardProps) {
+function PendingCard({ item, onPreview, onApprove }: PendingCardProps) {
   const { theme: t } = useTheme();
   return (
     <div style={{ background: t.card, borderRadius: 12, padding: "20px 24px", border: `1px solid ${t.orangeBorder}`, boxShadow: t.shadow, transition: "all 0.2s" }}>
@@ -201,8 +190,8 @@ function PendingCard({ item, onApprove }: PendingCardProps) {
           <p style={{ margin: 0, fontSize: 13, color: t.textMuted, lineHeight: 1.6, maxWidth: 580 }}>{item.preview}</p>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, marginLeft: 20 }}>
-          <button onClick={() => onApprove(item.id)} style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: t.green, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Approve & Save</button>
-          <button style={{ padding: "8px 18px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.textSecondary, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>Edit First</button>
+          <button onClick={() => onPreview(item)} style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: `linear-gradient(135deg, ${t.accent}, #8B5CF6)`, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>👁 Preview & Edit</button>
+          <button onClick={() => onApprove(item.id)} style={{ padding: "8px 18px", borderRadius: 8, border: `1px solid ${t.greenBorder}`, background: t.greenBg, color: t.green, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>✓ Quick Approve</button>
           <button style={{ padding: "8px 18px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.textMuted, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>Reject</button>
         </div>
       </div>
@@ -212,17 +201,19 @@ function PendingCard({ item, onApprove }: PendingCardProps) {
 
 interface SuccessBannerProps {
   title: string;
+  mode: 'draft' | 'publish';
   onDismiss: () => void;
 }
 
-function SuccessBanner({ title, onDismiss }: SuccessBannerProps) {
+function SuccessBanner({ title, mode, onDismiss }: SuccessBannerProps) {
   const { theme: t } = useTheme();
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderRadius: 10, background: t.greenBg, border: `1px solid ${t.greenBorder}`, marginBottom: 14, animation: "fadeIn 0.4s ease" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 15 }}>✅</span>
-        <span style={{ fontSize: 14, color: t.green, fontWeight: 600 }}>"{title}" saved as draft in WordPress.</span>
-        <a href="#" style={{ fontSize: 13, color: t.accent, textDecoration: "none", fontWeight: 500 }}>View in WordPress →</a>
+        <span style={{ fontSize: 14, color: t.green, fontWeight: 600 }}>
+          "{title}" {mode === 'publish' ? 'published to' : 'saved as draft in'} WordPress.
+        </span>
       </div>
       <button onClick={onDismiss} style={{ background: "none", border: "none", color: t.textDim, cursor: "pointer", fontSize: 16, padding: "2px 6px" }}>×</button>
     </div>
@@ -237,14 +228,22 @@ export default function ContentHub() {
   const [pending, setPending] = useState<PendingItem[]>([]);
   const [published, setPublished] = useState<PublishedItem[]>([]);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
-  const [completedId, setCompletedId] = useState<string | null>(null);
   const [generatedContents, setGeneratedContents] = useState<Record<string, GeneratedContent>>({});
-  const [successBanners, setSuccessBanners] = useState<Array<{ id: number; title: string }>>([]);
+  const [successBanners, setSuccessBanners] = useState<Array<{ id: number; title: string; mode: 'draft' | 'publish' }>>([]);
   const [showCustom, setShowCustom] = useState(false);
   const [customTopic, setCustomTopic] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'hub' | 'upload'>('hub');
+
+  // Preview modal state
+  const [previewModal, setPreviewModal] = useState<{
+    open: boolean;
+    content: PreviewModalData | null;
+    isGenerating: boolean;
+    generatingStep?: string;
+    sourceRecId?: string;
+  }>({ open: false, content: null, isGenerating: false });
 
   const loadData = async () => {
     if (!selectedSite) return;
@@ -252,11 +251,9 @@ export default function ContentHub() {
     setIsLoading(true);
     setError(null);
     try {
-        // Load recommendations
         const recsResponse = await fetchWithAuth(`/api/v1/sites/${selectedSite.id}/content-recommendations/`);
         if (recsResponse.ok) {
           const recsData = await recsResponse.json();
-          // Map API data to component format
           const mappedRecs: Recommendation[] = (recsData.recommendations || recsData.results || recsData || []).map((r: any) => ({
             id: r.id,
             title: r.title || r.recommended_title || 'Untitled',
@@ -268,13 +265,11 @@ export default function ContentHub() {
           setRecommendations(mappedRecs);
         }
 
-        // Load pages to derive published/pending
         const pagesResponse = await fetchWithAuth(`/api/v1/pages/?site_id=${selectedSite.id}`);
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json();
           const pages = pagesData.results || pagesData || [];
           
-          // Published: pages with status = 'published' or 'live'
           const publishedPages = pages
             .filter((p: any) => p.status === 'publish' || p.status === 'published' || p.status === 'live')
             .map((p: any, idx: number) => ({
@@ -286,7 +281,6 @@ export default function ContentHub() {
               date: p.published_date ? new Date(p.published_date).toLocaleDateString() : 'N/A',
             }));
 
-          // Pending: pages with status = 'draft' or 'pending'
           const pendingPages = pages
             .filter((p: any) => p.status === 'draft' || p.status === 'pending')
             .map((p: any, idx: number) => ({
@@ -313,15 +307,28 @@ export default function ContentHub() {
       }
     };
 
-  // Load data from API
   useEffect(() => {
     loadData();
   }, [selectedSite]);
 
   const handleGenerate = async (id: string) => {
     setGeneratingId(id);
+    const rec = recommendations.find(r => r.id === id);
     
-    // Call generate API
+    // Open preview modal in generating state
+    setPreviewModal({
+      open: true,
+      content: {
+        title: rec?.title || 'Generating...',
+        body: '',
+        wordCount: 0,
+        targetKeyword: rec?.title,
+      },
+      isGenerating: true,
+      generatingStep: 'Generating content with AI...',
+      sourceRecId: id,
+    });
+    
     try {
       const response = await fetchWithAuth(
         `/api/v1/sites/${selectedSite?.id}/content-recommendations/${id}/generate/`,
@@ -330,69 +337,97 @@ export default function ContentHub() {
       
       if (response.ok) {
         const data = await response.json();
-        // Store generated content for review/approve
-        setGeneratedContents(prev => ({
-          ...prev,
-          [id]: {
-            title: data.title || '',
-            content: data.content || '',
-            meta_description: data.meta_description || '',
-            suggested_slug: data.suggested_slug || '',
-            word_count: data.word_count || 0,
-            silo_id: data.silo_id,
-          }
-        }));
-        setGeneratingId(null);
-        setCompletedId(id);
+        const generated: GeneratedContent = {
+          title: data.title || '',
+          content: data.content || '',
+          meta_description: data.meta_description || '',
+          suggested_slug: data.suggested_slug || '',
+          word_count: data.word_count || 0,
+          silo_id: data.silo_id,
+        };
+        setGeneratedContents(prev => ({ ...prev, [id]: generated }));
+        
+        // Update preview modal with generated content
+        setPreviewModal({
+          open: true,
+          content: {
+            title: generated.title,
+            metaTitle: generated.title,
+            metaDescription: generated.meta_description,
+            body: generated.content,
+            wordCount: generated.word_count,
+            targetKeyword: rec?.title,
+            suggestedSlug: generated.suggested_slug,
+            siloId: generated.silo_id,
+          },
+          isGenerating: false,
+          sourceRecId: id,
+        });
       } else {
-        setGeneratingId(null);
         const errData = await response.json().catch(() => ({}));
         const msg = errData.error || errData.detail || errData.message || `Failed to generate content (${response.status})`;
+        setPreviewModal({ open: false, content: null, isGenerating: false });
         alert(msg);
       }
     } catch (error) {
       console.error('Generate error:', error);
+      setPreviewModal({ open: false, content: null, isGenerating: false });
+    } finally {
       setGeneratingId(null);
     }
   };
 
-  const handleApproveRec = async (id: string) => {
-    const rec = recommendations.find(r => r.id === id);
-    const generated = generatedContents[id];
-    if (!rec) return;
-
-    try {
-      const response = await fetchWithAuth(
-        `/api/v1/sites/${selectedSite?.id}/content/approve/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: generated?.title || rec.title,
-            content: generated?.content || '',
-            meta_description: generated?.meta_description || '',
-            slug: generated?.suggested_slug || '',
-            silo_id: generated?.silo_id,
-          })
-        }
-      );
-
-      if (response.ok) {
-        setRecommendations(p => p.filter(r => r.id !== id));
-        setCompletedId(null);
-        setPublished(p => [{
-          id: Date.now(),
-          title: rec.title,
-          silo: rec.silo,
-          type: "Blog Post",
-          status: "Draft in WP",
-          date: "Just now"
-        }, ...p]);
-        setSuccessBanners(p => [...p, { id: Date.now(), title: rec.title }]);
+  const handlePushToWordPress = async (content: PreviewModalData, publishMode: 'publish' | 'draft') => {
+    const response = await fetchWithAuth(
+      `/api/v1/sites/${selectedSite?.id}/content/approve/`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: content.title,
+          content: content.body,
+          meta_description: content.metaDescription || '',
+          meta_title: content.metaTitle || '',
+          slug: content.suggestedSlug || '',
+          silo_id: content.siloId,
+          publish_status: publishMode === 'publish' ? 'publish' : 'draft',
+        })
       }
-    } catch (error) {
-      console.error('Approve error:', error);
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to push to WordPress');
     }
+
+    // Remove from recommendations if it came from one
+    const recId = previewModal.sourceRecId;
+    if (recId) {
+      setRecommendations(p => p.filter(r => r.id !== recId));
+    }
+
+    // Add to published list
+    setPublished(p => [{
+      id: Date.now(),
+      title: content.title,
+      silo: '',
+      type: "Blog Post",
+      status: publishMode === 'publish' ? 'Published' : 'Draft in WP',
+      date: "Just now"
+    }, ...p]);
+
+    setSuccessBanners(p => [...p, { id: Date.now(), title: content.title, mode: publishMode }]);
+  };
+
+  const handlePreviewPending = (item: PendingItem) => {
+    setPreviewModal({
+      open: true,
+      content: {
+        title: item.title,
+        body: item.preview,
+        wordCount: item.wordCount,
+      },
+      isGenerating: false,
+    });
   };
 
   const handleApprovePending = async (id: number) => {
@@ -419,7 +454,7 @@ export default function ContentHub() {
           status: "Draft in WP",
           date: "Just now"
         }, ...p]);
-        setSuccessBanners(p => [...p, { id: Date.now(), title: item.title }]);
+        setSuccessBanners(p => [...p, { id: Date.now(), title: item.title, mode: 'draft' }]);
       }
     } catch (error) {
       console.error('Approve pending error:', error);
@@ -430,7 +465,6 @@ export default function ContentHub() {
     const highPriority = recommendations.filter(r => r.priority === 'high');
     for (const rec of highPriority) {
       await handleGenerate(rec.id);
-      // Add delay between generations
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   };
@@ -460,6 +494,18 @@ export default function ContentHub() {
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       `}</style>
 
+      {/* Content Preview Modal */}
+      {previewModal.open && previewModal.content && (
+        <ContentPreviewModal
+          content={previewModal.content}
+          isGenerating={previewModal.isGenerating}
+          generatingStep={previewModal.generatingStep}
+          onClose={() => setPreviewModal({ open: false, content: null, isGenerating: false })}
+          onPushToWordPress={handlePushToWordPress}
+          siteId={selectedSite.id}
+        />
+      )}
+
       <div style={{ padding: "0", maxWidth: 960, fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif" }}>
         {/* Upload Your Own Button */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
@@ -477,7 +523,7 @@ export default function ContentHub() {
         </div>
 
         {successBanners.map(b => (
-          <SuccessBanner key={b.id} title={b.title} onDismiss={() => setSuccessBanners(p => p.filter(x => x.id !== b.id))} />
+          <SuccessBanner key={b.id} title={b.title} mode={b.mode} onDismiss={() => setSuccessBanners(p => p.filter(x => x.id !== b.id))} />
         ))}
 
         {/* SECTION 1: Recommendations */}
@@ -514,8 +560,6 @@ export default function ContentHub() {
                   key={rec.id} rec={rec}
                   onGenerate={handleGenerate}
                   isGenerating={generatingId === rec.id}
-                  isComplete={completedId === rec.id}
-                  onApprove={handleApproveRec}
                   onDismiss={(id) => setRecommendations(p => p.filter(r => r.id !== id))}
                 />
               ))}
@@ -548,7 +592,7 @@ export default function ContentHub() {
               <span style={{ padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: t.orangeBg, color: t.orange, border: `1px solid ${t.orangeBorder}` }}>{pending.length}</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {pending.map(item => <PendingCard key={item.id} item={item} onApprove={handleApprovePending} />)}
+              {pending.map(item => <PendingCard key={item.id} item={item} onPreview={handlePreviewPending} onApprove={handleApprovePending} />)}
             </div>
           </div>
         )}
