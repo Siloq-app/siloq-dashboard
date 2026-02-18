@@ -20,6 +20,7 @@ const TAB_REDIRECTS: Record<string, string> = {
   'internal-links': 'pages',
   'sites': 'settings',
   'all-sites': 'settings',
+  'performance': 'search-console',
 };
 
 function DashboardContent() {
