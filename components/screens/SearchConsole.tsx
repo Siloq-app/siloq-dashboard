@@ -100,6 +100,7 @@ const severityConfig: Record<string, { color: string; bg: string; label: string 
   high: { color: '#FF9500', bg: '#FF950012', label: 'HIGH' },
   medium: { color: '#FFCC00', bg: '#FFCC0012', label: 'MEDIUM' },
   low: { color: '#34C759', bg: '#34C75912', label: 'LOW' },
+  info: { color: '#8E8E93', bg: '#8E8E9312', label: 'INFO' },
 };
 
 const PAGE_COLORS = ['#6C5CE7', '#00B4D8', '#FF6B6B', '#FFA62B', '#34C759'];
@@ -284,7 +285,7 @@ function BattlefieldChart({ conflicts, onSelect, selectedId }: { conflicts: Conf
 
     conflicts.forEach((conflict) => {
       const isSelected = selectedId === conflict.id;
-      const sev = severityConfig[conflict.severity];
+      const sev = severityConfig[conflict.severity] ?? severityConfig.low;
       const pageCoords = conflict.pages.map(p => ({
         x: padding.left + (p.impressions / maxImp) * chartW,
         y: padding.top + (p.pos / maxPos) * chartH,
@@ -890,7 +891,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
 
             {filtered.map((conflict, ci) => {
               const isOpen = selectedConflict === conflict.id;
-              const sev = severityConfig[conflict.severity];
+              const sev = severityConfig[conflict.severity] ?? severityConfig.low;
               return (
                 <div key={conflict.id} className="mb-2 rounded-xl overflow-hidden transition-all duration-300"
                   style={{
