@@ -142,6 +142,29 @@ class SitesService {
       throw new Error(data.message || data.detail || 'Failed to create site');
     return data;
   }
+
+  async approveAction(siteId: number | string, actionId: number | string): Promise<any> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/approve/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.error || data.message || 'Failed to approve action');
+    return data;
+  }
+
+  async denyAction(siteId: number | string, actionId: number | string, reason?: string): Promise<any> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/deny/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason || 'User denied' }),
+    });
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.error || data.message || 'Failed to deny action');
+    return data;
+  }
 }
 
 class PagesService {
