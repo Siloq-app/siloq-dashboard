@@ -706,6 +706,91 @@ class RedirectsService {
   }
 }
 
+// --- Three-Layer Content Analysis Types ---
+
+export interface Recommendation {
+  id: string;
+  layer: 'GEO' | 'SEO' | 'CRO';
+  priority: 'high' | 'medium' | 'low';
+  issue: string;
+  recommendation: string;
+  before: string;
+  after: string;
+  field: string;
+  status: 'pending' | 'approved' | 'applied';
+}
+
+export interface PageAnalysis {
+  id: number;
+  page_url: string;
+  geo_score: number | null;
+  seo_score: number | null;
+  cro_score: number | null;
+  overall_score: number | null;
+  geo_recommendations: Recommendation[];
+  seo_recommendations: Recommendation[];
+  cro_recommendations: Recommendation[];
+  status: 'pending' | 'analyzing' | 'complete' | 'failed';
+  created_at: string;
+}
+
+class AnalysisService {
+  async analyzePageContent(siteId: number | string, pageUrl: string): Promise<PageAnalysis> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/pages/analyze/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page_url: pageUrl }),
+    });
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.message || data.detail || data.error || 'Failed to analyze page');
+    return data;
+  }
+
+  async getPageAnalysis(siteId: number | string, pageUrl: string): Promise<PageAnalysis | null> {
+    const res = await fetchWithAuth(
+      `/api/v1/sites/${siteId}/pages/analysis/?page_url=${encodeURIComponent(pageUrl)}`
+    );
+    if (res.status === 404) return null;
+    const data = await res.json();
+    if (!res.ok) return null;
+    // API may return list or single object
+    if (Array.isArray(data)) return data.length > 0 ? data[0] : null;
+    if (data.results) return data.results.length > 0 ? data.results[0] : null;
+    return data.id ? data : null;
+  }
+
+  async approveRecommendations(
+    siteId: number | string,
+    analysisId: number,
+    recommendationIds: string[]
+  ): Promise<void> {
+    const res = await fetchWithAuth(
+      `/api/v1/sites/${siteId}/pages/analysis/${analysisId}/approve/`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recommendation_ids: recommendationIds }),
+      }
+    );
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || data.detail || data.error || 'Failed to approve recommendations');
+    }
+  }
+
+  async applyToWordPress(siteId: number | string, analysisId: number): Promise<void> {
+    const res = await fetchWithAuth(
+      `/api/v1/sites/${siteId}/pages/analysis/${analysisId}/apply/`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' } }
+    );
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || data.detail || data.error || 'Failed to apply to WordPress');
+    }
+  }
+}
+
 export const sitesService = new SitesService();
 export const pagesService = new PagesService();
 export const apiKeysService = new ApiKeysService();
@@ -719,3 +804,4 @@ export const keywordsService = new KeywordsService();
 export const healthScoresService = new HealthScoresService();
 export const silosV2Service = new SilosV2Service();
 export const redirectsService = new RedirectsService();
+export const analysisService = new AnalysisService();
