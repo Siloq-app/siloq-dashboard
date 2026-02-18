@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Search,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -11,8 +12,11 @@ import {
   gscService,
   GscSite,
   Site,
+  conflictsService,
 } from '@/lib/services/api';
 import { fetchWithAuth } from '@/lib/auth-headers';
+import { toast } from 'sonner';
+import ContentPreviewModal from '@/components/modals/ContentPreviewModal';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -31,6 +35,7 @@ interface Conflict {
   id: number;
   query: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
+  conflict_subtype?: string;
   volatility: number;
   totalClicks: number;
   totalImpressions: number;
@@ -421,6 +426,19 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
   const [generated, setGenerated] = useState<Record<string, boolean>>({});
   const [aiPlans, setAiPlans] = useState<Record<string, MergePlan | SpokeRewrite>>({});
 
+  // BUG 1 FIX: state for ContentPreviewModal (Generate Merge Plan / Rewrite as Spoke)
+  const [previewModal, setPreviewModal] = useState<{
+    content: { title: string; body: string; wordCount: number; targetKeyword?: string };
+  } | null>(null);
+
+  // BUG 1 FIX: state for 301 Map redirect confirmation dialog
+  const [redirectConfirm, setRedirectConfirm] = useState<{
+    conflict: Conflict;
+    fromUrls: string[];
+    toUrl: string;
+  } | null>(null);
+  const [redirectConfirmLoading, setRedirectConfirmLoading] = useState(false);
+
   // Load data
   useEffect(() => {
     let cancelled = false;
@@ -447,6 +465,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
               id: (item.id as number) || idx + 1,
               query: (item.keyword as string) || (item.query as string) || '',
               severity: (item.severity as string) || 'medium',
+              conflict_subtype: (item.conflict_subtype as string) || undefined,
               volatility: (item.volatility as number) || 0,
               totalClicks: (item.total_clicks as number) || (item.totalClicks as number) || 0,
               totalImpressions: (item.total_impressions as number) || (item.totalImpressions as number) || 0,
@@ -486,7 +505,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
           });
         }
 
-        // Parse site overview/health — API returns health_score + total_pages
+        // Parse site overview/health - API returns health_score + total_pages
         if (overviewRes.status === 'fulfilled' && overviewRes.value.ok) {
           const data = await overviewRes.value.json();
           const totalPages = data.total_pages || 0;
@@ -510,21 +529,27 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
 
   useEffect(() => { setTimeout(() => setAnimateIn(true), 80); }, []);
 
-  // AI generation handler
-  const handleAction = async (conflictId: number, type: string) => {
+  // BUG 1 FIX: AI generation handler — correct action types per spec; opens ContentPreviewModal on response
+  const handleAction = async (conflictId: number, type: string, conflictQuery?: string) => {
     const key = `${conflictId}-${type}`;
-    if (generated[key]) {
+    if (generated[key] && type !== 'merge_draft' && type !== 'spoke_draft') {
       setActiveAction(prev => prev?.conflictId === conflictId && prev?.type === type ? null : { conflictId, type });
       return;
     }
     setActiveAction({ conflictId, type });
     setGenerating(true);
     try {
+      // Use spec-correct action names: "merge" for merge plan, "spoke_rewrite" for spoke rewrite
+      const actionName =
+        type === 'merge' ? 'merge' :
+        type === 'spoke' ? 'spoke_rewrite' :
+        type === 'merge_draft' ? 'merge_draft' : 'spoke_draft';
+
       const response = await fetchWithAuth('/api/v1/ai/generate/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: type === 'merge' ? 'merge_plan' : type === 'spoke' ? 'spoke_rewrite' : type === 'merge_draft' ? 'merge_draft' : 'spoke_draft',
+          action: actionName,
           conflict_id: conflictId,
           site_id: siteId,
         }),
@@ -534,12 +559,107 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
       const plan = data.plan || data;
       setAiPlans(prev => ({ ...prev, [key]: plan }));
       setGenerated(prev => ({ ...prev, [key]: true }));
-    } catch {
-      // On error, still mark generated so UI doesn't get stuck
+
+      // Open ContentPreviewModal with formatted plan content
+      const mergePlan = plan as MergePlan;
+      const spokePlan = plan as SpokeRewrite;
+      let htmlBody = data.content || data.body || '';
+      let title = data.title || '';
+
+      if ((type === 'merge' || type === 'merge_draft') && !htmlBody) {
+        title = mergePlan.newTitle || `Merge Plan — "${conflictQuery || ''}"`;
+        htmlBody = [
+          `<h2>Hub URL</h2><p><code>${mergePlan.hubUrl || ''}</code></p>`,
+          mergePlan.mergeFrom?.length
+            ? `<h2>Pages to Merge</h2><ul>${mergePlan.mergeFrom.map(u => `<li>${u}</li>`).join('')}</ul>`
+            : '',
+          mergePlan.newH2s?.length
+            ? `<h2>Proposed H2 Structure</h2>${mergePlan.newH2s.map(h2 => `<h3>${h2}</h3>`).join('')}`
+            : '',
+          mergePlan.contentNotes?.length
+            ? `<h2>Content Actions</h2>${mergePlan.contentNotes.map(n => `<p><strong>[${n.type.toUpperCase()}]</strong> ${n.text}</p>`).join('')}`
+            : '',
+          mergePlan.targetKeywords?.length
+            ? `<h2>Target Keywords</h2><p>${mergePlan.targetKeywords.join(', ')}</p>`
+            : '',
+          mergePlan.wordCount ? `<h2>Estimated Length</h2><p>${mergePlan.wordCount}</p>` : '',
+        ].filter(Boolean).join('\n');
+      } else if ((type === 'spoke' || type === 'spoke_draft') && !htmlBody && spokePlan.pages?.length) {
+        title = `Spoke Rewrite Plan — "${conflictQuery || ''}"`;
+        htmlBody = spokePlan.pages.map((page, i) => [
+          `<h2>Spoke ${i + 1}: ${page.url}</h2>`,
+          `<p><strong>New Angle:</strong> ${page.newAngle}</p>`,
+          `<p><strong>New Title:</strong> ${page.newTitle}</p>`,
+          page.newH2s?.length ? `<h3>Proposed H2s</h3><ul>${page.newH2s.map(h => `<li>${h}</li>`).join('')}</ul>` : '',
+          page.keywordShift ? `<p><strong>Keyword Pivot:</strong> <del>${page.keywordShift.from}</del> → <ins>${page.keywordShift.to}</ins></p>` : '',
+          page.internalLink ? `<p><strong>Internal Link to Hub:</strong> ${page.internalLink}</p>` : '',
+        ].filter(Boolean).join('\n')).join('<hr/>');
+      }
+
+      if (htmlBody) {
+        setPreviewModal({
+          content: {
+            title: title || `AI Plan — "${conflictQuery || ''}"`,
+            body: htmlBody,
+            wordCount: htmlBody.replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean).length,
+            targetKeyword: conflictQuery,
+          },
+        });
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'AI generation failed. Please try again.');
       setGenerated(prev => ({ ...prev, [key]: true }));
+      setActiveAction(null);
     } finally {
       setGenerating(false);
     }
+  };
+
+  // BUG 1 FIX: Set Primary handler
+  const handleSetPrimary = async (conflict: Conflict) => {
+    const primaryPage = conflict.pages[0];
+    if (!primaryPage) return;
+    try {
+      await conflictsService.setPrimary(conflict.id, primaryPage.url);
+      toast.success(`Set "${primaryPage.url}" as primary page`);
+      setConflicts(prev => prev.filter(c => c.id !== conflict.id));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to set primary page');
+    }
+  };
+
+  // BUG 1 FIX: 301 Map handler — opens confirmation dialog
+  const handle301Map = (conflict: Conflict) => {
+    const toUrl = conflict.pages[0]?.url || '';
+    const fromUrls = conflict.pages.slice(1).map(p => p.url).filter(Boolean);
+    setRedirectConfirm({ conflict, fromUrls, toUrl });
+  };
+
+  // BUG 1 FIX: Execute redirect after confirmation
+  const handleConfirmRedirect = async () => {
+    if (!redirectConfirm) return;
+    setRedirectConfirmLoading(true);
+    try {
+      await conflictsService.resolveWithRedirect(redirectConfirm.conflict.id, 'redirect');
+      toast.success(`301 redirect created: ${redirectConfirm.fromUrls.length} page(s) → ${redirectConfirm.toUrl}`);
+      setConflicts(prev => prev.filter(c => c.id !== redirectConfirm.conflict.id));
+      setRedirectConfirm(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create redirect');
+    } finally {
+      setRedirectConfirmLoading(false);
+    }
+  };
+
+  // BUG 1 FIX: Acknowledge handler for structural warnings
+  const handleAcknowledge = async (conflictId: number, query: string) => {
+    try {
+      await conflictsService.acknowledge(conflictId);
+    } catch {
+      // silently ignore
+    }
+    setConflicts(prev => prev.filter(c => c.id !== conflictId));
+    toast.success(`Acknowledged: "${query}"`);
   };
 
   const filtered = filter === 'all' ? conflicts : conflicts.filter(c => c.severity === filter);
@@ -580,6 +700,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
   }
 
   return (
+    <>
     <div className="font-sans bg-white text-slate-900 min-h-screen">
       <style>{`
         @keyframes bf-pulse { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.4); opacity: 0.3; } }
@@ -821,7 +942,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
                       <div className="my-3 p-3 bg-slate-100 rounded-[10px] border border-slate-200">
                         <div className="flex justify-between items-center mb-2">
                           <div className="text-[10px] font-semibold text-[#8892b0] font-mono tracking-wide">
-                            ⚡ FLIP-FLOP DETECTION — 28 Day Position History
+                            ⚡ FLIP-FLOP DETECTION - 28 Day Position History
                           </div>
                           <div className="flex gap-2.5">
                             {conflict.pages.map((p, i) => (
@@ -878,8 +999,35 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
                         })}
                       </div>
 
-                      {/* Action Bar */}
-                      <div className="mt-3 p-3 px-3.5 bg-[#6C5CE708] rounded-[10px] border border-[#6C5CE720]">
+                      {/* BUG 1+2 FIX: Action Bar */}
+                      {(() => {
+                        // BUG 2 FIX: detect structural_warning by subtype OR zero traffic fallback
+                        const isStructuralWarning =
+                          conflict.conflict_subtype === 'structural_warning' ||
+                          (conflict.totalClicks === 0 && conflict.totalImpressions === 0);
+
+                        if (isStructuralWarning) {
+                          // BUG 2 FIX: structural warnings show note + Acknowledge only, NO action buttons
+                          return (
+                            <div className="mt-3 p-3 px-3.5 bg-slate-100 rounded-[10px] border border-slate-200">
+                              <div className="flex items-start gap-2 mb-3">
+                                <AlertTriangle className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" />
+                                <p className="text-[12px] text-slate-600 leading-relaxed">
+                                  No search traffic data yet. Monitor — if both pages start ranking, they may compete.
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => handleAcknowledge(conflict.id, conflict.query)}
+                                className="px-3.5 py-1.5 rounded-[7px] text-[11px] font-semibold cursor-pointer font-sans border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 transition-all duration-200"
+                              >
+                                ✓ Acknowledge
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        return (
+                        <div className="mt-3 p-3 px-3.5 bg-[#6C5CE708] rounded-[10px] border border-[#6C5CE720]">
                         <div className="flex gap-2 items-center flex-wrap">
                           <span className="text-[10px] text-[#8892b0] font-mono mr-1">ACTIONS:</span>
                           {[
@@ -890,12 +1038,20 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
                             { label: 'Rewrite as Spoke', icon: '🔄', color: '#FFA62B', type: 'spoke' },
                           ].map((action, i) => {
                             const isActive = activeAction?.conflictId === conflict.id && activeAction?.type === action.type;
+                            // BUG 1 FIX: wire all button onClick handlers
+                            const handleClick = () => {
+                              if (action.type === 'merge' || action.type === 'spoke') {
+                                handleAction(conflict.id, action.type, conflict.query);
+                              } else if (action.type === '301') {
+                                handle301Map(conflict);
+                              } else if (action.type === 'lock') {
+                                handleSetPrimary(conflict);
+                              } else if (action.type === 'silo') {
+                                toast.info(`View Silo Plan for "${conflict.query}" — coming soon`);
+                              }
+                            };
                             return (
-                              <button key={i} onClick={() => {
-                                if (action.type === 'merge' || action.type === 'spoke') {
-                                  handleAction(conflict.id, action.type);
-                                }
-                              }}
+                              <button key={i} onClick={handleClick}
                                 className="flex items-center gap-[5px] px-3.5 py-1.5 rounded-[7px] text-[11px] font-semibold cursor-pointer font-sans transition-all duration-200"
                                 style={{
                                   border: `1px solid ${isActive ? action.color + '60' : action.color + '30'}`,
@@ -1130,6 +1286,8 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
                           );
                         })()}
                       </div>
+                      );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -1145,6 +1303,64 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
         </div>
       </div>
     </div>
+
+    {/* BUG 1 FIX: ContentPreviewModal for Generate Merge Plan / Rewrite as Spoke */}
+    {previewModal && (
+      <ContentPreviewModal
+        content={previewModal.content}
+        siteId={siteId}
+        onClose={() => setPreviewModal(null)}
+        onPushToWordPress={async () => {
+          // Push to WordPress not applicable for plans — just close
+          setPreviewModal(null);
+        }}
+      />
+    )}
+
+    {/* BUG 1 FIX: 301 Map redirect confirmation dialog */}
+    {redirectConfirm && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        onClick={() => !redirectConfirmLoading && setRedirectConfirm(null)}
+      >
+        <div
+          className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl"
+          onClick={e => e.stopPropagation()}
+        >
+          <h3 className="text-base font-bold text-slate-900 mb-1">Confirm 301 Redirect</h3>
+          <p className="text-sm text-slate-500 mb-4">
+            The following pages will be permanently redirected:
+          </p>
+          <div className="space-y-2 mb-4">
+            {redirectConfirm.fromUrls.map((url, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm rounded-lg bg-slate-50 px-3 py-2">
+                <span className="font-mono text-red-600 truncate flex-1">{url}</span>
+                <span className="shrink-0 text-slate-400">→</span>
+                <span className="font-mono text-green-600 truncate flex-1">{redirectConfirm.toUrl}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => setRedirectConfirm(null)}
+              disabled={redirectConfirmLoading}
+              className="px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmRedirect}
+              disabled={redirectConfirmLoading}
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              {redirectConfirmLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+              Confirm 301 Redirect
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
@@ -1171,7 +1387,7 @@ export default function SearchConsole({ selectedSite }: Props) {
         if (connectedSiteId) {
           localStorage.setItem('siloq-selected-site-id', connectedSiteId);
         }
-        // Successful connection — reload to pick up new gsc_connected status
+        // Successful connection - reload to pick up new gsc_connected status
         const url = new URL(window.location.href);
         url.searchParams.delete('gsc_connected');
         url.searchParams.delete('site_id');

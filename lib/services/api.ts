@@ -462,6 +462,41 @@ class ConflictsService {
     }
   }
 
+  async acknowledge(conflictId: number | string): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/conflicts/${conflictId}/acknowledge/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || data.detail || 'Failed to acknowledge conflict');
+    }
+  }
+
+  async setPrimary(conflictId: number | string, winnerUrl: string): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/conflicts/${conflictId}/set-primary/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ winner_url: winnerUrl }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || data.detail || 'Failed to set primary page');
+    }
+  }
+
+  async resolveWithRedirect(conflictId: number | string, resolutionType = 'redirect'): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/conflicts/${conflictId}/resolve/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resolution_type: resolutionType }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || data.detail || 'Failed to resolve conflict');
+    }
+  }
+
   async differentiate(siteId: number | string, payload: {
     pages: Array<{ url: string; title?: string; page_type?: string }>;
     keyword: string;
