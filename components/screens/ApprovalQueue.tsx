@@ -347,6 +347,12 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
                     {change.description}
                   </div>
 
+                  {change.keyword && (
+                    <div className="mb-1 text-xs text-slate-600 dark:text-slate-400">
+                      <span className="font-medium">Keyword:</span> {change.keyword}
+                    </div>
+                  )}
+
                   {change.doctrine && (
                     <div className="mb-1 text-sm text-slate-700 dark:text-slate-300">
                       <span className="font-medium text-slate-500 dark:text-slate-400">
