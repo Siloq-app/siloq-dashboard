@@ -76,6 +76,7 @@ const data = {
     name: '',
     email: '',
     avatar: '',
+    subscriptionTier: '',
   },
 };
 
