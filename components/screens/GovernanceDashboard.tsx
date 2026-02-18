@@ -828,11 +828,13 @@ function ConflictCard({
   onRedirect: (conflict: Conflict) => void;
   onDismiss: (conflict: Conflict) => void;
 }) {
+  const isStructuralWarning = (conflict as any).conflict_subtype === 'structural_warning';
   const severity = conflict.severity || 'medium';
-  const color = SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium;
-  const emoji = SEVERITY_EMOJI[severity] || '🟡';
+  const color = isStructuralWarning ? '#94A3B8' : (SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium);
+  const emoji = isStructuralWarning ? 'ℹ️' : (SEVERITY_EMOJI[severity] || '🟡');
   const headlineFn = SEVERITY_HEADLINES[severity] || SEVERITY_HEADLINES.medium;
   const [headline, subline] = headlineFn(conflict.keyword, conflict.pages?.length || 0).split('\n');
+  const noteText = (conflict as any).note;
 
   return (
     <Card className="overflow-hidden">
@@ -848,7 +850,7 @@ function ConflictCard({
                 className="inline-flex items-center rounded px-2 py-0.5 text-xs font-bold uppercase text-white"
                 style={{ backgroundColor: color }}
               >
-                {severity}
+                {isStructuralWarning ? 'warning' : severity}
               </span>
               {conflict.conflict_type && (
                 <span className="text-xs text-muted-foreground bg-muted rounded px-2 py-0.5">
@@ -936,10 +938,18 @@ function ConflictCard({
           </div>
         )}
 
-        {/* Action buttons — hide Redirect/Differentiate for INFO (false positives) */}
+        {/* Structural warning note */}
+        {isStructuralWarning && noteText && (
+          <div className="flex items-start gap-2 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-3">
+            <AlertTriangle className="h-4 w-4 text-slate-500 mt-0.5 shrink-0" />
+            <p className="text-sm text-slate-600 dark:text-slate-300">{noteText}</p>
+          </div>
+        )}
+
+        {/* Action buttons — hide Redirect/Differentiate for INFO and structural warnings */}
         {conflict.status === 'active' && (
           <div className="flex flex-wrap gap-2 pt-1">
-            {conflict.severity !== 'info' && (
+            {conflict.severity !== 'info' && !isStructuralWarning && (
               <>
                 <Button
                   size="sm"
@@ -963,7 +973,7 @@ function ConflictCard({
               className="text-muted-foreground"
               onClick={() => onDismiss(conflict)}
             >
-              Dismiss
+              {isStructuralWarning ? 'Acknowledge' : 'Dismiss'}
             </Button>
           </div>
         )}
