@@ -102,7 +102,7 @@ export interface PendingChange {
   id: number;
   type: string;
   description: string;
-  risk: 'safe' | 'destructive';
+  risk: 'safe' | 'destructive' | 'redirect' | 'content_change' | 'meta_update';
   impact: string;
   doctrine?: string;
 }
