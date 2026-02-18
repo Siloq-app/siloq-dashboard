@@ -72,19 +72,62 @@ export function mapSilos(response: SiloResponse[]): Silo[] {
 }
 
 /**
- * Map API recommendations to dashboard pending changes
+ * Map API recommendations to dashboard pending changes.
+ * Filters out non-actionable / informational items so only real
+ * proposed changes appear in the Approval Queue.
  */
 export function mapRecommendationsToPendingChanges(
   response: RecommendationResponse
 ): PendingChange[] {
-  return response.recommendations.map((rec) => ({
-    id: rec.id,
-    type: rec.type,
-    description: rec.description,
-    risk: rec.risk_level,
-    impact: rec.impact,
-    doctrine: rec.doctrine,
-  }));
+  const NON_ACTIONABLE_PATTERNS = [
+    /no action needed/i,
+    /no changes? (required|needed|necessary)/i,
+    /this is correct/i,
+    /correctly configured/i,
+    /already optimized/i,
+    /no conflict/i,
+  ];
+
+  return response.recommendations
+    .filter((rec) => {
+      // Skip purely informational items
+      if (rec.status === 'applied' || rec.status === 'rejected') return false;
+
+      // Check description for non-actionable language
+      const text = `${rec.description} ${rec.impact || ''}`;
+      if (NON_ACTIONABLE_PATTERNS.some((p) => p.test(text))) return false;
+
+      return true;
+    })
+    .map((rec) => ({
+      id: rec.id,
+      type: rec.type,
+      description: rec.description,
+      risk: mapRiskLevel(rec.type, rec.risk_level),
+      impact: rec.impact,
+      doctrine: rec.doctrine,
+    }));
+}
+
+function mapRiskLevel(
+  type: string,
+  apiRisk: 'safe' | 'destructive'
+): PendingChange['risk'] {
+  // Derive a more specific risk label from the change type
+  switch (type) {
+    case 'redirect':
+    case 'canonical_fix':
+      return 'redirect';
+    case 'content_refresh':
+    case 'content_rewrite':
+      return apiRisk === 'destructive' ? 'destructive' : 'content_change';
+    case 'meta_update':
+    case 'title_update':
+    case 'meta_description':
+      return 'meta_update';
+    default:
+      return apiRisk === 'destructive' ? 'destructive' : 'safe';
+  }
 }
 
 /**
