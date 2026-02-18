@@ -101,10 +101,15 @@ export interface Silo {
 export interface PendingChange {
   id: number;
   type: string;
+  action_type?: string; // redirect, merge_redirect, canonical, differentiate, etc.
   description: string;
   risk: 'safe' | 'destructive' | 'redirect' | 'content_change' | 'meta_update';
   impact: string;
   doctrine?: string;
+  keyword?: string;
+  winner_url?: string;
+  loser_urls?: string[];
+  severity?: string;
 }
 
 export interface LinkOpportunity {
