@@ -335,10 +335,30 @@ export default function GovernanceDashboard({
     }
   };
 
-  const handleDismiss = (conflict: Conflict) => {
-    // Add keyword to dismissed list so it disappears from current session
+  const handleDismiss = async (conflict: Conflict) => {
+    const isStructural =
+      (conflict as any).conflict_subtype === 'structural_warning' ||
+      (conflict.total_impressions === 0 && conflict.total_clicks === 0);
+
+    // Add keyword to dismissed list immediately for responsive UI
     setDismissedKeywords(prev => new Set(prev).add(conflict.keyword));
-    toast.success(`Dismissed conflict for "${conflict.keyword}"`);
+
+    // Call the appropriate API endpoint (gracefully ignore failures)
+    try {
+      if (isStructural) {
+        await conflictsService.acknowledge(conflict.id);
+      } else {
+        await conflictsService.dismiss(conflict.id);
+      }
+    } catch {
+      // Silently ignore — local state is already updated
+    }
+
+    toast.success(
+      isStructural
+        ? `Acknowledged: "${conflict.keyword}"`
+        : `Dismissed conflict for "${conflict.keyword}"`
+    );
   };
 
   // No site selected
@@ -828,13 +848,23 @@ function ConflictCard({
   onRedirect: (conflict: Conflict) => void;
   onDismiss: (conflict: Conflict) => void;
 }) {
-  const isStructuralWarning = (conflict as any).conflict_subtype === 'structural_warning';
-  const severity = conflict.severity || 'medium';
+  // BUG 2 FIX: detect structural_warning by subtype OR by zero traffic (fallback)
+  const isStructuralWarning =
+    (conflict as any).conflict_subtype === 'structural_warning' ||
+    (conflict.total_impressions === 0 && conflict.total_clicks === 0);
+
+  const rawSeverity = conflict.severity || 'medium';
+  // BUG 2 FIX: structural warnings must never show HIGH or CRITICAL — cap at MEDIUM
+  const severity: string = isStructuralWarning && (rawSeverity === 'critical' || rawSeverity === 'high')
+    ? 'medium'
+    : rawSeverity;
+
   const color = isStructuralWarning ? '#94A3B8' : (SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium);
   const emoji = isStructuralWarning ? 'ℹ️' : (SEVERITY_EMOJI[severity] || '🟡');
   const headlineFn = SEVERITY_HEADLINES[severity] || SEVERITY_HEADLINES.medium;
   const [headline, subline] = headlineFn(conflict.keyword, conflict.pages?.length || 0).split('\n');
-  const noteText = (conflict as any).note;
+  // BUG 2 FIX: always show the spec-required note text for structural warnings
+  const structuralNoteText = "No search traffic data yet. Monitor — if both pages start ranking, they may compete.";
 
   return (
     <Card className="overflow-hidden">
@@ -938,11 +968,13 @@ function ConflictCard({
           </div>
         )}
 
-        {/* Structural warning note */}
-        {isStructuralWarning && noteText && (
+        {/* BUG 2 FIX: structural warning note — always show, with hardcoded spec text */}
+        {isStructuralWarning && (
           <div className="flex items-start gap-2 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-3">
             <AlertTriangle className="h-4 w-4 text-slate-500 mt-0.5 shrink-0" />
-            <p className="text-sm text-slate-600 dark:text-slate-300">{noteText}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {(conflict as any).note || structuralNoteText}
+            </p>
           </div>
         )}
 
