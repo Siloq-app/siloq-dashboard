@@ -8,6 +8,20 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardProvider } from '@/lib/hooks/dashboard-context';
 
+// Map removed tabs to their new homes
+const TAB_REDIRECTS: Record<string, string> = {
+  'overview': 'dashboard',
+  'silos': 'dashboard',
+  'keyword-registry': 'conflicts',
+  'silo-health': 'dashboard',
+  'content-hub': 'pages',
+  'content-upload': 'pages',
+  'content': 'pages',
+  'internal-links': 'pages',
+  'sites': 'settings',
+  'all-sites': 'settings',
+};
+
 function DashboardContent() {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab') as TabType | null;
@@ -20,7 +34,9 @@ function DashboardContent() {
 
   useEffect(() => {
     if (!tabFromUrl) {
-      router.replace('/dashboard?tab=overview');
+      router.replace('/dashboard?tab=dashboard');
+    } else if (TAB_REDIRECTS[tabFromUrl]) {
+      router.replace(`/dashboard?tab=${TAB_REDIRECTS[tabFromUrl]}`);
     } else if (tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
     }
