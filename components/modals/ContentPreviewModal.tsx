@@ -61,6 +61,7 @@ export default function ContentPreviewModal({
   const [viewMode, setViewMode] = useState<'preview' | 'html'>('preview');
   const [pushState, setPushState] = useState<'idle' | 'pushing' | 'success-publish' | 'success-draft' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
+  const [copiedHtml, setCopiedHtml] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
   // Update content when initialContent changes (e.g., generation completes)
@@ -86,6 +87,12 @@ export default function ContentPreviewModal({
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }, [content]);
+
+  const handleCopyHtml = useCallback(async () => {
+    await navigator.clipboard.writeText(content.body);
+    setCopiedHtml(true);
+    setTimeout(() => setCopiedHtml(false), 2000);
   }, [content]);
 
   const handlePush = useCallback(async (mode: 'publish' | 'draft') => {
@@ -363,6 +370,17 @@ export default function ContentPreviewModal({
           }}>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
+                onClick={handleCopyHtml}
+                style={{
+                  padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)',
+                  background: 'rgba(139,92,246,0.1)', color: '#A78BFA', fontSize: 13, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s', fontWeight: 600,
+                }}
+              >
+                {copiedHtml ? <Check size={14} /> : <Code size={14} />}
+                {copiedHtml ? 'Copied HTML!' : 'Copy HTML'}
+              </button>
+              <button
                 onClick={handleCopyAll}
                 style={{
                   padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
@@ -371,7 +389,7 @@ export default function ContentPreviewModal({
                 }}
               >
                 {copied ? <Check size={14} /> : <Copy size={14} />}
-                {copied ? 'Copied!' : 'Copy All'}
+                {copied ? 'Copied!' : 'Copy Text'}
               </button>
               <button
                 onClick={onClose}
