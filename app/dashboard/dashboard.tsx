@@ -152,7 +152,7 @@ export default function Dashboard({
           />
         );
       case 'approvals':
-        return <ApprovalQueue pendingChanges={pendingChanges} />;
+        return <ApprovalQueue pendingChanges={pendingChanges} siteId={selectedSite?.id || 0} />;
       case 'sites':
         return <SitesScreen />;
       case 'content':
