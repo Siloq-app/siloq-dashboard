@@ -12,6 +12,7 @@ import {
   Loader2,
   FileText,
   Globe,
+  RefreshCw,
 } from 'lucide-react';
 
 interface ContentData {
@@ -31,6 +32,7 @@ interface ContentPreviewModalProps {
   generatingStep?: string;
   onClose: () => void;
   onPushToWordPress: (content: ContentData, publishMode: 'publish' | 'draft') => Promise<void>;
+  onRegenerate?: () => Promise<void>;
   siteId: number;
 }
 
@@ -40,8 +42,21 @@ export default function ContentPreviewModal({
   generatingStep,
   onClose,
   onPushToWordPress,
+  onRegenerate,
   siteId,
 }: ContentPreviewModalProps) {
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const handleRegenerate = async () => {
+    if (!onRegenerate) return;
+    setIsRegenerating(true);
+    setPushState('idle');
+    try {
+      await onRegenerate();
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
   const [content, setContent] = useState<ContentData>(initialContent);
   const [viewMode, setViewMode] = useState<'preview' | 'html'>('preview');
   const [pushState, setPushState] = useState<'idle' | 'pushing' | 'success-publish' | 'success-draft' | 'error'>('idle');
@@ -117,6 +132,23 @@ export default function ContentPreviewModal({
               <span style={{ fontSize: 13, fontWeight: 600, color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Content Preview
               </span>
+              {onRegenerate && !isGenerating && (
+                <button
+                  onClick={handleRegenerate}
+                  disabled={isRegenerating}
+                  title="Regenerate content"
+                  style={{
+                    background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)',
+                    borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    color: '#A78BFA', fontSize: 11, fontWeight: 600,
+                    opacity: isRegenerating ? 0.6 : 1, transition: 'all 0.2s',
+                  }}
+                >
+                  <RefreshCw size={12} style={isRegenerating ? { animation: 'spin 1s linear infinite' } : {}} />
+                  {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+                </button>
+              )}
               {content.targetKeyword && (
                 <span style={{
                   padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600,
