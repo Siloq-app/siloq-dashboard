@@ -15,11 +15,12 @@ import {
 } from 'lucide-react';
 import { PendingChange } from '@/app/dashboard/types';
 import { cn } from '@/lib/utils';
-import { fetchWithAuth } from '@/lib/services/api';
+import { sitesService } from '@/lib/services/api';
 import { useToast } from '@/components/ui/use-toast';
 
 interface Props {
   pendingChanges: PendingChange[];
+  siteId: number | string;
 }
 
 const ITEMS_PER_PAGE = 3;
@@ -100,7 +101,7 @@ function getRiskBadge(risk: string) {
   return RISK_BADGE[risk] || RISK_BADGE.safe;
 }
 
-export default function ApprovalQueue({ pendingChanges }: Props) {
+export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [processedIds, setProcessedIds] = useState<Set<number>>(new Set());
@@ -143,10 +144,8 @@ export default function ApprovalQueue({ pendingChanges }: Props) {
     async (change: PendingChange) => {
       setLoading(change.id, true);
       try {
-        // Call the conflicts resolve endpoint (works for all recommendation types)
-        await fetchWithAuth(`/api/v1/conflicts/${change.id}/resolve/`, {
-          method: 'POST',
-        });
+        // Use the sites service approve endpoint
+        await sitesService.approveAction(siteId, change.id);
         markProcessed(change.id);
         toast({
           title: 'Approved',
@@ -164,17 +163,15 @@ export default function ApprovalQueue({ pendingChanges }: Props) {
         setLoading(change.id, false);
       }
     },
-    [markProcessed, setLoading, toast]
+    [siteId, markProcessed, setLoading, toast]
   );
 
   const handleDeny = useCallback(
     async (change: PendingChange) => {
       setLoading(change.id, true);
       try {
-        // Dismiss the recommendation
-        await fetchWithAuth(`/api/v1/conflicts/${change.id}/dismiss/`, {
-          method: 'POST',
-        });
+        // Use the sites service deny endpoint
+        await sitesService.denyAction(siteId, change.id, 'User denied recommendation');
         markProcessed(change.id);
         toast({
           title: 'Denied',
@@ -192,7 +189,7 @@ export default function ApprovalQueue({ pendingChanges }: Props) {
         setLoading(change.id, false);
       }
     },
-    [markProcessed, setLoading, toast]
+    [siteId, markProcessed, setLoading, toast]
   );
 
   const handleApproveAllSafe = useCallback(async () => {
