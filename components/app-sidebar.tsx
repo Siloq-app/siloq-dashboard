@@ -88,7 +88,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   React.useEffect(() => {
     const cachedName = localStorage.getItem('userName') || 'User';
     const cachedEmail = localStorage.getItem('userEmail') || '';
-    setUserData({ name: cachedName, email: cachedEmail, avatar: '' });
+    const cachedTier = localStorage.getItem('subscriptionTier') || '';
+    setUserData({ name: cachedName, email: cachedEmail, avatar: '', subscriptionTier: cachedTier });
 
     const token = localStorage.getItem('token');
     if (token) {
@@ -102,9 +103,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               [data.user.first_name, data.user.last_name].filter(Boolean).join(' ') ||
               data.user.email || cachedName;
             const email = data.user.email || cachedEmail;
+            const subscriptionTier = data.user.subscription_tier || '';
             localStorage.setItem('userName', name);
             localStorage.setItem('userEmail', email);
-            setUserData({ name, email, avatar: '' });
+            localStorage.setItem('subscriptionTier', subscriptionTier);
+            setUserData({ name, email, avatar: '', subscriptionTier });
           }
         })
         .catch(() => {});
