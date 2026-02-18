@@ -6,17 +6,14 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
-  Database,
   CheckSquare,
   FileText,
-  Link2,
   Globe,
   Settings,
   HelpCircle,
   Search,
   CreditCard,
   Shield,
-  BookOpen,
   Activity,
 } from 'lucide-react';
 
@@ -30,11 +27,49 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+
+const navMain = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard?tab=overview',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Conflicts',
+    url: '/dashboard?tab=conflicts',
+    icon: Shield,
+  },
+  {
+    title: 'Pages',
+    url: '/dashboard?tab=pages',
+    icon: FileText,
+  },
+  {
+    title: 'Performance',
+    url: '/dashboard?tab=performance',
+    icon: Activity,
+  },
+  {
+    title: 'Approvals',
+    url: '/dashboard?tab=approvals',
+    icon: CheckSquare,
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard?tab=settings',
+    icon: Settings,
+  },
+];
+
+const navSecondary = [
+  {
+    title: 'Subscription',
+    url: '/dashboard/settings/subscription',
+    icon: CreditCard,
+  },
+];
 
 const data = {
   user: {
@@ -42,121 +77,6 @@ const data = {
     email: '',
     avatar: '',
   },
-  navMain: [
-    {
-      title: 'Dashboard',
-      url: '#',
-      icon: LayoutDashboard,
-      items: [
-        {
-          title: 'Overview',
-          url: '/dashboard?tab=overview',
-        },
-        {
-          title: 'Silos',
-          url: '/dashboard?tab=silos',
-        },
-        {
-          title: 'Approvals',
-          url: '/dashboard?tab=approvals',
-        },
-      ],
-    },
-    {
-      title: 'Anti-Cannibalization',
-      url: '#',
-      icon: Shield,
-      items: [
-        {
-          title: 'Conflicts',
-          url: '/dashboard?tab=conflicts',
-        },
-        {
-          title: 'Keyword Registry',
-          url: '/dashboard?tab=keyword-registry',
-        },
-        {
-          title: 'Silo Health',
-          url: '/dashboard?tab=silo-health',
-        },
-      ],
-    },
-    {
-      title: 'Content',
-      url: '#',
-      icon: FileText,
-      items: [
-        {
-          title: 'Content Hub',
-          url: '/dashboard?tab=content',
-        },
-        {
-          title: 'Content Upload',
-          url: '/dashboard?tab=content-upload',
-        },
-        {
-          title: 'Pages',
-          url: '/dashboard?tab=pages',
-        },
-        {
-          title: 'Internal Links',
-          url: '/dashboard?tab=links',
-        },
-      ],
-    },
-    {
-      title: 'Search Console',
-      url: '/dashboard?tab=search-console',
-      icon: Search,
-      items: [
-        {
-          title: 'Performance',
-          url: '/dashboard?tab=search-console',
-        },
-      ],
-    },
-    {
-      title: 'Sites',
-      url: '#',
-      icon: Globe,
-      items: [
-        {
-          title: 'All Sites',
-          url: '/dashboard?tab=sites',
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: 'Subscription',
-      url: '/dashboard/settings/subscription',
-      icon: CreditCard,
-    },
-    {
-      title: 'Settings',
-      url: '/dashboard?tab=settings',
-      icon: Settings,
-    },
-    {
-      title: 'Help Center',
-      url: '/dashboard/help',
-      icon: HelpCircle,
-    },
-    {
-      title: 'Search',
-      url: '#',
-      icon: Search,
-    },
-  ],
-};
-
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Dashboard: LayoutDashboard,
-  'Anti-Cannibalization': Shield,
-  Content: FileText,
-  'Search Console': Search,
-  Sites: Globe,
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -166,12 +86,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [userData, setUserData] = React.useState(data.user);
   React.useEffect(() => {
-    // Start with localStorage cache
     const cachedName = localStorage.getItem('userName') || 'User';
     const cachedEmail = localStorage.getItem('userEmail') || '';
     setUserData({ name: cachedName, email: cachedEmail, avatar: '' });
 
-    // Fetch fresh from API
     const token = localStorage.getItem('token');
     if (token) {
       fetch('https://api.siloq.ai/api/v1/auth/me/', {
@@ -189,7 +107,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             setUserData({ name, email, avatar: '' });
           }
         })
-        .catch(() => {}); // Silently fail, keep cached values
+        .catch(() => {});
     }
   }, []);
 
@@ -224,34 +142,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {data.navMain.map((item) => {
-              const Icon = iconMap[item.title] || Database;
+            {navMain.map((item) => {
+              const tabParam = item.url.split('?tab=')[1];
+              const isActive = currentTab === tabParam;
               return (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={isActive}>
                     <Link
                       href={item.url}
                       className="flex items-center gap-2 font-medium"
                     >
-                      <Icon className="size-4" />
+                      <item.icon className="size-4" />
                       {item.title}
                     </Link>
                   </SidebarMenuButton>
-                  {item.items?.length ? (
-                    <SidebarMenuSub>
-                      {item.items.map((subItem) => {
-                        const isActive =
-                          currentTab === subItem.url.split('?tab=')[1];
-                        return (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild isActive={isActive}>
-                              <Link href={subItem.url}>{subItem.title}</Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
-                    </SidebarMenuSub>
-                  ) : null}
                 </SidebarMenuItem>
               );
             })}
@@ -260,7 +164,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          {data.navSecondary.map((item) => {
+          {navSecondary.map((item) => {
             const isTabUrl = item.url.includes('?tab=');
             const isActive = isTabUrl
               ? currentTab === item.url.split('?tab=')[1]
