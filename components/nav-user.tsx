@@ -34,9 +34,11 @@ export function NavUser({
     name: string;
     email: string;
     avatar: string;
+    subscriptionTier?: string;
   };
 }) {
   const { isMobile } = useSidebar();
+  const isPaidTier = user.subscriptionTier && !['free_trial', 'free', ''].includes(user.subscriptionTier);
 
   const initials = user.name
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -101,7 +103,7 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => { window.location.href = '/dashboard/settings/subscription'; }}>
                 <Sparkles />
-                Upgrade to Pro
+                {isPaidTier ? 'Manage Subscription' : 'Upgrade to Pro'}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
