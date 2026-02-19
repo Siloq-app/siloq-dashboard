@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { entityProfileService, EntityProfile } from '@/lib/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
 interface Props { siteId: number | string; }
@@ -95,7 +94,7 @@ export default function BusinessProfileSettings({ siteId }: Props) {
         <h3 className="font-medium text-slate-800 border-b pb-2">Business Info</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2"><Label>Business Name</Label><Input value={profile.business_name} onChange={e => set('business_name', e.target.value)} /></div>
-          <div className="col-span-2"><Label>Description</Label><Textarea value={profile.description} onChange={e => set('description', e.target.value)} rows={3} /></div>
+          <div className="col-span-2"><Label>Description</Label><textarea value={profile.description} onChange={e => set('description', e.target.value)} rows={3} className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" /></div>
           <div><Label>Phone</Label><Input value={profile.phone} onChange={e => set('phone', e.target.value)} /></div>
           <div><Label>Email</Label><Input value={profile.email} onChange={e => set('email', e.target.value)} /></div>
           <div><Label>Founder Name</Label><Input value={profile.founder_name} onChange={e => set('founder_name', e.target.value)} /></div>
