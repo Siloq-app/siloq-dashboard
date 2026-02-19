@@ -173,7 +173,11 @@ export default function RegisterPage() {
 
       setIsSuccess(true);
       setTimeout(() => {
-        router.push('/auth/login');
+        // If user came from an invite link, send them back to complete acceptance
+        const inviteToken = typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('invite')
+          : null;
+        router.push(inviteToken ? `/invite?token=${inviteToken}` : '/auth/login');
       }, 2000);
     } catch (err: any) {
       setError(err.message);

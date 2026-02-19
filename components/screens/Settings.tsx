@@ -227,6 +227,35 @@ export default function Settings({
     }
   };
 
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editingRole, setEditingRole] = useState<TeamRole>('viewer');
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+
+  const handleUpdateRole = async (memberId: string, newRole: TeamRole) => {
+    setIsUpdatingRole(true);
+    try {
+      const res = await fetchWithAuth(`/api/v1/auth/team/${memberId}/role/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (res.ok) {
+        setTeamMembers(prev =>
+          prev.map(m => m.id === memberId ? { ...m, role: newRole } : m)
+        );
+        setEditingMemberId(null);
+        toast.success('Role updated');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || 'Failed to update role');
+      }
+    } catch {
+      toast.error('Failed to update role');
+    } finally {
+      setIsUpdatingRole(false);
+    }
+  };
+
   const [apiKeys, setApiKeys] = useState<{
     id: string;
     name: string;
@@ -695,14 +724,47 @@ export default function Settings({
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 sm:ml-auto">
-                <span className="text-sm capitalize text-slate-500 dark:text-slate-400">
-                  {member.role}
-                </span>
-                {member.role !== 'owner' && (
-                  <button className="focus-visible:ring-ring inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800">
-                    Edit
-                  </button>
+              <div className="flex items-center gap-2 sm:ml-auto">
+                {editingMemberId === member.id ? (
+                  <>
+                    <select
+                      value={editingRole}
+                      onChange={e => setEditingRole(e.target.value as TeamRole)}
+                      className="h-8 rounded border border-slate-200 bg-white px-2 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                      disabled={isUpdatingRole}
+                    >
+                      <option value="viewer">Viewer</option>
+                      <option value="editor">Editor</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <button
+                      onClick={() => handleUpdateRole(member.id, editingRole)}
+                      disabled={isUpdatingRole}
+                      className="h-8 rounded bg-indigo-600 px-3 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {isUpdatingRole ? '...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => setEditingMemberId(null)}
+                      className="h-8 rounded px-2 text-xs text-slate-500 hover:text-slate-700"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm capitalize text-slate-500 dark:text-slate-400">
+                      {member.role}
+                    </span>
+                    {member.role !== 'owner' && (
+                      <button
+                        onClick={() => { setEditingMemberId(member.id); setEditingRole(member.role); }}
+                        className="focus-visible:ring-ring inline-flex h-8 items-center justify-center rounded-md px-3 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 dark:text-slate-300 dark:hover:bg-slate-800"
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </Card>
