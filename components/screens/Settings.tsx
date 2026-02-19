@@ -133,6 +133,15 @@ export default function Settings({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Pick up subtab navigation from sessionStorage (set by onboarding nudges)
+  useEffect(() => {
+    const subtab = sessionStorage.getItem('siloq_settings_subtab');
+    if (subtab && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications', 'business-profile'].includes(subtab)) {
+      sessionStorage.removeItem('siloq_settings_subtab');
+      setActiveTab(subtab as TabId);
+    }
+  }, []);
+
   // Team state
   const tierConfig = TIER_CONFIGS[resolvedTier];
   const maxTeammates = tierConfig.maxTeammates;

@@ -19,6 +19,7 @@ const Settings = lazy(() => import('@/components/screens/Settings'));
 const PagesScreen = lazy(() => import('@/components/screens/PagesScreen'));
 const InternalLinks = lazy(() => import('@/components/screens/InternalLinks'));
 const SearchConsole = lazy(() => import('@/components/screens/SearchConsole'));
+const GettingStartedCard = lazy(() => import('@/components/onboarding/GettingStartedCard'));
 const GenerateModal = lazy(() => import('@/components/modals/GenerateModal'));
 const ApprovalModal = lazy(() => import('@/components/modals/ApprovalModal'));
 const CannibalizationModal = lazy(() => import('@/components/modals/CannibalizationModal'));
@@ -129,15 +130,28 @@ export default function Dashboard({
       case 'overview':
       case 'conflicts':
         return (
-          <GovernanceDashboard
-            healthScore={healthScore}
-            cannibalizationIssues={cannibalizationIssues}
-            silos={silos}
-            pendingChanges={pendingChanges}
-            onViewSilo={() => onTabChange?.('silos')}
-            onViewApprovals={() => onTabChange?.('approvals')}
-            onShowApprovalModal={() => setShowApprovalModal(true)}
-          />
+          <>
+            {activeTab === 'dashboard' && (
+              <Suspense fallback={null}>
+                <GettingStartedCard
+                  siteId={selectedSite.id}
+                  onNavigate={(tab, subtab) => {
+                    if (subtab) sessionStorage.setItem('siloq_settings_subtab', subtab);
+                    onTabChange?.(tab as TabType);
+                  }}
+                />
+              </Suspense>
+            )}
+            <GovernanceDashboard
+              healthScore={healthScore}
+              cannibalizationIssues={cannibalizationIssues}
+              silos={silos}
+              pendingChanges={pendingChanges}
+              onViewSilo={() => onTabChange?.('silos')}
+              onViewApprovals={() => onTabChange?.('approvals')}
+              onShowApprovalModal={() => setShowApprovalModal(true)}
+            />
+          </>
         );
       case 'keyword-registry':
         return <KeywordRegistry />;
@@ -154,7 +168,14 @@ export default function Dashboard({
       case 'approvals':
         return <ApprovalQueue pendingChanges={pendingChanges} siteId={selectedSite?.id || 0} />;
       case 'sites':
-        return <SitesScreen />;
+        return (
+          <SitesScreen
+            onSiteCreated={() => {
+              sessionStorage.setItem('siloq_settings_subtab', 'business-profile');
+              onTabChange?.('settings');
+            }}
+          />
+        );
       case 'content':
         return <ContentHub />;
       case 'content-upload':
@@ -168,6 +189,10 @@ export default function Dashboard({
             onAnalyze={(pageIds) => {
               setSelectedPageIds(pageIds);
               setShowCannibalizationModal(true);
+            }}
+            onNavigateToSettings={() => {
+              sessionStorage.setItem('siloq_settings_subtab', 'business-profile');
+              onTabChange?.('settings');
             }}
           />
         );
