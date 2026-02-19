@@ -799,6 +799,86 @@ class AnalysisService {
   }
 }
 
+
+export interface GbpReview {
+  text: string;
+  author: string;
+  rating: number;
+  date: string;
+}
+
+export interface EntityProfile {
+  id: number;
+  business_name: string;
+  description: string;
+  phone: string;
+  email: string;
+  founding_year: number | null;
+  founder_name: string;
+  num_employees: string;
+  price_range: string;
+  languages: string[];
+  payment_methods: string[];
+  street_address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+  service_cities: string[];
+  service_zips: string[];
+  service_radius_miles: number | null;
+  hours: Record<string, string>;
+  categories: string[];
+  social_profiles: {
+    facebook: string;
+    instagram: string;
+    linkedin: string;
+    twitter: string;
+    youtube: string;
+    tiktok: string;
+  };
+  gbp_url: string;
+  google_place_id: string;
+  gbp_star_rating: number | null;
+  gbp_review_count: number | null;
+  gbp_reviews: GbpReview[];
+  gbp_last_synced: string | null;
+  updated_at: string;
+}
+
+class EntityProfileService {
+  async get(siteId: number | string): Promise<EntityProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/entity-profile/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to load entity profile');
+    return data;
+  }
+
+  async update(siteId: number | string, updates: Partial<EntityProfile>): Promise<EntityProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/entity-profile/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update entity profile');
+    return data;
+  }
+
+  async syncGbp(siteId: number | string, placeIdOrUrl: string): Promise<EntityProfile> {
+    const isUrl = placeIdOrUrl.startsWith('http');
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/entity-profile/sync-gbp/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(isUrl ? { gbp_url: placeIdOrUrl } : { place_id: placeIdOrUrl }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to sync from Google');
+    return data.synced;
+  }
+}
+export const entityProfileService = new EntityProfileService();
+
 export const sitesService = new SitesService();
 export const pagesService = new PagesService();
 export const apiKeysService = new ApiKeysService();

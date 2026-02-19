@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Check,
@@ -17,8 +17,11 @@ import {
   Link as LinkIcon,
   Eye,
   EyeOff,
+  Building2,
 } from 'lucide-react';
 import { AutomationMode } from '@/app/dashboard/types';
+import { useDashboardContext } from '@/lib/hooks/dashboard-context';
+const BusinessProfileSettings = lazy(() => import('@/components/settings/BusinessProfileSettings'));
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { fetchWithAuth } from '@/lib/auth-headers';
@@ -70,7 +73,8 @@ type TabId =
   | 'api-keys'
   | 'team'
   | 'agent-permissions'
-  | 'notifications';
+  | 'notifications'
+  | 'business-profile';
 
 const tabs = [
   { id: 'profile' as const, label: 'Profile', icon: User },
@@ -82,6 +86,7 @@ const tabs = [
     icon: Shield,
   },
   { id: 'notifications' as const, label: 'Notifications', icon: Bell },
+  { id: 'business-profile' as const, label: 'Business Profile', icon: Building2 },
 ];
 
 export default function Settings({
@@ -92,6 +97,7 @@ export default function Settings({
 }: Props) {
   // Independent tier fetch — don't rely solely on parent prop
   const [resolvedTier, setResolvedTier] = useState<SubscriptionTier>(currentTierProp);
+  const { selectedSite } = useDashboardContext();
 
   useEffect(() => {
     setResolvedTier(currentTierProp);
@@ -120,7 +126,7 @@ export default function Settings({
   const router = useRouter();
   const settingsParams = useSearchParams();
   const sectionParam = settingsParams.get('section');
-  const initialTab = (sectionParam && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications'].includes(sectionParam)) 
+  const initialTab = (sectionParam && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications', 'business-profile'].includes(sectionParam)) 
     ? sectionParam as TabId 
     : 'profile';
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
@@ -1020,12 +1026,23 @@ export default function Settings({
     </div>
   );
 
+  const renderBusinessProfileTab = () => (
+    <Suspense fallback={<div className="p-6 text-slate-500">Loading...</div>}>
+      {selectedSite ? (
+        <BusinessProfileSettings siteId={selectedSite.id} />
+      ) : (
+        <div className="p-6 text-slate-500">Select a site to manage its business profile.</div>
+      )}
+    </Suspense>
+  );
+
   const tabContent = {
     profile: renderProfileTab,
     'api-keys': renderApiKeysTab,
     team: renderTeamTab,
     'agent-permissions': renderAgentPermissionsTab,
     notifications: renderNotificationsTab,
+    'business-profile': renderBusinessProfileTab,
   };
 
   if (isLoading) {
