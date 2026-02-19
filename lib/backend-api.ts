@@ -27,6 +27,10 @@ export const SITES_ENDPOINTS = {
   detail: (id: number | string) => `${getBackendApiUrl()}/api/v1/sites/${id}/`,
   overview: (id: number | string) =>
     `${getBackendApiUrl()}/api/v1/sites/${id}/overview/`,
+  pagesAnalyze: (id: number | string) =>
+    `${getBackendApiUrl()}/api/v1/sites/${id}/pages/analyze/`,
+  pagesAnalysis: (id: number | string) =>
+    `${getBackendApiUrl()}/api/v1/sites/${id}/pages/analysis/`,
 };
 
 export const API_KEYS_ENDPOINTS = {
@@ -56,3 +60,4 @@ export const SCAN_ENDPOINTS = {
   report: (id: number | string) =>
     `${getBackendApiUrl()}/api/v1/scans/${id}/report/`,
 };
+
