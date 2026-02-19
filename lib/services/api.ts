@@ -779,15 +779,23 @@ class AnalysisService {
     }
   }
 
-  async applyToWordPress(siteId: number | string, analysisId: number): Promise<void> {
+  async applyToWordPress(siteId: number | string, analysisId: number): Promise<{
+    applied: string[];
+    failed: Array<{rec_id: string; error: string}>;
+    verified: string[];
+    unverified: string[];
+    verification_details: Record<string, {found: boolean; field: string}>;
+    analysis_id: number;
+  }> {
     const res = await fetchWithAuth(
       `/api/v1/sites/${siteId}/pages/analysis/${analysisId}/apply/`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' } }
     );
+    const data = await res.json();
     if (!res.ok) {
-      const data = await res.json();
       throw new Error(data.message || data.detail || data.error || 'Failed to apply to WordPress');
     }
+    return data;
   }
 }
 
