@@ -33,6 +33,10 @@ export const SITES_ENDPOINTS = {
     `${getBackendApiUrl()}/api/v1/sites/${id}/pages/analysis/`,
   pagesAnalysisApply: (id: number | string, analysisId: number | string) =>
     `${getBackendApiUrl()}/api/v1/sites/${id}/pages/analysis/${analysisId}/apply/`,
+  entityProfile: (id: number | string) =>
+    `${getBackendApiUrl()}/api/v1/sites/${id}/entity-profile/`,
+  entityProfileSyncGbp: (id: number | string) =>
+    `${getBackendApiUrl()}/api/v1/sites/${id}/entity-profile/sync-gbp/`,
 };
 
 export const API_KEYS_ENDPOINTS = {
