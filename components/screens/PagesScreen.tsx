@@ -284,6 +284,7 @@ function RecommendationPanel({
   const { toast } = useToast();
   const [isApplying, setIsApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [applyResult, setApplyResult] = useState<{verified: string[], unverified: string[], failed: Array<{rec_id: string, error: string}>} | null>(null);
 
   const handleApply = async () => {
     if (selectedRecs.size === 0) return;
@@ -294,8 +295,9 @@ function RecommendationPanel({
         analysis.id,
         Array.from(selectedRecs)
       );
-      await analysisService.applyToWordPress(siteId, analysis.id);
+      const result = await analysisService.applyToWordPress(siteId, analysis.id);
       setApplied(true);
+      setApplyResult({ verified: (result as any)?.verified || [], unverified: (result as any)?.unverified || [], failed: (result as any)?.failed || [] });
       toast({ title: 'Changes applied to WordPress!' });
       // Optimistically mark applied
       onApplySuccess({
@@ -411,6 +413,26 @@ function RecommendationPanel({
           Dismiss
         </Button>
       </div>
+
+      {applyResult && (
+        <div className="mt-3 space-y-1 text-sm">
+          {applyResult.verified.length > 0 && (
+            <div className="flex items-center gap-2 text-green-700 bg-green-50 rounded px-3 py-2">
+              ✅ {applyResult.verified.length} change{applyResult.verified.length !== 1 ? 's' : ''} verified live on WordPress
+            </div>
+          )}
+          {applyResult.unverified.length > 0 && (
+            <div className="flex items-center gap-2 text-yellow-700 bg-yellow-50 rounded px-3 py-2">
+              ⏳ {applyResult.unverified.length} applied — not yet confirmed on live page
+            </div>
+          )}
+          {applyResult.failed.length > 0 && (
+            <div className="flex items-center gap-2 text-red-700 bg-red-50 rounded px-3 py-2">
+              ❌ {applyResult.failed.length} failed — check recommendations panel
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
