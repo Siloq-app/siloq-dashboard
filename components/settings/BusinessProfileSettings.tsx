@@ -16,6 +16,8 @@ export default function BusinessProfileSettings({ siteId }: Props) {
   const [gbpInput, setGbpInput] = useState('');
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [needsPlaceId, setNeedsPlaceId] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -41,11 +43,19 @@ export default function BusinessProfileSettings({ siteId }: Props) {
 
   const handleSyncGbp = async () => {
     if (!gbpInput.trim()) return;
-    setSyncing(true); setError(null);
+    setSyncing(true); setSyncError(null); setNeedsPlaceId(false);
     try {
       const updated = await entityProfileService.syncGbp(siteId, gbpInput.trim());
       setProfile(updated);
-    } catch (e: any) { setError(e.message || 'Sync failed — check your GBP URL or Place ID'); }
+      setSyncError(null);
+    } catch (e: any) {
+      const msg: string = e.message || 'Sync failed';
+      setSyncError(msg);
+      // Backend signals when a Place ID is needed instead of a URL
+      if (msg.includes('Place ID') || msg.includes('place_id') || msg.includes("Couldn't find")) {
+        setNeedsPlaceId(true);
+      }
+    }
     finally { setSyncing(false); }
   };
 
@@ -82,10 +92,29 @@ export default function BusinessProfileSettings({ siteId }: Props) {
             {syncing ? 'Syncing...' : 'Sync from Google'}
           </Button>
         </div>
-        {profile.gbp_last_synced && (
+        {profile.gbp_last_synced && !syncError && (
           <p className="text-xs text-blue-600">
             Last synced: {new Date(profile.gbp_last_synced).toLocaleString()} · {profile.gbp_review_count} reviews · {profile.gbp_star_rating}★
           </p>
+        )}
+        {syncError && (
+          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-xs text-red-700">
+            <p className="font-medium mb-1">⚠️ {syncError}</p>
+            {needsPlaceId && (
+              <p>
+                <strong>Try pasting your Place ID instead</strong> (starts with <code className="bg-red-100 px-1 rounded">ChIJ</code>).{' '}
+                Find yours at:{' '}
+                <a
+                  href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline font-medium"
+                >
+                  Place ID Finder →
+                </a>
+              </p>
+            )}
+          </div>
         )}
       </div>
 
