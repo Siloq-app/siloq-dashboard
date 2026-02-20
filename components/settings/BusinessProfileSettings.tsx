@@ -16,6 +16,10 @@ export default function BusinessProfileSettings({ siteId }: Props) {
   const [gbpInput, setGbpInput] = useState('');
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [needsPlaceId, setNeedsPlaceId] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [syncingPhone, setSyncingPhone] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -41,12 +45,33 @@ export default function BusinessProfileSettings({ siteId }: Props) {
 
   const handleSyncGbp = async () => {
     if (!gbpInput.trim()) return;
-    setSyncing(true); setError(null);
+    setSyncing(true); setSyncError(null); setNeedsPlaceId(false);
     try {
       const updated = await entityProfileService.syncGbp(siteId, gbpInput.trim());
       setProfile(updated);
-    } catch (e: any) { setError(e.message || 'Sync failed — check your GBP URL or Place ID'); }
+      setSyncError(null);
+    } catch (e: any) {
+      const msg: string = e.message || 'Sync failed';
+      setSyncError(msg);
+      // Backend signals when a Place ID is needed instead of a URL
+      if (msg.includes('Place ID') || msg.includes('place_id') || msg.includes("Couldn't find")) {
+        setNeedsPlaceId(true);
+      }
+    }
     finally { setSyncing(false); }
+  };
+
+  const handleSyncByPhone = async () => {
+    if (!phoneInput.trim()) return;
+    setSyncingPhone(true); setSyncError(null); setNeedsPlaceId(false);
+    try {
+      const updated = await entityProfileService.syncGbp(siteId, phoneInput.trim());
+      setProfile(updated);
+    } catch (e: any) {
+      setSyncError(e.message || 'Phone lookup failed');
+    } finally {
+      setSyncingPhone(false);
+    }
   };
 
   const set = (field: keyof EntityProfile, value: any) =>
@@ -82,10 +107,44 @@ export default function BusinessProfileSettings({ siteId }: Props) {
             {syncing ? 'Syncing...' : 'Sync from Google'}
           </Button>
         </div>
-        {profile.gbp_last_synced && (
+        {profile.gbp_last_synced && !syncError && (
           <p className="text-xs text-blue-600">
             Last synced: {new Date(profile.gbp_last_synced).toLocaleString()} · {profile.gbp_review_count} reviews · {profile.gbp_star_rating}★
           </p>
+        )}
+        {syncError && (
+          <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 space-y-2">
+            <p className="font-medium">⚠️ {syncError}</p>
+            {needsPlaceId && (
+              <>
+                <p className="text-amber-700">
+                  This can happen with <strong>Service Area Businesses</strong>. Try your business phone number instead — Google can always find a verified GBP by phone:
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="tel"
+                    value={phoneInput}
+                    onChange={e => setPhoneInput(e.target.value)}
+                    placeholder="+1 (816) 555-0123"
+                    className="flex-1 rounded border border-amber-300 bg-white px-2 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                  />
+                  <button
+                    onClick={handleSyncByPhone}
+                    disabled={syncingPhone || !phoneInput.trim()}
+                    className="rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                  >
+                    {syncingPhone ? 'Searching…' : 'Try Phone'}
+                  </button>
+                </div>
+                <p className="text-amber-600">
+                  Or paste a <code className="bg-amber-100 px-1 rounded">ChIJ…</code> Place ID above.{' '}
+                  <a href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" target="_blank" rel="noopener noreferrer" className="underline">
+                    Find yours here →
+                  </a>
+                </p>
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -120,7 +179,7 @@ export default function BusinessProfileSettings({ siteId }: Props) {
       <div className="space-y-4">
         <h3 className="font-medium text-slate-800 border-b pb-2">Service Area</h3>
         <div><Label>Cities Served (comma-separated)</Label>
-          <Input value={profile.service_cities.join(', ')} onChange={e => set('service_cities', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))} placeholder="Kansas City, Lee's Summit, Blue Springs" />
+          <Input value={profile.service_cities.join(', ')} onChange={e => set('service_cities', e.target.value.split(',').map((s: string) => s.trimStart()).filter(s => s.trim() !== ''))} placeholder="Kansas City, Lee's Summit, Blue Springs" />
         </div>
         <div><Label>Service Radius (miles)</Label>
           <Input type="number" value={profile.service_radius_miles || ''} onChange={e => set('service_radius_miles', parseInt(e.target.value) || null)} />
@@ -140,21 +199,26 @@ export default function BusinessProfileSettings({ siteId }: Props) {
         </div>
       </div>
 
-      {/* GBP Reviews preview */}
-      {profile.gbp_reviews.length > 0 && (
+      {/* GBP Reviews preview — 4 & 5 star only */}
+      {profile.gbp_reviews.filter(r => r.rating >= 4).length > 0 && (
         <div className="space-y-3">
-          <h3 className="font-medium text-slate-800 border-b pb-2">Google Reviews ({profile.gbp_review_count} total)</h3>
+          <h3 className="font-medium text-slate-800 border-b pb-2">
+            Google Reviews ({profile.gbp_review_count} total · showing 4★ &amp; 5★ only)
+          </h3>
           <div className="space-y-2 max-h-48 overflow-y-auto">
-            {profile.gbp_reviews.slice(0, 5).map((r, i) => (
-              <div key={i} className="bg-slate-50 rounded p-3 text-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-slate-700">{r.author}</span>
-                  <span className="text-yellow-500">{'★'.repeat(r.rating)}</span>
-                  <span className="text-slate-400 text-xs">{r.date}</span>
+            {profile.gbp_reviews
+              .filter(r => r.rating >= 4)
+              .slice(0, 5)
+              .map((r, i) => (
+                <div key={i} className="bg-slate-50 rounded p-3 text-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-slate-700">{r.author}</span>
+                    <span className="text-yellow-500">{'★'.repeat(r.rating)}</span>
+                    <span className="text-slate-400 text-xs">{r.date}</span>
+                  </div>
+                  <p className="text-slate-600 line-clamp-2">{r.text}</p>
                 </div>
-                <p className="text-slate-600 line-clamp-2">{r.text}</p>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}
