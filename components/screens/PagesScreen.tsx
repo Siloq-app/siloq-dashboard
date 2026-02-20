@@ -298,8 +298,20 @@ function RecommendationPanel({
       );
       const result = await analysisService.applyToWordPress(siteId, analysis.id);
       setApplied(true);
-      setApplyResult({ verified: (result as any)?.verified || [], unverified: (result as any)?.unverified || [], failed: (result as any)?.failed || [] });
-      toast({ title: 'Changes applied to WordPress!' });
+      const verified = (result as any)?.verified || [];
+      const unverified = (result as any)?.unverified || [];
+      const failed = (result as any)?.failed || [];
+      const appliedCount = verified.length + unverified.length;
+      const failedCount = failed.length;
+      setApplyResult({ verified, unverified, failed });
+
+      if (failedCount === 0) {
+        toast({ title: `✅ ${appliedCount} change${appliedCount !== 1 ? 's' : ''} applied to WordPress` });
+      } else if (appliedCount > 0) {
+        toast({ title: `⚠️ ${appliedCount} applied, ${failedCount} needed attention`, variant: 'default' });
+      } else {
+        toast({ title: `❌ Changes could not be applied — check recommendations`, variant: 'destructive' });
+      }
       // Optimistically mark applied
       onApplySuccess({
         ...analysis,
@@ -372,9 +384,39 @@ function RecommendationPanel({
       <div className="flex items-center justify-between pt-3 border-t border-slate-200">
         <div className="flex items-center gap-3">
           {applied ? (
-            <div className="flex items-center gap-2 text-green-600 font-medium text-sm">
-              <Check size={16} />
-              Changes applied to WordPress
+            <div className="flex flex-col gap-1">
+              {(() => {
+                const appliedCount = (applyResult?.verified?.length ?? 0) + (applyResult?.unverified?.length ?? 0);
+                const failedCount = applyResult?.failed?.length ?? 0;
+                const manualCount = applyResult?.failed?.filter(f => f.error === 'requires_manual_action').length ?? 0;
+                const trueFailCount = failedCount - manualCount;
+                return (
+                  <>
+                    {appliedCount > 0 && (
+                      <div className="flex items-center gap-2 text-green-600 font-medium text-sm">
+                        <Check size={16} />
+                        {appliedCount} change{appliedCount !== 1 ? 's' : ''} applied to WordPress
+                        {applyResult?.unverified?.length ? <span className="text-yellow-600 font-normal text-xs">(⏳ pending verification)</span> : null}
+                      </div>
+                    )}
+                    {manualCount > 0 && (
+                      <div className="text-amber-600 text-xs font-medium">
+                        ⚠️ {manualCount} recommendation{manualCount !== 1 ? 's' : ''} require manual action — see panel
+                      </div>
+                    )}
+                    {trueFailCount > 0 && (
+                      <div className="text-red-600 text-xs font-medium">
+                        ❌ {trueFailCount} failed — check plugin connection
+                      </div>
+                    )}
+                    {appliedCount === 0 && failedCount > 0 && manualCount === failedCount && (
+                      <div className="flex items-center gap-2 text-amber-600 font-medium text-sm">
+                        ⚠️ These recommendations require manual action in WordPress
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           ) : (
             <Button
@@ -415,25 +457,7 @@ function RecommendationPanel({
         </Button>
       </div>
 
-      {applyResult && (
-        <div className="mt-3 space-y-1 text-sm">
-          {applyResult.verified.length > 0 && (
-            <div className="flex items-center gap-2 text-green-700 bg-green-50 rounded px-3 py-2">
-              ✅ {applyResult.verified.length} change{applyResult.verified.length !== 1 ? 's' : ''} verified live on WordPress
-            </div>
-          )}
-          {applyResult.unverified.length > 0 && (
-            <div className="flex items-center gap-2 text-yellow-700 bg-yellow-50 rounded px-3 py-2">
-              ⏳ {applyResult.unverified.length} applied — not yet confirmed on live page
-            </div>
-          )}
-          {applyResult.failed.length > 0 && (
-            <div className="flex items-center gap-2 text-red-700 bg-red-50 rounded px-3 py-2">
-              ❌ {applyResult.failed.length} failed — check recommendations panel
-            </div>
-          )}
-        </div>
-      )}
+      {/* Status now shown inline in the actions bar above */}
     </div>
   );
 }
