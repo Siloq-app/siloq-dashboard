@@ -78,7 +78,11 @@ export default function LoginPage() {
         if (name) localStorage.setItem('userName', name);
         if (data.user.email) localStorage.setItem('userEmail', data.user.email);
       }
-      router.push('/dashboard');
+      // Redirect to invite acceptance page if coming from an invite link
+      const inviteToken = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('invite')
+        : null;
+      router.push(inviteToken ? `/invite?token=${inviteToken}` : '/dashboard');
     } catch (err: any) {
       setError(err.message);
     } finally {
