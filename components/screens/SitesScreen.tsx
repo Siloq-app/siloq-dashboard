@@ -57,7 +57,11 @@ const BACKEND_API_URL =
       ).replace(/\/+$/, '')
     : 'https://api.siloq.ai';
 
-export default function SitesScreen() {
+interface SitesScreenProps {
+  onSiteCreated?: () => void;
+}
+
+export default function SitesScreen({ onSiteCreated }: SitesScreenProps = {}) {
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -243,6 +247,7 @@ export default function SitesScreen() {
       setNewSiteUrl('');
       toast.success('Site added successfully!');
       loadSites();
+      onSiteCreated?.();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to create site');
     } finally {

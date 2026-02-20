@@ -31,7 +31,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NoSiteSelected } from '@/components/ui/no-site-selected';
 import { useToast } from '@/components/ui/use-toast';
-import { analysisService, PageAnalysis, Recommendation } from '@/lib/services/api';
+import { analysisService, entityProfileService, PageAnalysis, Recommendation } from '@/lib/services/api';
 import { FileText } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -57,6 +57,7 @@ interface Page {
 interface PagesScreenProps {
   onAnalyze?: (pageIds: number[]) => void;
   siteId?: number | string;
+  onNavigateToSettings?: () => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -439,8 +440,9 @@ function RecommendationPanel({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function PagesScreen({ onAnalyze, siteId }: PagesScreenProps) {
+export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }: PagesScreenProps) {
   const { toast } = useToast();
+  const [showProfileWarning, setShowProfileWarning] = useState(false);
 
   // Pages data
   const [pages, setPages] = useState<Page[]>([]);
@@ -523,6 +525,11 @@ export default function PagesScreen({ onAnalyze, siteId }: PagesScreenProps) {
   // ── Analyze a single page ──
   const handleAnalyzePage = async (page: Page) => {
     if (!siteId || analyzingPages.has(page.url)) return;
+
+    // Check business profile completeness — show non-blocking warning if empty
+    entityProfileService.get(siteId).then(profile => {
+      if (!profile?.business_name) setShowProfileWarning(true);
+    }).catch(() => {});
 
     setAnalyzingPages(prev => new Set(prev).add(page.url));
     setExpandedAnalysis(null);
@@ -657,6 +664,29 @@ export default function PagesScreen({ onAnalyze, siteId }: PagesScreenProps) {
           Refresh
         </Button>
       </div>
+
+      {/* Business Profile Warning */}
+      {showProfileWarning && (
+        <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+          <span className="text-base">⚠️</span>
+          <span className="flex-1">
+            <strong>Business Profile incomplete</strong> — schema generation accuracy is reduced.{' '}
+            <button
+              className="underline font-medium hover:text-yellow-900"
+              onClick={() => onNavigateToSettings?.()}
+            >
+              Set it up in 2 min →
+            </button>
+          </span>
+          <button
+            className="text-yellow-500 hover:text-yellow-700 transition-colors"
+            onClick={() => setShowProfileWarning(false)}
+            title="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
