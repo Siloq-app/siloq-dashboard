@@ -18,6 +18,8 @@ export default function BusinessProfileSettings({ siteId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [needsPlaceId, setNeedsPlaceId] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [syncingPhone, setSyncingPhone] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -59,6 +61,19 @@ export default function BusinessProfileSettings({ siteId }: Props) {
     finally { setSyncing(false); }
   };
 
+  const handleSyncByPhone = async () => {
+    if (!phoneInput.trim()) return;
+    setSyncingPhone(true); setSyncError(null); setNeedsPlaceId(false);
+    try {
+      const updated = await entityProfileService.syncGbp(siteId, phoneInput.trim());
+      setProfile(updated);
+    } catch (e: any) {
+      setSyncError(e.message || 'Phone lookup failed');
+    } finally {
+      setSyncingPhone(false);
+    }
+  };
+
   const set = (field: keyof EntityProfile, value: any) =>
     setProfile(prev => prev ? { ...prev, [field]: value } : prev);
 
@@ -98,21 +113,36 @@ export default function BusinessProfileSettings({ siteId }: Props) {
           </p>
         )}
         {syncError && (
-          <div className="rounded-md bg-red-50 border border-red-200 p-3 text-xs text-red-700">
-            <p className="font-medium mb-1">⚠️ {syncError}</p>
+          <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 space-y-2">
+            <p className="font-medium">⚠️ {syncError}</p>
             {needsPlaceId && (
-              <p>
-                <strong>Try pasting your Place ID instead</strong> (starts with <code className="bg-red-100 px-1 rounded">ChIJ</code>).{' '}
-                Find yours at:{' '}
-                <a
-                  href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline font-medium"
-                >
-                  Place ID Finder →
-                </a>
-              </p>
+              <>
+                <p className="text-amber-700">
+                  This can happen with <strong>Service Area Businesses</strong>. Try your business phone number instead — Google can always find a verified GBP by phone:
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="tel"
+                    value={phoneInput}
+                    onChange={e => setPhoneInput(e.target.value)}
+                    placeholder="+1 (816) 555-0123"
+                    className="flex-1 rounded border border-amber-300 bg-white px-2 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                  />
+                  <button
+                    onClick={handleSyncByPhone}
+                    disabled={syncingPhone || !phoneInput.trim()}
+                    className="rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                  >
+                    {syncingPhone ? 'Searching…' : 'Try Phone'}
+                  </button>
+                </div>
+                <p className="text-amber-600">
+                  Or paste a <code className="bg-amber-100 px-1 rounded">ChIJ…</code> Place ID above.{' '}
+                  <a href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" target="_blank" rel="noopener noreferrer" className="underline">
+                    Find yours here →
+                  </a>
+                </p>
+              </>
             )}
           </div>
         )}

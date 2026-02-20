@@ -865,12 +865,19 @@ class EntityProfileService {
     return data;
   }
 
-  async syncGbp(siteId: number | string, placeIdOrUrl: string): Promise<EntityProfile> {
+  async syncGbp(siteId: number | string, placeIdOrUrl: string, phone?: string): Promise<EntityProfile> {
     const isUrl = placeIdOrUrl.startsWith('http');
+    const isPhone = /^\+?[\d\s\-().]{7,}$/.test(placeIdOrUrl);
+    let body: Record<string, string> = {};
+    if (isUrl) body.gbp_url = placeIdOrUrl;
+    else if (isPhone) body.phone = placeIdOrUrl;
+    else body.place_id = placeIdOrUrl;
+    if (phone) body.phone = phone;
+
     const res = await fetchWithAuth(`/api/v1/sites/${siteId}/entity-profile/sync-gbp/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(isUrl ? { gbp_url: placeIdOrUrl } : { place_id: placeIdOrUrl }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to sync from Google');
