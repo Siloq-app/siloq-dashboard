@@ -179,7 +179,7 @@ export default function BusinessProfileSettings({ siteId }: Props) {
       <div className="space-y-4">
         <h3 className="font-medium text-slate-800 border-b pb-2">Service Area</h3>
         <div><Label>Cities Served (comma-separated)</Label>
-          <Input value={profile.service_cities.join(', ')} onChange={e => set('service_cities', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))} placeholder="Kansas City, Lee's Summit, Blue Springs" />
+          <Input value={profile.service_cities.join(', ')} onChange={e => set('service_cities', e.target.value.split(',').map((s: string) => s.trimStart()).filter(s => s.trim() !== ''))} placeholder="Kansas City, Lee's Summit, Blue Springs" />
         </div>
         <div><Label>Service Radius (miles)</Label>
           <Input type="number" value={profile.service_radius_miles || ''} onChange={e => set('service_radius_miles', parseInt(e.target.value) || null)} />
@@ -199,21 +199,26 @@ export default function BusinessProfileSettings({ siteId }: Props) {
         </div>
       </div>
 
-      {/* GBP Reviews preview */}
-      {profile.gbp_reviews.length > 0 && (
+      {/* GBP Reviews preview — 4 & 5 star only */}
+      {profile.gbp_reviews.filter(r => r.rating >= 4).length > 0 && (
         <div className="space-y-3">
-          <h3 className="font-medium text-slate-800 border-b pb-2">Google Reviews ({profile.gbp_review_count} total)</h3>
+          <h3 className="font-medium text-slate-800 border-b pb-2">
+            Google Reviews ({profile.gbp_review_count} total · showing 4★ &amp; 5★ only)
+          </h3>
           <div className="space-y-2 max-h-48 overflow-y-auto">
-            {profile.gbp_reviews.slice(0, 5).map((r, i) => (
-              <div key={i} className="bg-slate-50 rounded p-3 text-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-slate-700">{r.author}</span>
-                  <span className="text-yellow-500">{'★'.repeat(r.rating)}</span>
-                  <span className="text-slate-400 text-xs">{r.date}</span>
+            {profile.gbp_reviews
+              .filter(r => r.rating >= 4)
+              .slice(0, 5)
+              .map((r, i) => (
+                <div key={i} className="bg-slate-50 rounded p-3 text-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-slate-700">{r.author}</span>
+                    <span className="text-yellow-500">{'★'.repeat(r.rating)}</span>
+                    <span className="text-slate-400 text-xs">{r.date}</span>
+                  </div>
+                  <p className="text-slate-600 line-clamp-2">{r.text}</p>
                 </div>
-                <p className="text-slate-600 line-clamp-2">{r.text}</p>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}
