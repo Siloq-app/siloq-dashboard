@@ -20,6 +20,7 @@ export default function BusinessProfileSettings({ siteId }: Props) {
   const [needsPlaceId, setNeedsPlaceId] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [syncingPhone, setSyncingPhone] = useState(false);
+  const [citiesRaw, setCitiesRaw] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -31,6 +32,15 @@ export default function BusinessProfileSettings({ siteId }: Props) {
   }, [siteId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Sync citiesRaw display string whenever profile.service_cities changes externally
+  // (e.g. after GBP sync). Don't override if user is actively editing — the onBlur
+  // handler writes back to profile, so a profile change = external update.
+  useEffect(() => {
+    if (profile?.service_cities) {
+      setCitiesRaw(profile.service_cities.join(', '));
+    }
+  }, [JSON.stringify(profile?.service_cities)]);
 
   const handleSave = async () => {
     if (!profile) return;
@@ -179,7 +189,12 @@ export default function BusinessProfileSettings({ siteId }: Props) {
       <div className="space-y-4">
         <h3 className="font-medium text-slate-800 border-b pb-2">Service Area</h3>
         <div><Label>Cities Served (comma-separated)</Label>
-          <Input value={profile.service_cities.join(', ')} onChange={e => set('service_cities', e.target.value.split(',').map((s: string) => s.trimStart()).filter(s => s.trim() !== ''))} placeholder="Kansas City, Lee's Summit, Blue Springs" />
+          <Input
+            value={citiesRaw}
+            onChange={e => setCitiesRaw(e.target.value)}
+            onBlur={e => set('service_cities', e.target.value.split(',').map((s: string) => s.trim()).filter(s => s !== ''))}
+            placeholder="Kansas City, Lee's Summit, Blue Springs"
+          />
         </div>
         <div><Label>Service Radius (miles)</Label>
           <Input type="number" value={profile.service_radius_miles || ''} onChange={e => set('service_radius_miles', parseInt(e.target.value) || null)} />
