@@ -128,7 +128,8 @@ export default function Dashboard({
     switch (activeTab) {
       case 'dashboard':
       case 'overview':
-      case 'conflicts':
+      case 'conflicts': {
+        if (!selectedSite) return null;
         return (
           <>
             {activeTab === 'dashboard' && (
@@ -153,6 +154,7 @@ export default function Dashboard({
             />
           </>
         );
+      }
       case 'keyword-registry':
         return <KeywordRegistry />;
       case 'silo-health':
