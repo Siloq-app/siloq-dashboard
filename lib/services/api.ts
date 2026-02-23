@@ -847,11 +847,60 @@ export interface EntityProfile {
 }
 
 class EntityProfileService {
+  /** Normalize raw API response → full EntityProfile with safe defaults */
+  private normalize(data: any): EntityProfile {
+    return {
+      // Core identity — API returns "name" but component expects "business_name"
+      business_name:       data.business_name  ?? data.name         ?? '',
+      description:         data.description                          ?? '',
+      phone:               data.phone                                ?? '',
+      email:               data.email                                ?? '',
+      website:             data.website         ?? data.gbp_website  ?? '',
+      founder_name:        data.founder_name                         ?? '',
+      founding_year:       data.founding_year                        ?? null,
+      price_range:         data.price_range                          ?? '',
+      num_employees:       data.num_employees                        ?? '',
+
+      // Address — API returns combined "address" string
+      street_address:      data.street_address  ?? data.address      ?? '',
+      city:                data.city                                 ?? '',
+      state:               data.state                                ?? '',
+      zip_code:            data.zip_code                             ?? '',
+      country:             data.country                              ?? '',
+
+      // Service area
+      service_cities:      Array.isArray(data.service_cities)
+                             ? data.service_cities : [],
+      service_radius_miles: data.service_radius_miles                ?? null,
+
+      // Social — API may not return this at all
+      social_profiles: {
+        facebook:   data.social_profiles?.facebook   ?? '',
+        instagram:  data.social_profiles?.instagram  ?? '',
+        linkedin:   data.social_profiles?.linkedin   ?? '',
+        twitter:    data.social_profiles?.twitter    ?? '',
+        youtube:    data.social_profiles?.youtube    ?? '',
+        tiktok:     data.social_profiles?.tiktok     ?? '',
+        ...(data.social_profiles ?? {}),
+      },
+
+      // GBP — API uses different field names than component
+      gbp_url:          data.gbp_url                                 ?? '',
+      google_place_id:  data.place_id       ?? data.google_place_id ?? '',
+      gbp_last_synced:  data.gbp_last_synced ?? data.last_synced_at ?? '',
+      gbp_star_rating:  data.gbp_star_rating ?? data.rating          ?? 0,
+      gbp_review_count: data.gbp_review_count ?? data.review_count   ?? 0,
+      gbp_reviews:      Array.isArray(data.gbp_reviews)
+                          ? data.gbp_reviews
+                          : Array.isArray(data.reviews) ? data.reviews : [],
+    };
+  }
+
   async get(siteId: number | string): Promise<EntityProfile> {
     const res = await fetchWithAuth(`/api/v1/sites/${siteId}/entity-profile/`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to load entity profile');
-    return data;
+    return this.normalize(data);
   }
 
   async update(siteId: number | string, updates: Partial<EntityProfile>): Promise<EntityProfile> {
@@ -881,7 +930,7 @@ class EntityProfileService {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to sync from Google');
-    return data.synced;
+    return this.normalize(data.synced ?? data);
   }
 }
 export const entityProfileService = new EntityProfileService();
