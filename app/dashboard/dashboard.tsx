@@ -111,14 +111,14 @@ export default function Dashboard({
       return <DashboardSkeleton />;
     }
 
-    // Show empty state if no site selected
-    if (!selectedSite) {
+    // Show empty state if no site selected — except Sites tab where users add their first site
+    if (!selectedSite && activeTab !== 'sites') {
       return (
         <div className="flex h-full items-center justify-center">
           <div className="text-center">
             <p className="text-lg font-medium mb-2">No site selected</p>
             <p className="text-sm text-muted-foreground">
-              Select a site from the header to view dashboard data
+              Select a site from the header to view dashboard data, or go to Sites to add one
             </p>
           </div>
         </div>

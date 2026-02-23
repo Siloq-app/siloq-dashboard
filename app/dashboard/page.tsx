@@ -18,8 +18,7 @@ const TAB_REDIRECTS: Record<string, string> = {
   'content-upload': 'pages',
   'content': 'pages',
   'internal-links': 'pages',
-  'sites': 'settings',
-  'all-sites': 'settings',
+  'all-sites': 'sites',
   'performance': 'search-console',
 };
 
