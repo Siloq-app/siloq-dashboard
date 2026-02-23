@@ -37,6 +37,11 @@ const navMain = [
     icon: LayoutDashboard,
   },
   {
+    title: 'Sites',
+    url: '/dashboard?tab=sites',
+    icon: Globe,
+  },
+  {
     title: 'Conflicts',
     url: '/dashboard?tab=conflicts',
     icon: Shield,
