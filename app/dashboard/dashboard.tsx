@@ -132,7 +132,7 @@ export default function Dashboard({
         if (!selectedSite) return null;
         return (
           <>
-            {activeTab === 'dashboard' && (
+            {activeTab === 'dashboard' && selectedSite && (
               <Suspense fallback={null}>
                 <GettingStartedCard
                   siteId={selectedSite.id}
