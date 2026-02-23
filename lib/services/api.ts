@@ -917,7 +917,7 @@ class EntityProfileService {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to update entity profile');
-    return data;
+    return this.normalize(data);
   }
 
   async syncGbp(siteId: number | string, placeIdOrUrl: string, phone?: string): Promise<EntityProfile> {
