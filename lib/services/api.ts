@@ -850,46 +850,52 @@ class EntityProfileService {
   /** Normalize raw API response → full EntityProfile with safe defaults */
   private normalize(data: any): EntityProfile {
     return {
+      id:               data.id                                      ?? 0,
       // Core identity — API returns "name" but component expects "business_name"
-      business_name:       data.business_name  ?? data.name         ?? '',
-      description:         data.description                          ?? '',
-      phone:               data.phone                                ?? '',
-      email:               data.email                                ?? '',
-      website:             data.website         ?? data.gbp_website  ?? '',
-      founder_name:        data.founder_name                         ?? '',
-      founding_year:       data.founding_year                        ?? null,
-      price_range:         data.price_range                          ?? '',
-      num_employees:       data.num_employees                        ?? '',
+      business_name:    data.business_name  ?? data.name             ?? '',
+      description:      data.description                             ?? '',
+      phone:            data.phone                                   ?? '',
+      email:            data.email                                   ?? '',
+      founder_name:     data.founder_name                            ?? '',
+      founding_year:    data.founding_year                           ?? null,
+      price_range:      data.price_range                             ?? '',
+      num_employees:    data.num_employees                           ?? '',
+      languages:        Array.isArray(data.languages)     ? data.languages     : [],
+      payment_methods:  Array.isArray(data.payment_methods) ? data.payment_methods : [],
+      categories:       Array.isArray(data.categories)    ? data.categories    : [],
+      hours:            data.hours                                   ?? {},
+      updated_at:       data.updated_at                              ?? '',
 
       // Address — API returns combined "address" string
-      street_address:      data.street_address  ?? data.address      ?? '',
-      city:                data.city                                 ?? '',
-      state:               data.state                                ?? '',
-      zip_code:            data.zip_code                             ?? '',
-      country:             data.country                              ?? '',
+      street_address:   data.street_address ?? data.address          ?? '',
+      city:             data.city                                    ?? '',
+      state:            data.state                                   ?? '',
+      zip_code:         data.zip_code                                ?? '',
+      country:          data.country                                 ?? '',
 
       // Service area
-      service_cities:      Array.isArray(data.service_cities)
-                             ? data.service_cities : [],
+      service_cities:       Array.isArray(data.service_cities)  ? data.service_cities  : [],
+      service_zips:         Array.isArray(data.service_zips)    ? data.service_zips    : [],
+
       service_radius_miles: data.service_radius_miles                ?? null,
 
       // Social — API may not return this at all
       social_profiles: {
-        facebook:   data.social_profiles?.facebook   ?? '',
-        instagram:  data.social_profiles?.instagram  ?? '',
-        linkedin:   data.social_profiles?.linkedin   ?? '',
-        twitter:    data.social_profiles?.twitter    ?? '',
-        youtube:    data.social_profiles?.youtube    ?? '',
-        tiktok:     data.social_profiles?.tiktok     ?? '',
-        ...(data.social_profiles ?? {}),
+        facebook:  data.social_profiles?.facebook  ?? '',
+        instagram: data.social_profiles?.instagram ?? '',
+        linkedin:  data.social_profiles?.linkedin  ?? '',
+        twitter:   data.social_profiles?.twitter   ?? '',
+        youtube:   data.social_profiles?.youtube   ?? '',
+        tiktok:    data.social_profiles?.tiktok    ?? '',
       },
 
-      // GBP — API uses different field names than component
+      // GBP — API uses different field names
       gbp_url:          data.gbp_url                                 ?? '',
-      google_place_id:  data.place_id       ?? data.google_place_id ?? '',
-      gbp_last_synced:  data.gbp_last_synced ?? data.last_synced_at ?? '',
-      gbp_star_rating:  data.gbp_star_rating ?? data.rating          ?? 0,
-      gbp_review_count: data.gbp_review_count ?? data.review_count   ?? 0,
+      google_place_id:  data.place_id       ?? data.google_place_id  ?? '',
+      gbp_last_synced:  data.gbp_last_synced ?? data.last_synced_at  ?? null,
+      gbp_star_rating:  data.gbp_star_rating ?? data.rating           ?? null,
+      gbp_review_count: data.gbp_review_count ?? data.review_count    ?? null,
+
       gbp_reviews:      Array.isArray(data.gbp_reviews)
                           ? data.gbp_reviews
                           : Array.isArray(data.reviews) ? data.reviews : [],
