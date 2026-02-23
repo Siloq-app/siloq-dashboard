@@ -152,6 +152,21 @@ export default function Settings({
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [teamError, setTeamError] = useState<string | null>(null);
 
+  // Notification preferences state
+  const [emailNotifPrefs, setEmailNotifPrefs] = useState([
+    { label: 'Daily digest email', desc: 'Summary of all changes made by agents (Full-Auto mode)', enabled: true },
+    { label: 'Immediate alerts for BLOCK errors', desc: 'Critical issues that require immediate attention', enabled: true },
+    { label: 'Weekly governance report', desc: 'Comprehensive report on site health and recommendations', enabled: false },
+    { label: 'Team member activity', desc: 'Notifications when team members make changes', enabled: false },
+    { label: 'New approval requests', desc: 'Alert when destructive changes need approval', enabled: true },
+  ]);
+
+  const [appNotifPrefs, setAppNotifPrefs] = useState([
+    { label: 'Show toast notifications', desc: 'Display brief popup notifications for important events', enabled: true },
+    { label: 'Play sound alerts', desc: 'Audio notification for critical alerts', enabled: false },
+    { label: 'Browser push notifications', desc: 'Allow notifications when app is not in focus', enabled: false },
+  ]);
+
   // Agent permissions state
   const [agentPerms, setAgentPerms] = useState([
     { label: 'Allow content generation', desc: 'Agents can create new content blocks', enabled: true },
@@ -571,7 +586,7 @@ export default function Settings({
         </h4>
         <div className="mb-4">
           <a
-            href="https://github.com/Siloq-app/siloq-wordpress/releases/download/v1.5.3/siloq-connector.zip"
+            href="https://github.com/Siloq-app/siloq-wordpress/releases/download/v1.5.7/siloq-connector.zip"
             download
             className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700"
           >
@@ -973,33 +988,7 @@ export default function Settings({
         <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
           Email Notifications
         </h4>
-        {[
-          {
-            label: 'Daily digest email',
-            desc: 'Summary of all changes made by agents (Full-Auto mode)',
-            checked: true,
-          },
-          {
-            label: 'Immediate alerts for BLOCK errors',
-            desc: 'Critical issues that require immediate attention',
-            checked: true,
-          },
-          {
-            label: 'Weekly governance report',
-            desc: 'Comprehensive report on site health and recommendations',
-            checked: false,
-          },
-          {
-            label: 'Team member activity',
-            desc: 'Notifications when team members make changes',
-            checked: false,
-          },
-          {
-            label: 'New approval requests',
-            desc: 'Alert when destructive changes need approval',
-            checked: true,
-          },
-        ].map((pref, i) => (
+        {emailNotifPrefs.map((pref, i) => (
           <div
             key={i}
             className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
@@ -1013,15 +1002,21 @@ export default function Settings({
               </div>
             </div>
             <div
+              onClick={() => {
+                const updated = [...emailNotifPrefs];
+                updated[i] = { ...updated[i], enabled: !updated[i].enabled };
+                setEmailNotifPrefs(updated);
+                toast.success(`${pref.label} ${!pref.enabled ? 'enabled' : 'disabled'}`);
+              }}
               className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
-                pref.checked
+                pref.enabled
                   ? 'bg-emerald-500'
                   : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div
                 className={`h-4 w-4 rounded-full bg-white transition-transform ${
-                  pref.checked ? 'translate-x-4' : ''
+                  pref.enabled ? 'translate-x-4' : ''
                 }`}
               />
             </div>
@@ -1033,23 +1028,7 @@ export default function Settings({
         <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
           In-App Notifications
         </h4>
-        {[
-          {
-            label: 'Show toast notifications',
-            desc: 'Display brief popup notifications for important events',
-            checked: true,
-          },
-          {
-            label: 'Play sound alerts',
-            desc: 'Audio notification for critical alerts',
-            checked: false,
-          },
-          {
-            label: 'Browser push notifications',
-            desc: 'Allow notifications when app is not in focus',
-            checked: false,
-          },
-        ].map((pref, i) => (
+        {appNotifPrefs.map((pref, i) => (
           <div
             key={i}
             className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
@@ -1063,15 +1042,21 @@ export default function Settings({
               </div>
             </div>
             <div
+              onClick={() => {
+                const updated = [...appNotifPrefs];
+                updated[i] = { ...updated[i], enabled: !updated[i].enabled };
+                setAppNotifPrefs(updated);
+                toast.success(`${pref.label} ${!pref.enabled ? 'enabled' : 'disabled'}`);
+              }}
               className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
-                pref.checked
+                pref.enabled
                   ? 'bg-emerald-500'
                   : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div
                 className={`h-4 w-4 rounded-full bg-white transition-transform ${
-                  pref.checked ? 'translate-x-4' : ''
+                  pref.enabled ? 'translate-x-4' : ''
                 }`}
               />
             </div>
@@ -1087,10 +1072,13 @@ export default function Settings({
           />
           <div className="text-sm text-slate-700 dark:text-slate-300">
             <span className="font-medium">Primary email:</span>{' '}
-            john.doe@company.com
+            {profile.email || 'Loading...'}
           </div>
         </div>
-        <button className="focus-visible:ring-ring inline-flex h-9 w-fit items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 md:ml-auto dark:text-slate-300 dark:hover:bg-slate-700">
+        <button
+          onClick={() => setActiveTab('profile')}
+          className="focus-visible:ring-ring inline-flex h-9 w-fit items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 md:ml-auto dark:text-slate-300 dark:hover:bg-slate-700"
+        >
           Change
         </button>
       </div>
