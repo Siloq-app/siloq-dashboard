@@ -876,6 +876,7 @@ class EntityProfileService {
       // Service area
       service_cities:       Array.isArray(data.service_cities)  ? data.service_cities  : [],
       service_zips:         Array.isArray(data.service_zips)    ? data.service_zips    : [],
+
       service_radius_miles: data.service_radius_miles                ?? null,
 
       // Social — API may not return this at all
@@ -894,6 +895,7 @@ class EntityProfileService {
       gbp_last_synced:  data.gbp_last_synced ?? data.last_synced_at  ?? null,
       gbp_star_rating:  data.gbp_star_rating ?? data.rating           ?? null,
       gbp_review_count: data.gbp_review_count ?? data.review_count    ?? null,
+
       gbp_reviews:      Array.isArray(data.gbp_reviews)
                           ? data.gbp_reviews
                           : Array.isArray(data.reviews) ? data.reviews : [],
