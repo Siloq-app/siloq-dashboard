@@ -79,7 +79,17 @@ export default function ApiKeysPage() {
       const res = await fetchWithAuth('/api/v1/api-keys');
       const data = await res.json();
       if (res.ok) {
-        setApiKeys(data.results || data.keys || data || []);
+        // API returns snake_case — map to camelCase for this component
+        const raw: any[] = data.results || data.keys || (Array.isArray(data) ? data : []);
+        setApiKeys(raw.map((k) => ({
+          id: k.id,
+          name: k.name,
+          key: k.key,
+          keyPrefix: k.key_prefix ?? k.keyPrefix ?? '',
+          createdAt: k.created_at ?? k.createdAt ?? '',
+          lastUsedAt: k.last_used_at ?? k.lastUsedAt ?? null,
+          isActive: k.is_active ?? k.isActive ?? false,
+        })));
       } else {
         setError(data.message || 'Failed to fetch API keys');
       }
