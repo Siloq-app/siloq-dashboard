@@ -131,7 +131,7 @@ export default function Dashboard({
       case 'conflicts':
         return (
           <>
-            {activeTab === 'dashboard' && (
+            {activeTab === 'dashboard' && selectedSite && (
               <Suspense fallback={null}>
                 <GettingStartedCard
                   siteId={selectedSite.id}
