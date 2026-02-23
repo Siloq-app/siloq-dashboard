@@ -70,6 +70,7 @@ export default function Dashboard({
     pendingChanges,
     linkOpportunities,
     isLoading,
+    loadSites,
     loadCannibalization,
     loadSilos,
     loadRecommendations,
@@ -173,8 +174,9 @@ export default function Dashboard({
         return (
           <SitesScreen
             onSiteCreated={() => {
-              sessionStorage.setItem('siloq_settings_subtab', 'business-profile');
-              onTabChange?.('settings');
+              // Stay on Sites after creation — SitesScreen reloads the list and shows success toast.
+              // Reload the dashboard context so the new site gets picked up.
+              loadSites();
             }}
           />
         );
