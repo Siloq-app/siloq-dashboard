@@ -586,7 +586,7 @@ export default function Settings({
         </h4>
         <div className="mb-4">
           <a
-            href="https://github.com/Siloq-app/siloq-wordpress/releases/download/v1.5.8/siloq-connector-v1.5.8.zip"
+            href="https://github.com/Siloq-app/siloq-wordpress/releases/download/v1.5.9/siloq-connector-v1.5.9.zip"
             download
             className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700"
           >
