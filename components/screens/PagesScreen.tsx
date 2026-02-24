@@ -404,11 +404,22 @@ function RecommendationPanel({
                         ⚠️ {manualCount} recommendation{manualCount !== 1 ? 's' : ''} require manual action — see panel
                       </div>
                     )}
-                    {trueFailCount > 0 && (
-                      <div className="text-red-600 text-xs font-medium">
-                        ❌ {trueFailCount} failed — check plugin connection
-                      </div>
-                    )}
+                    {trueFailCount > 0 && (() => {
+                      const trueFailures = applyResult?.failed?.filter(f => f.error !== 'requires_manual_action') ?? [];
+                      const firstError = trueFailures[0]?.error ?? '';
+                      const friendlyError = firstError.includes('schema') || firstError.includes('No schema')
+                        ? 'schema not generated — re-run Analyze first'
+                        : firstError.includes('404') || firstError.includes('not found')
+                        ? 'page not found in WordPress — try re-syncing'
+                        : firstError.includes('401') || firstError.includes('403')
+                        ? 'plugin auth failed — check API key'
+                        : 'check plugin connection';
+                      return (
+                        <div className="text-red-600 text-xs font-medium">
+                          ❌ {trueFailCount} failed — {friendlyError}
+                        </div>
+                      );
+                    })()}
                     {appliedCount === 0 && failedCount > 0 && manualCount === failedCount && (
                       <div className="flex items-center gap-2 text-amber-600 font-medium text-sm">
                         ⚠️ These recommendations require manual action in WordPress
