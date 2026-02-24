@@ -219,6 +219,7 @@ export default function GovernanceDashboard({
         new_title: rec.new_title,
         new_meta_description: rec.new_meta_description,
         new_h1: rec.new_h1,
+        new_slug: rec.new_slug || null,
       }));
 
     if (changes.length === 0) {
@@ -737,6 +738,29 @@ export default function GovernanceDashboard({
                           {rec.new_h1}
                         </div>
                       </div>
+
+                      {/* URL Slug — only shown when AI recommends a change */}
+                      {rec.new_slug && (
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-muted-foreground">URL Slug</Label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <span className="text-xs text-muted-foreground">Current</span>
+                              <div className="rounded bg-muted p-2 text-sm text-muted-foreground font-mono">
+                                /{rec.url.replace(/\/$/, '').split('/').pop()}/
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-xs text-amber-600 font-medium">Suggested (301 redirect created)</span>
+                              <Input
+                                value={rec.new_slug}
+                                onChange={(e) => updateRecommendation(rec.url, 'new_slug', e.target.value)}
+                                className="border-amber-200 bg-amber-50 dark:bg-amber-950 font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Internal Linking */}
                       {rec.internal_link_suggestion && (
