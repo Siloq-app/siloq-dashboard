@@ -46,8 +46,11 @@ export default function BusinessProfileSettings({ siteId }: Props) {
     if (!profile) return;
     setSaving(true); setError(null);
     try {
-      const updated = await entityProfileService.update(siteId, profile);
-      setProfile(updated); setSaved(true);
+      await entityProfileService.update(siteId, profile);
+      // Reload from API after save to guarantee we display what's actually persisted
+      const refreshed = await entityProfileService.get(siteId);
+      setProfile(refreshed);
+      setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e: any) { setError(e.message); }
     finally { setSaving(false); }
