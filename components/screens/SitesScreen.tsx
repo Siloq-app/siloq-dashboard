@@ -15,7 +15,7 @@ import {
   Download,
 } from 'lucide-react';
 
-const PLUGIN_DOWNLOAD_URL = 'https://github.com/Siloq-app/siloq-wordpress/releases/download/v1.5.7/siloq-connector-v1.5.7.zip';
+const PLUGIN_DOWNLOAD_URL = 'https://github.com/Siloq-app/siloq-wordpress/releases/download/v1.5.8/siloq-connector-v1.5.8.zip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
