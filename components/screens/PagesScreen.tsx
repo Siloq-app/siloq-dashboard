@@ -712,7 +712,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
             Analyze content health and apply Three-Layer optimizations to your WordPress pages
           </p>
         </div>
-        <Button onClick={loadPages} variant="outline" size="sm">
+        <Button onClick={() => loadPages()} variant="outline" size="sm">
           <RefreshCw size={16} className="mr-2" />
           Refresh
         </Button>
