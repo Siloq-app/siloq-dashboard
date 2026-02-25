@@ -153,6 +153,7 @@ export default function GovernanceDashboard({
       new_title: string;
       new_h1: string;
       new_meta_description: string;
+      new_slug?: string | null;
       primary_keyword: string;
       internal_link_suggestion: string;
       reasoning: string;
