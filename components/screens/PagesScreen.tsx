@@ -500,12 +500,19 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
   const loadedAnalysesRef = useRef(false);
 
   // ── Load pages ──
-  const loadPages = useCallback(async () => {
+  const loadPages = useCallback(async (signal?: AbortSignal) => {
+    // Never fetch without a valid siteId — would return all user pages mixed together
+    if (!siteId) {
+      setPages([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError('');
     try {
-      const url = siteId ? `/api/v1/pages/?site_id=${siteId}` : '/api/v1/pages/';
-      const res = await fetchWithAuth(url);
+      const url = `/api/v1/pages/?site_id=${siteId}`;
+      const res = await fetchWithAuth(url, signal ? { signal } : undefined);
+      if (signal?.aborted) return;
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.message || data.detail || 'Failed to load pages');
@@ -514,15 +521,26 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
       setPages(results);
       setTotalPages(Math.ceil(results.length / itemsPerPage) || 1);
     } catch (e: unknown) {
+      if (signal?.aborted) return; // Ignore cancellations from site switching
       setError(e instanceof Error ? e.message : 'Failed to load pages');
       setPages([]);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, [siteId]);
 
+  // ── Reset stale state immediately when site changes ──
   useEffect(() => {
-    loadPages();
+    setPages([]);
+    setCurrentPage(1);
+    setError('');
+  }, [siteId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadPages(controller.signal);
+    // Cancel in-flight request if siteId changes before response arrives
+    return () => controller.abort();
   }, [loadPages]);
 
   // ── Load existing analyses on mount (once pages are loaded) ──

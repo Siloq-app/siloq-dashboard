@@ -169,7 +169,8 @@ class SitesService {
 
 class PagesService {
   async list(siteId?: number | string): Promise<Page[]> {
-    const url = siteId ? `/api/v1/pages?site_id=${siteId}` : '/api/v1/pages';
+    if (!siteId) return [];
+    const url = `/api/v1/pages/?site_id=${siteId}`;
     const res = await fetchWithAuth(url);
     const data = await res.json();
     if (!res.ok)
