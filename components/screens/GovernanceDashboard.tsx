@@ -267,7 +267,7 @@ export default function GovernanceDashboard({
     });
   };
 
-  const updateRecommendation = (url: string, field: 'new_title' | 'new_meta_description', value: string) => {
+  const updateRecommendation = (url: string, field: 'new_title' | 'new_meta_description' | 'new_slug', value: string) => {
     setDifferentiationModal(prev => {
       if (!prev.recommendations) return prev;
       const updated = prev.recommendations.map(rec =>
