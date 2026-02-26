@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@100..1000&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -38,11 +42,13 @@
     --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 221.2 83.2% 53.3%;
 
-    --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", 'Courier New', monospace;
+
+    --font-brand: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .dark {
     --background: 222.2 84% 4.9%;
@@ -96,8 +102,45 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family:
-      var(--font-dm-sans), 'DM Sans', var(--font-inter), 'Inter', sans-serif;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer utilities {
+  /* Primary UI Font - Inter */
+  .font-ui {
+    font-family: var(--font-sans);
+  }
+  
+  /* Data & Metrics Font - Roboto Mono */
+  .font-data {
+    font-family: var(--font-mono);
+  }
+  
+  /* Brand & Heading Font - DM Sans */
+  .font-brand {
+    font-family: var(--font-brand);
+  }
+  
+  /* Specific use cases */
+  .font-keyword {
+    @apply font-data text-sm;
+  }
+  
+  .font-url {
+    @apply font-data text-xs;
+  }
+  
+  .font-metric {
+    @apply font-data tabular-nums;
+  }
+  
+  .font-heading {
+    @apply font-brand;
+  }
+  
+  .font-label {
+    @apply font-ui text-sm;
   }
 }
 
