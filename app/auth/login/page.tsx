@@ -56,8 +56,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || 'https://api.siloq.ai';
-      const res = await fetch(`${apiBase}/api/v1/auth/login/`, {
+      const res = await fetch('/api/v1/auth/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

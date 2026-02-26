@@ -99,7 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const token = localStorage.getItem('token');
     if (token) {
-      fetch('https://api.siloq.ai/api/v1/auth/me/', {
+      fetch('/api/v1/auth/me/', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => res.ok ? res.json() : null)

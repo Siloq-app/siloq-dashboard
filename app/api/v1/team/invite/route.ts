@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.API_URL || 'https://api.siloq.ai';
+const API_BASE = process.env.API_URL || 'http://localhost:8000';
 
 export async function POST(request: NextRequest) {
   try {

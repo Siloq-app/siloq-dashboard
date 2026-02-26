@@ -77,81 +77,83 @@ export default function ForgotPasswordPage() {
 
   if (isSent) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-4">
-        <Card className="w-full max-w-md border-slate-700/50 bg-slate-900/80">
-          <CardContent className="pt-6">
-            <Alert variant="success">
-              <Send className="h-4 w-4" />
-              <AlertDescription>
-                <span className="font-medium">Check your email.</span>{' '}
-                We&apos;ve sent a password reset link to {email}. Didn&apos;t
-                receive it? Check your spam folder or{' '}
-                <button onClick={() => setIsSent(false)} className="underline">
-                  try again
-                </button>
-              </AlertDescription>
-            </Alert>
-            <div className="mt-4">
-              <Link href="/auth/login">
-                <Button
-                  variant="outline"
-                  className="w-full border-slate-700 text-slate-300 hover:bg-slate-800"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to login
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-[#0f172a] p-6 md:p-10">
+        <div className="flex w-full max-w-sm flex-col gap-6">
+          <Link
+            href="/"
+            className="flex items-center gap-2 self-center font-medium text-white"
+          >
+            <Image
+              src="/symbol.png"
+              alt="Siloq"
+              width={32}
+              height={32}
+              className="size-8 object-contain"
+            />
+            Siloq
+          </Link>
+          <Card>
+            <CardContent className="pt-6">
+              <Alert variant="success">
+                <Send className="h-4 w-4" />
+                <AlertDescription>
+                  <span className="font-medium">Check your email.</span>{' '}
+                  We&apos;ve sent a password reset link to {email}. Didn&apos;t
+                  receive it? Check your spam folder or{' '}
+                  <button onClick={() => setIsSent(false)} className="underline">
+                    try again
+                  </button>
+                </AlertDescription>
+              </Alert>
+              <div className="mt-4">
+                <Link href="/auth/login">
+                  <Button variant="outline" className="w-full">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to login
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-4">
-      <Card className="w-full max-w-md border-slate-700/50 bg-slate-900/80">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mb-2 flex justify-center">
-            <Image
-              src="/logo-dark.png"
-              alt="Siloq"
-              width={150}
-              height={150}
-              className="rounded-xl"
-              style={{ width: 'auto', height: 'auto' }}
-              priority
-            />
-          </div>
-          <Link
-            href="/auth/login"
-            className="mb-2 flex items-center gap-1 text-sm text-slate-400 hover:text-slate-300"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to login
-          </Link>
-          <CardTitle className="text-2xl font-bold text-slate-100">
-            Reset password
-          </CardTitle>
-          <CardDescription className="text-slate-400">
-            Enter your email and we'll send you a reset link
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-[#0f172a] p-6 md:p-10">
+      <div className="flex w-full max-w-sm flex-col gap-6">
+        <Link
+          href="/"
+          className="flex items-center gap-2 self-center font-medium text-white"
+        >
+          <Image
+            src="/symbol.png"
+            alt="Siloq"
+            width={32}
+            height={32}
+            className="size-8 object-contain"
+          />
+          Siloq
+        </Link>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-xl">Reset password</CardTitle>
+            <CardDescription>
+              Enter your email and we'll send you a reset link
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300">
-                Email <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -163,34 +165,38 @@ export default function ForgotPasswordPage() {
                   onBlur={() => validateEmail(email)}
                   required
                   disabled={isLoading}
-                  className={`border-slate-700 bg-slate-800/50 pl-10 text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 ${fieldError ? 'border-red-500' : ''}`}
                 />
               </div>
               {fieldError && (
                 <p className="text-xs text-red-500">{fieldError}</p>
               )}
-            </div>
 
-            <Button
-              type="submit"
-              disabled={isLoading || !email}
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send className="mr-2 h-4 w-4" />
-                  Send Reset Link
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <Button
+                type="submit"
+                disabled={isLoading || !email}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Reset Link
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+        <div className="text-center text-sm text-muted-foreground">
+          <Link href="/auth/login" className="underline underline-offset-4 hover:text-primary">
+            Back to login
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

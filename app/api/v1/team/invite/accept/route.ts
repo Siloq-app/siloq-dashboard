@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const getBackendUrl = () =>
-  (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || 'https://api.siloq.ai').replace(/\/+$/, '');
+  (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
 export async function POST(request: NextRequest) {
   try {
