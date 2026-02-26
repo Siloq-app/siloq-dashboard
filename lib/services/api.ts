@@ -939,6 +939,26 @@ class EntityProfileService {
     if (!res.ok) throw new Error(data.error || 'Failed to sync from Google');
     return this.normalize(data.synced ?? data);
   }
+
+  async previewGbp(siteId: number | string, placeIdOrUrl: string, phone?: string): Promise<any> {
+    const isUrl = placeIdOrUrl.startsWith('http');
+    const isPhone = /^\+?[\d\s\-().]{7,}$/.test(placeIdOrUrl);
+    let body: Record<string, string> = {};
+    if (isUrl) body.gbp_url = placeIdOrUrl;
+    else if (isPhone) body.phone = placeIdOrUrl;
+    else body.place_id = placeIdOrUrl;
+    if (phone) body.phone = phone;
+    body.preview = 'true'; // Add preview flag
+
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/entity-profile/sync-gbp/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to preview business data');
+    return data;
+  }
 }
 export const entityProfileService = new EntityProfileService();
 

@@ -5,6 +5,7 @@ import { entityProfileService, EntityProfile } from '@/lib/services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
 
 interface Props { siteId: number | string; }
 
@@ -20,6 +21,10 @@ export default function BusinessProfileSettings({ siteId }: Props) {
   const [needsPlaceId, setNeedsPlaceId] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [syncingPhone, setSyncingPhone] = useState(false);
+  const [syncMode, setSyncMode] = useState<'url' | 'phone'>('url');
+  const [confirmationData, setConfirmationData] = useState<any>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [citiesRaw, setCitiesRaw] = useState('');
 
   const load = useCallback(async () => {
@@ -87,6 +92,48 @@ export default function BusinessProfileSettings({ siteId }: Props) {
     }
   };
 
+  const handlePreviewGbp = async () => {
+    const input = syncMode === 'phone' ? phoneInput.trim() : gbpInput.trim();
+    if (!input) return;
+    
+    setPreviewLoading(true); setSyncError(null);
+    try {
+      const preview = await entityProfileService.previewGbp(siteId, input);
+      setConfirmationData(preview);
+      setShowConfirmation(true);
+    } catch (e: any) {
+      setSyncError(e.message || 'Failed to preview business data');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleConfirmSync = async () => {
+    if (!confirmationData) return;
+    setSaving(true); setError(null);
+    try {
+      // Actually save the confirmed data
+      const updated = await entityProfileService.syncGbp(
+        siteId, 
+        syncMode === 'phone' ? phoneInput.trim() : gbpInput.trim()
+      );
+      setProfile(updated);
+      setShowConfirmation(false);
+      setConfirmationData(null);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false);
+    setConfirmationData(null);
+  };
+
   const set = (field: keyof EntityProfile, value: any) =>
     setProfile(prev => prev ? { ...prev, [field]: value } : prev);
 
@@ -107,19 +154,56 @@ export default function BusinessProfileSettings({ siteId }: Props) {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
         <div>
           <h3 className="font-medium text-blue-900">Google Business Profile</h3>
-          <p className="text-xs text-blue-700 mt-1">Paste your GBP URL or Place ID to auto-fill business info and pull real customer reviews.</p>
+          <p className="text-xs text-blue-700 mt-1">Sync your business info and pull real customer reviews from Google.</p>
         </div>
+        
+        {/* Sync Mode Toggle */}
         <div className="flex gap-2">
-          <Input
-            value={gbpInput}
-            onChange={e => setGbpInput(e.target.value)}
-            placeholder="https://maps.google.com/?cid=... or ChIJ..."
-            className="flex-1 text-sm"
-          />
-          <Button onClick={handleSyncGbp} disabled={syncing || !gbpInput.trim()} size="sm">
-            {syncing ? 'Syncing...' : 'Sync from Google'}
-          </Button>
+          <button
+            onClick={() => setSyncMode('url')}
+            className={`px-3 py-1.5 text-xs font-medium rounded ${syncMode === 'url' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-200'}`}
+          >
+            Place ID / URL
+          </button>
+          <button
+            onClick={() => setSyncMode('phone')}
+            className={`px-3 py-1.5 text-xs font-medium rounded ${syncMode === 'phone' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-200'}`}
+          >
+            Find by phone
+          </button>
         </div>
+
+        {/* URL/Place ID Input */}
+        {syncMode === 'url' && (
+          <div className="flex gap-2">
+            <Input
+              value={gbpInput}
+              onChange={e => setGbpInput(e.target.value)}
+              placeholder="https://maps.google.com/?cid=... or ChIJ..."
+              className="flex-1 text-sm"
+            />
+            <Button onClick={handlePreviewGbp} disabled={previewLoading || !gbpInput.trim()} size="sm">
+              {previewLoading ? 'Loading...' : 'Preview'}
+            </Button>
+          </div>
+        )}
+
+        {/* Phone Input */}
+        {syncMode === 'phone' && (
+          <div className="flex gap-2">
+            <Input
+              type="tel"
+              value={phoneInput}
+              onChange={e => setPhoneInput(e.target.value)}
+              placeholder="+1 (816) 555-0123"
+              className="flex-1 text-sm"
+            />
+            <Button onClick={handlePreviewGbp} disabled={previewLoading || !phoneInput.trim()} size="sm">
+              {previewLoading ? 'Searching...' : 'Find Business'}
+            </Button>
+          </div>
+        )}
+
         {profile.gbp_last_synced && !syncError && (
           <p className="text-xs text-blue-600">
             Last synced: {new Date(profile.gbp_last_synced).toLocaleString()} · {profile.gbp_review_count} reviews · {profile.gbp_star_rating}★
@@ -128,38 +212,46 @@ export default function BusinessProfileSettings({ siteId }: Props) {
         {syncError && (
           <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 space-y-2">
             <p className="font-medium">⚠️ {syncError}</p>
-            {needsPlaceId && (
-              <>
-                <p className="text-amber-700">
-                  This can happen with <strong>Service Area Businesses</strong>. Try your business phone number instead — Google can always find a verified GBP by phone:
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="tel"
-                    value={phoneInput}
-                    onChange={e => setPhoneInput(e.target.value)}
-                    placeholder="+1 (816) 555-0123"
-                    className="flex-1 rounded border border-amber-300 bg-white px-2 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                  />
-                  <button
-                    onClick={handleSyncByPhone}
-                    disabled={syncingPhone || !phoneInput.trim()}
-                    className="rounded bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
-                  >
-                    {syncingPhone ? 'Searching…' : 'Try Phone'}
-                  </button>
-                </div>
-                <p className="text-amber-600">
-                  Or paste a <code className="bg-amber-100 px-1 rounded">ChIJ…</code> Place ID above.{' '}
-                  <a href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" target="_blank" rel="noopener noreferrer" className="underline">
-                    Find yours here →
-                  </a>
-                </p>
-              </>
-            )}
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmation && confirmationData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="p-6 max-w-md w-full mx-4 space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Is this your business?</h3>
+              <div className="mt-3 space-y-2">
+                <p className="text-gray-900 font-medium">{confirmationData.business_name}</p>
+                <p className="text-gray-600">
+                  {confirmationData.city}, {confirmationData.state}
+                </p>
+                <p className="text-sm text-gray-500">
+                  ⭐ {confirmationData.gbp_star_rating} · {confirmationData.gbp_review_count} reviews
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleConfirmSync}
+                disabled={saving}
+                className="flex-1"
+              >
+                {saving ? 'Connecting...' : 'Yes, connect this business'}
+              </Button>
+              <Button
+                onClick={handleCancelConfirmation}
+                variant="outline"
+                disabled={saving}
+                className="flex-1"
+              >
+                No, try again
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Core Info */}
       <div className="space-y-4">
