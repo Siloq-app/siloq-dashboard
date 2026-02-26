@@ -120,7 +120,7 @@ export function NavUser({
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { alert('Notifications coming soon'); }}>
+              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard?tab=settings&section=notifications'; }}>
                 <Bell />
                 Notifications
               </DropdownMenuItem>

@@ -152,20 +152,30 @@ export default function Settings({
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [teamError, setTeamError] = useState<string | null>(null);
 
-  // Notification preferences state
-  const [emailNotifPrefs, setEmailNotifPrefs] = useState([
-    { label: 'Daily digest email', desc: 'Summary of all changes made by agents (Full-Auto mode)', enabled: true },
-    { label: 'Immediate alerts for BLOCK errors', desc: 'Critical issues that require immediate attention', enabled: true },
-    { label: 'Weekly governance report', desc: 'Comprehensive report on site health and recommendations', enabled: false },
-    { label: 'Team member activity', desc: 'Notifications when team members make changes', enabled: false },
-    { label: 'New approval requests', desc: 'Alert when destructive changes need approval', enabled: true },
-  ]);
+  // Notification preferences (keyed for API persistence)
+  const EMAIL_PREF_KEYS = ['daily_digest', 'block_errors', 'weekly_report', 'team_activity', 'approval_requests'] as const;
+  const APP_PREF_KEYS = ['toast', 'sound', 'push'] as const;
+  const EMAIL_PREF_META: Record<string, { label: string; desc: string }> = {
+    daily_digest: { label: 'Daily digest email', desc: 'Summary of all changes made by agents (Full-Auto mode)' },
+    block_errors: { label: 'Immediate alerts for BLOCK errors', desc: 'Critical issues that require immediate attention' },
+    weekly_report: { label: 'Weekly governance report', desc: 'Comprehensive report on site health and recommendations' },
+    team_activity: { label: 'Team member activity', desc: 'Notifications when team members make changes' },
+    approval_requests: { label: 'New approval requests', desc: 'Alert when destructive changes need approval' },
+  };
+  const APP_PREF_META: Record<string, { label: string; desc: string }> = {
+    toast: { label: 'Show toast notifications', desc: 'Display brief popup notifications for important events' },
+    sound: { label: 'Play sound alerts', desc: 'Audio notification for critical alerts' },
+    push: { label: 'Browser push notifications', desc: 'Allow notifications when app is not in focus' },
+  };
 
-  const [appNotifPrefs, setAppNotifPrefs] = useState([
-    { label: 'Show toast notifications', desc: 'Display brief popup notifications for important events', enabled: true },
-    { label: 'Play sound alerts', desc: 'Audio notification for critical alerts', enabled: false },
-    { label: 'Browser push notifications', desc: 'Allow notifications when app is not in focus', enabled: false },
-  ]);
+  const [emailNotifPrefs, setEmailNotifPrefs] = useState<Record<string, boolean>>({
+    daily_digest: true, block_errors: true, weekly_report: false, team_activity: false, approval_requests: true,
+  });
+  const [appNotifPrefs, setAppNotifPrefs] = useState<Record<string, boolean>>({
+    toast: true, sound: false, push: false,
+  });
+  const [notificationPrefsLoading, setNotificationPrefsLoading] = useState(true);
+  const [notificationPrefsSaving, setNotificationPrefsSaving] = useState(false);
 
   // Agent permissions state
   const [agentPerms, setAgentPerms] = useState([
@@ -176,6 +186,46 @@ export default function Settings({
     { label: 'Allow page deletion', desc: 'Agents can delete or archive pages', enabled: false },
     { label: 'Allow schema markup changes', desc: 'Agents can modify structured data', enabled: true },
   ]);
+
+  // Fetch notification preferences
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetchWithAuth('/api/v1/auth/notifications/');
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && data.email_preferences) setEmailNotifPrefs(prev => ({ ...prev, ...data.email_preferences }));
+          if (!cancelled && data.app_preferences) setAppNotifPrefs(prev => ({ ...prev, ...data.app_preferences }));
+        }
+      } catch {
+        // keep defaults
+      } finally {
+        if (!cancelled) setNotificationPrefsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const saveNotificationPrefs = async (email: Record<string, boolean>, app: Record<string, boolean>) => {
+    setNotificationPrefsSaving(true);
+    try {
+      const res = await fetchWithAuth('/api/v1/auth/notifications/', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email_preferences: email, app_preferences: app }),
+      });
+      if (res.ok) {
+        toast.success('Preferences saved');
+      } else {
+        toast.error('Failed to save preferences');
+      }
+    } catch {
+      toast.error('Failed to save preferences');
+    } finally {
+      setNotificationPrefsSaving(false);
+    }
+  };
 
   // Fetch team members
   // Bug fix: Wrap in try/catch to gracefully fail so profile tab still works
@@ -973,95 +1023,111 @@ export default function Settings({
     </div>
   );
 
-  const renderNotificationsTab = () => (
+  const renderNotificationsTab = () => {
+    if (notificationPrefsLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[30vh] gap-2">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-slate-600" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">Loading preferences…</p>
+        </div>
+      );
+    }
+    return (
     <div className="space-y-6">
       <div>
         <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
           Notification Preferences
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Choose how and when you want to be notified
+          Choose how and when you want to be notified. Changes are saved automatically.
         </p>
+        {notificationPrefsSaving && (
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Saving…</p>
+        )}
       </div>
 
       <div className="space-y-4">
         <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
           Email Notifications
         </h4>
-        {emailNotifPrefs.map((pref, i) => (
+        {EMAIL_PREF_KEYS.map((key) => {
+          const meta = EMAIL_PREF_META[key];
+          const enabled = emailNotifPrefs[key] ?? true;
+          return (
           <div
-            key={i}
+            key={key}
             className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
           >
             <div>
               <div className="mb-1 truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                {pref.label}
+                {meta.label}
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                {pref.desc}
+                {meta.desc}
               </div>
             </div>
             <div
               onClick={() => {
-                const updated = [...emailNotifPrefs];
-                updated[i] = { ...updated[i], enabled: !updated[i].enabled };
+                if (notificationPrefsSaving) return;
+                const updated = { ...emailNotifPrefs, [key]: !enabled };
                 setEmailNotifPrefs(updated);
-                toast.success(`${pref.label} ${!pref.enabled ? 'enabled' : 'disabled'}`);
+                saveNotificationPrefs(updated, appNotifPrefs);
               }}
               className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
-                pref.enabled
-                  ? 'bg-emerald-500'
-                  : 'bg-slate-300 dark:bg-slate-600'
+                enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div
                 className={`h-4 w-4 rounded-full bg-white transition-transform ${
-                  pref.enabled ? 'translate-x-4' : ''
+                  enabled ? 'translate-x-4' : ''
                 }`}
               />
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="space-y-4 border-t border-slate-200 pt-4 dark:border-slate-700">
         <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
           In-App Notifications
         </h4>
-        {appNotifPrefs.map((pref, i) => (
+        {APP_PREF_KEYS.map((key) => {
+          const meta = APP_PREF_META[key];
+          const enabled = appNotifPrefs[key] ?? true;
+          return (
           <div
-            key={i}
+            key={key}
             className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
           >
             <div>
               <div className="mb-1 truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                {pref.label}
+                {meta.label}
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                {pref.desc}
+                {meta.desc}
               </div>
             </div>
             <div
               onClick={() => {
-                const updated = [...appNotifPrefs];
-                updated[i] = { ...updated[i], enabled: !updated[i].enabled };
+                if (notificationPrefsSaving) return;
+                const updated = { ...appNotifPrefs, [key]: !enabled };
                 setAppNotifPrefs(updated);
-                toast.success(`${pref.label} ${!pref.enabled ? 'enabled' : 'disabled'}`);
+                saveNotificationPrefs(emailNotifPrefs, updated);
               }}
               className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
-                pref.enabled
-                  ? 'bg-emerald-500'
-                  : 'bg-slate-300 dark:bg-slate-600'
+                enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div
                 className={`h-4 w-4 rounded-full bg-white transition-transform ${
-                  pref.enabled ? 'translate-x-4' : ''
+                  enabled ? 'translate-x-4' : ''
                 }`}
               />
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center dark:border-slate-700 dark:bg-slate-800/50">
@@ -1083,7 +1149,8 @@ export default function Settings({
         </button>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderBusinessProfileTab = () => (
     <Suspense fallback={<div className="p-6 text-slate-500">Loading...</div>}>
