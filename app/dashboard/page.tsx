@@ -68,22 +68,30 @@ function SidebarWithSearch() {
 
 export default function DashboardPage() {
   return (
-    <DashboardProvider>
-      <SidebarProvider>
-        <Suspense fallback={null}>
-          <SidebarWithSearch />
-        </Suspense>
-        <SidebarInset>
-          <Suspense
-            fallback={
-              <div className="flex h-16 items-center px-4">Loading...</div>
-            }
-          >
-            <DashboardContent />
-          </Suspense>
-        </SidebarInset>
-        <DebugAuth />
-      </SidebarProvider>
-    </DashboardProvider>
+    <div className="relative min-h-screen">
+      {/* Background layer */}
+      <div className="absolute inset-0 z-10 bg-background px-2 text-muted-foreground" style={{ backgroundColor: '#0F182A' }}></div>
+      
+      {/* Main content */}
+      <div className="relative z-20">
+        <DashboardProvider>
+          <SidebarProvider>
+            <Suspense fallback={null}>
+              <SidebarWithSearch />
+            </Suspense>
+            <SidebarInset>
+              <Suspense
+                fallback={
+                  <div className="flex h-16 items-center px-4">Loading...</div>
+                }
+              >
+                <DashboardContent />
+              </Suspense>
+            </SidebarInset>
+            <DebugAuth />
+          </SidebarProvider>
+        </DashboardProvider>
+      </div>
+    </div>
   );
 }
