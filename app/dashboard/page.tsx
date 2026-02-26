@@ -70,7 +70,7 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-screen">
       {/* Background layer */}
-      <div className="absolute inset-0 z-10 bg-background px-2 text-muted-foreground" style={{ backgroundColor: '#0F182A' }}></div>
+      <div className="absolute inset-0 z-10 bg-background"></div>
       
       {/* Main content */}
       <div className="relative z-20">
