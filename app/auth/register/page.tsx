@@ -199,7 +199,7 @@ export default function RegisterPage() {
 
   if (isSuccess) {
     return (
-      <div className="flex min-h-svh w-full items-center justify-center bg-[#0f172a] p-6 md:p-10">
+      <div className="flex min-h-svh w-full items-center justify-center bg-[#020618] p-6 md:p-10">
         <div className="w-full max-w-sm">
           <Card>
             <CardContent className="pt-6">
@@ -230,7 +230,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-[#0f172a] p-6 md:p-10">
+    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-[#020618] p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <Link
           href="/"
