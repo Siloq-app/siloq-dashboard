@@ -1,6 +1,6 @@
 {
   "name": "siloq-dashboard",
-  "version": "1.0.0",
+  "version": "1.5.13",
   "private": true,
   "scripts": {
     "dev": "next dev",
