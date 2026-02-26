@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log('[Auth/Me] Forwarding request to backend:', AUTH_ENDPOINTS.me());
+
     const res = await fetch(AUTH_ENDPOINTS.me(), {
       method: 'GET',
       headers: {
@@ -22,17 +24,28 @@ export async function GET(request: NextRequest) {
     const data = await res.json();
 
     if (!res.ok) {
+      console.log('[Auth/Me] Backend error:', res.status, data);
       return NextResponse.json(
-        { message: data.detail || data.message || 'Failed to fetch user' },
+        { 
+          message: data.detail || data.message || 'Failed to fetch user',
+          error_code: data.code,
+          status: res.status 
+        },
         { status: res.status }
       );
     }
 
+    console.log('[Auth/Me] Success: User data retrieved');
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('Me proxy error:', error);
+    console.error('[Auth/Me] Proxy error:', error);
+    console.error('[Auth/Me] Backend URL attempted:', AUTH_ENDPOINTS.me());
+    
     return NextResponse.json(
-      { message: 'Unable to reach auth service.' },
+      { 
+        message: 'Unable to reach auth service.',
+        error: error.message 
+      },
       { status: 502 }
     );
   }

@@ -47,9 +47,23 @@ export default function Dashboard({
   // Fetch user tier from /auth/me/
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) return;
+    if (!token) {
+      console.log('[Dashboard] No token found, using default tier');
+      return;
+    }
+    
     fetch('/api/v1/auth/me/', { headers: { 'Authorization': `Bearer ${token}` } })
-      .then(res => res.ok ? res.json() : Promise.reject(`Auth/me failed: ${res.status}`))
+      .then(res => {
+        if (res.status === 401 || res.status === 403) {
+          console.log('[Dashboard] Token invalid/expired, clearing and using default tier');
+          localStorage.removeItem('token');
+          return Promise.reject(`Auth/me failed: ${res.status} - Token invalid`);
+        }
+        if (!res.ok) {
+          return Promise.reject(`Auth/me failed: ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
         if (data?.user?.subscription_tier) {
           setUserTier(data.user.subscription_tier);
@@ -59,7 +73,11 @@ export default function Dashboard({
           setUserTier('empire');
         }
       })
-      .catch((err) => { console.error('[Dashboard] Failed to fetch user tier:', err); });
+      .catch((err) => { 
+        console.error('[Dashboard] Failed to fetch user tier:', err);
+        // Set default tier on auth failure
+        setUserTier('free_trial');
+      });
   }, []);
 
   const {

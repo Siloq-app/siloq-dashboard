@@ -7,6 +7,7 @@ import Header from './header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardProvider } from '@/lib/hooks/dashboard-context';
+import { DebugAuth } from '@/components/debug-auth';
 
 // Map removed tabs to their new homes
 const TAB_REDIRECTS: Record<string, string> = {
@@ -81,6 +82,7 @@ export default function DashboardPage() {
             <DashboardContent />
           </Suspense>
         </SidebarInset>
+        <DebugAuth />
       </SidebarProvider>
     </DashboardProvider>
   );
