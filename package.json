@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "fix-cache": "./scripts/fix-cache.sh",
+    "fix-cache-full": "./scripts/fix-cache.sh --reinstall"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
