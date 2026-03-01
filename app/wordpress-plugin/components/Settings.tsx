@@ -15,12 +15,17 @@ export function Settings({ config, onDisconnect, onUpdateConfig }: SettingsProps
   const [apiKey, setApiKey] = useState(config.apiKey || '');
   const [geminiKey, setGeminiKey] = useState('');
   const [autoSync, setAutoSync] = useState(config.autoSync);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(config.postTypes.length > 0 ? config.postTypes : ['page']);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(
+    config.postTypes.length > 0 ? config.postTypes : ['page']
+  );
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setApiKey(config.apiKey || '');
+
     setAutoSync(config.autoSync);
+
     setSelectedTypes(config.postTypes.length > 0 ? config.postTypes : ['page']);
   }, [config]);
 
@@ -29,7 +34,7 @@ export function Settings({ config, onDisconnect, onUpdateConfig }: SettingsProps
       ...config,
       apiKey: apiKey || config.apiKey,
       postTypes: selectedTypes,
-      autoSync
+      autoSync,
     });
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
@@ -42,14 +47,16 @@ export function Settings({ config, onDisconnect, onUpdateConfig }: SettingsProps
   };
 
   return (
-    <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-normal text-gray-800">Plugin Settings</h1>
-        <p className="text-gray-500 text-sm mt-1">Configure your WordPress plugin integration.</p>
+        <p className="mt-1 text-sm text-gray-500">Configure your WordPress plugin integration.</p>
       </div>
 
       {/* Connection Status */}
-      <div className={`p-4 rounded-md border-l-4 shadow-sm flex items-center gap-3 ${config.connected ? 'bg-white border-green-500' : 'bg-white border-amber-500'}`}>
+      <div
+        className={`flex items-center gap-3 rounded-md border-l-4 p-4 shadow-sm ${config.connected ? 'border-green-500 bg-white' : 'border-amber-500 bg-white'}`}
+      >
         {config.connected ? (
           <Check className="text-green-500" size={24} />
         ) : (
@@ -59,7 +66,7 @@ export function Settings({ config, onDisconnect, onUpdateConfig }: SettingsProps
           <h3 className="font-semibold text-gray-800">
             {config.connected ? 'Connected to NextGen Cloud' : 'Not Connected'}
           </h3>
-          <p className="text-gray-600 text-sm">
+          <p className="text-sm text-gray-600">
             {config.connected
               ? `API Key: ${config.apiKey.substring(0, 8)}...`
               : 'Please configure your API settings to connect.'}
@@ -68,59 +75,66 @@ export function Settings({ config, onDisconnect, onUpdateConfig }: SettingsProps
       </div>
 
       {/* API Configuration */}
-      <div className="bg-white rounded shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
           <h3 className="font-semibold text-gray-800">API Configuration</h3>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="space-y-4 p-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">API URL</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">API URL</label>
             <input
               type="text"
               value={apiUrl}
               onChange={(e) => setApiUrl(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-[#2271b1] focus:border-[#2271b1] outline-none"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#2271b1] focus:ring-1 focus:ring-[#2271b1]"
             />
-            <p className="text-xs text-gray-400 mt-1">Your NextGen Cloud API endpoint.</p>
+            <p className="mt-1 text-xs text-gray-400">Your NextGen Cloud API endpoint.</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">API Key</label>
             <input
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder={config.apiKey ? '••••••••••••••••' : 'Enter your API key'}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-[#2271b1] focus:border-[#2271b1] outline-none"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#2271b1] focus:ring-1 focus:ring-[#2271b1]"
             />
-            <p className="text-xs text-gray-400 mt-1">Your Siloq API key for authentication.</p>
+            <p className="mt-1 text-xs text-gray-400">Your Siloq API key for authentication.</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Gemini API Key (Optional)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Gemini API Key (Optional)
+            </label>
             <input
               type="password"
               value={geminiKey}
               onChange={(e) => setGeminiKey(e.target.value)}
               placeholder="Enter Gemini API key for AI features"
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-[#2271b1] focus:border-[#2271b1] outline-none"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#2271b1] focus:ring-1 focus:ring-[#2271b1]"
             />
-            <p className="text-xs text-gray-400 mt-1">Required for AI content analysis features.</p>
+            <p className="mt-1 text-xs text-gray-400">Required for AI content analysis features.</p>
           </div>
         </div>
       </div>
 
       {/* Sync Settings */}
-      <div className="bg-white rounded shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
           <h3 className="font-semibold text-gray-800">Sync Settings</h3>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="space-y-4 p-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Content Types to Sync</label>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Content Types to Sync
+            </label>
             <div className="space-y-2">
               {['post', 'page', 'product'].map((type) => (
-                <label key={type} className="flex items-center gap-3 p-3 border border-gray-200 rounded cursor-pointer hover:bg-gray-50">
+                <label
+                  key={type}
+                  className="flex cursor-pointer items-center gap-3 rounded border border-gray-200 p-3 hover:bg-gray-50"
+                >
                   <input
                     type="checkbox"
                     checked={selectedTypes.includes(type)}
@@ -128,28 +142,30 @@ export function Settings({ config, onDisconnect, onUpdateConfig }: SettingsProps
                       if (e.target.checked) {
                         setSelectedTypes([...selectedTypes, type]);
                       } else {
-                        setSelectedTypes(selectedTypes.filter(t => t !== type));
+                        setSelectedTypes(selectedTypes.filter((t) => t !== type));
                       }
                     }}
-                    className="w-4 h-4 text-[#2271b1] rounded focus:ring-[#2271b1]"
+                    className="h-4 w-4 rounded text-[#2271b1] focus:ring-[#2271b1]"
                   />
-                  <span className="capitalize font-medium text-gray-700">{type}s</span>
+                  <span className="font-medium capitalize text-gray-700">{type}s</span>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="pt-4 border-t border-gray-100">
-            <label className="flex items-center gap-3 cursor-pointer">
+          <div className="border-t border-gray-100 pt-4">
+            <label className="flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={autoSync}
                 onChange={(e) => setAutoSync(e.target.checked)}
-                className="w-4 h-4 text-[#2271b1] rounded focus:ring-[#2271b1]"
+                className="h-4 w-4 rounded text-[#2271b1] focus:ring-[#2271b1]"
               />
               <div>
                 <span className="font-medium text-gray-700">Enable Auto-Sync</span>
-                <p className="text-xs text-gray-400">Automatically sync pages when published or updated.</p>
+                <p className="text-xs text-gray-400">
+                  Automatically sync pages when published or updated.
+                </p>
               </div>
             </label>
           </div>
@@ -160,13 +176,13 @@ export function Settings({ config, onDisconnect, onUpdateConfig }: SettingsProps
       <div className="flex items-center justify-between">
         <button
           onClick={handleSave}
-          className="px-6 py-2.5 bg-[#2271b1] hover:bg-[#135e96] text-white font-medium rounded transition-colors"
+          className="rounded bg-[#2271b1] px-6 py-2.5 font-medium text-white transition-colors hover:bg-[#135e96]"
         >
           Save Changes
         </button>
 
         {showSuccess && (
-          <span className="text-green-600 text-sm flex items-center gap-1">
+          <span className="flex items-center gap-1 text-sm text-green-600">
             <Check size={16} /> Settings saved!
           </span>
         )}
@@ -174,19 +190,21 @@ export function Settings({ config, onDisconnect, onUpdateConfig }: SettingsProps
 
       {/* Danger Zone */}
       {config.connected && (
-        <div className="bg-white rounded shadow-sm border border-red-200 overflow-hidden mt-8">
-          <div className="px-6 py-4 border-b border-red-200 bg-red-50">
+        <div className="mt-8 overflow-hidden rounded border border-red-200 bg-white shadow-sm">
+          <div className="border-b border-red-200 bg-red-50 px-6 py-4">
             <h3 className="font-semibold text-red-800">Danger Zone</h3>
           </div>
           <div className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium text-gray-800">Disconnect Site</h4>
-                <p className="text-sm text-gray-500">Remove all API credentials and reset plugin settings.</p>
+                <p className="text-sm text-gray-500">
+                  Remove all API credentials and reset plugin settings.
+                </p>
               </div>
               <button
                 onClick={handleDisconnect}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-2"
+                className="flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
               >
                 <Trash2 size={16} /> Disconnect
               </button>

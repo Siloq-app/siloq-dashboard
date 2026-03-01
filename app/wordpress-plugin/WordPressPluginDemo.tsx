@@ -32,13 +32,14 @@ export function WordPressPluginDemo() {
       // Clear any auth tokens to avoid conflicts with JWT authentication
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
-      
+
       const savedConfig = localStorage.getItem('wp_plugin_demo_config');
       if (savedConfig) {
         try {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setConfig(JSON.parse(savedConfig));
         } catch (e) {
-          console.error("Failed to parse config", e);
+          console.error('Failed to parse config', e);
         }
       }
     }
@@ -74,14 +75,16 @@ export function WordPressPluginDemo() {
     if (!config.connected && currentView === AppView.DASHBOARD) {
       return (
         <div className="p-8">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Welcome to Siloq WordPress Plugin</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="mb-4 text-2xl font-bold text-gray-800">
+              Welcome to Siloq WordPress Plugin
+            </h2>
+            <p className="mb-6 text-gray-600">
               Please complete the setup wizard to connect your WordPress site to the NextGen Cloud.
             </p>
             <button
               onClick={() => setCurrentView(AppView.SETUP)}
-              className="px-6 py-3 bg-[#2271b1] hover:bg-[#135e96] text-white font-medium rounded transition-colors"
+              className="rounded bg-[#2271b1] px-6 py-3 font-medium text-white transition-colors hover:bg-[#135e96]"
             >
               Start Setup Wizard
             </button>
@@ -100,7 +103,13 @@ export function WordPressPluginDemo() {
       case AppView.SCANNER:
         return <ScannerView pages={pages} setPages={setPages} />;
       case AppView.SETTINGS:
-        return <Settings config={config} onDisconnect={handleDisconnect} onUpdateConfig={handleUpdateConfig} />;
+        return (
+          <Settings
+            config={config}
+            onDisconnect={handleDisconnect}
+            onUpdateConfig={handleUpdateConfig}
+          />
+        );
       default:
         return <Dashboard config={config} onChangeView={setCurrentView} pages={pages} />;
     }
@@ -108,18 +117,18 @@ export function WordPressPluginDemo() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f0f0f1] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#f0f0f1]">
         <div className="text-gray-500">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f0f1] flex flex-col font-sans">
+    <div className="flex min-h-screen flex-col bg-[#f0f0f1] font-sans">
       <WordpressHeader />
 
       <div className="flex flex-1 pt-8">
-        <aside className="fixed left-0 top-8 bottom-0 z-30">
+        <aside className="fixed bottom-0 left-0 top-8 z-30">
           <Sidebar
             currentView={currentView}
             onChangeView={setCurrentView}
@@ -135,7 +144,7 @@ export function WordPressPluginDemo() {
             {renderContent()}
 
             {/* Footer */}
-            <div className="mt-12 py-6 px-8 border-t border-gray-200 text-xs text-gray-500 flex justify-between">
+            <div className="mt-12 flex justify-between border-t border-gray-200 px-8 py-6 text-xs text-gray-500">
               <span>Thank you for creating with WordPress.</span>
               <span>Version 1.2.0</span>
             </div>

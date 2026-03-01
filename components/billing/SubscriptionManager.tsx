@@ -10,12 +10,7 @@ import { CreditCard, Zap, Building2, Crown, Check, AlertCircle } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { fetchWithAuth } from '@/lib/services/api';
 import { toast } from 'sonner';
-import {
-  SubscriptionTier,
-  TierConfig,
-  TIER_CONFIGS,
-  AIBillingMode,
-} from '@/lib/billing/types';
+import { SubscriptionTier, TierConfig, TIER_CONFIGS, AIBillingMode } from '@/lib/billing/types';
 import { formatTierCapabilities, getUpgradeRecommendation } from '@/lib/billing/tiers';
 
 interface SubscriptionManagerProps {
@@ -64,7 +59,7 @@ export function SubscriptionManager({
 
   const handleUpgrade = useCallback(async () => {
     if (!selectedTier) return;
-    
+
     setIsUpgrading(true);
     try {
       const response = await fetchWithAuth('/api/v1/billing/checkout/', {
@@ -78,7 +73,7 @@ export function SubscriptionManager({
       }
 
       const { checkout_url } = await response.json();
-      
+
       // Redirect to Stripe checkout
       window.location.href = checkout_url;
     } catch (error) {
@@ -92,10 +87,7 @@ export function SubscriptionManager({
   return (
     <div className="space-y-6">
       {/* Current Tier Card */}
-      <div className={cn(
-        'rounded-xl border p-6',
-        tierColors[currentTier]
-      )}>
+      <div className={cn('rounded-xl border p-6', tierColors[currentTier])}>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/50">
@@ -146,7 +138,8 @@ export function SubscriptionManager({
           <div className="mt-4 flex items-center gap-2 rounded-lg bg-white/50 p-3 text-sm">
             <AlertCircle className="h-4 w-4" />
             <span>
-              Consider upgrading to <strong>{TIER_CONFIGS[recommendedTier].name}</strong> for more features
+              Consider upgrading to <strong>{TIER_CONFIGS[recommendedTier].name}</strong> for more
+              features
             </span>
           </div>
         )}
@@ -194,61 +187,74 @@ export function SubscriptionManager({
       )}
 
       {/* Upgrade Options */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h4 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">Upgrade Options</h4>
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {tiers.filter((t) => t !== 'free_trial' && t !== currentTier).map((tier) => {
-            const tierConfig = TIER_CONFIGS[tier];
-            const isRecommended = recommendedTier === tier;
+      <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+        <h4 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          Upgrade Options
+        </h4>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {tiers
+            .filter((t) => t !== 'free_trial' && t !== currentTier)
+            .map((tier) => {
+              const tierConfig = TIER_CONFIGS[tier];
+              const isRecommended = recommendedTier === tier;
 
-            return (
-              <button
-                key={tier}
-                onClick={() => setSelectedTier(tier)}
-                className={cn(
-                  'relative rounded-lg border p-4 text-left transition-all',
-                  selectedTier === tier
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/20'
-                    : 'border-slate-200 hover:border-indigo-300 dark:border-slate-700',
-                  isRecommended && 'ring-2 ring-amber-400'
-                )}
-              >
-                {isRecommended && (
-                  <span className="absolute -top-2 left-2 rounded bg-amber-400 px-2 py-0.5 text-xs font-medium text-amber-900">
-                    Recommended
-                  </span>
-                )}
-                <div className="mb-2 flex items-center gap-2">
-                  {tierIcons[tier]}
-                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{tierConfig.name}</span>
-                </div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">${tierConfig.price}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">/month</p>
-                <ul className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-400">
-                  <li className="flex items-center gap-1">
-                    <Check className="h-3 w-3 text-emerald-500" />
-                    {tierConfig.sites} site{tierConfig.sites > 1 ? 's' : ''}
-                  </li>
-                  <li className="flex items-center gap-1">
-                    <Check className="h-3 w-3 text-emerald-500" />
-                    {tierConfig.siloLimit === 'unlimited' ? 'Unlimited' : tierConfig.siloLimit} silos
-                  </li>
-                  <li className="flex items-center gap-1">
-                    <Check className="h-3 w-3 text-emerald-500" />
-                    {tierConfig.automationOptions.includes('semi_auto') ? 'Auto modes' : 'Manual only'}
-                  </li>
-                </ul>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={tier}
+                  onClick={() => setSelectedTier(tier)}
+                  className={cn(
+                    'relative rounded-lg border p-4 text-left transition-all',
+                    selectedTier === tier
+                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/20'
+                      : 'border-slate-200 hover:border-indigo-300 dark:border-slate-700',
+                    isRecommended && 'ring-2 ring-amber-400'
+                  )}
+                >
+                  {isRecommended && (
+                    <span className="absolute -top-2 left-2 rounded bg-amber-400 px-2 py-0.5 text-xs font-medium text-amber-900">
+                      Recommended
+                    </span>
+                  )}
+                  <div className="mb-2 flex items-center gap-2">
+                    {tierIcons[tier]}
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {tierConfig.name}
+                    </span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                    ${tierConfig.price}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">/month</p>
+                  <ul className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                    <li className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-emerald-500" />
+                      {tierConfig.sites} site{tierConfig.sites > 1 ? 's' : ''}
+                    </li>
+                    <li className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-emerald-500" />
+                      {tierConfig.siloLimit === 'unlimited'
+                        ? 'Unlimited'
+                        : tierConfig.siloLimit}{' '}
+                      silos
+                    </li>
+                    <li className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-emerald-500" />
+                      {tierConfig.automationOptions.includes('semi_auto')
+                        ? 'Auto modes'
+                        : 'Manual only'}
+                    </li>
+                  </ul>
+                </button>
+              );
+            })}
         </div>
 
         {selectedTier && (
-          <div className="mt-4 flex flex-col sm:flex-row justify-end">
+          <div className="mt-4 flex flex-col justify-end sm:flex-row">
             <button
               onClick={handleUpgrade}
               disabled={isUpgrading}
-              className="w-full sm:w-auto rounded-lg bg-indigo-600 px-6 py-2 font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+              className="w-full rounded-lg bg-indigo-600 px-6 py-2 font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
             >
               {isUpgrading ? 'Processing...' : `Upgrade to ${TIER_CONFIGS[selectedTier].name}`}
             </button>

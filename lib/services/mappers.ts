@@ -1,8 +1,4 @@
-import type {
-  CannibalizationIssueResponse,
-  SiloResponse,
-  RecommendationResponse,
-} from './api';
+import type { CannibalizationIssueResponse, SiloResponse, RecommendationResponse } from './api';
 import type {
   CannibalizationIssue,
   Silo,
@@ -18,10 +14,7 @@ export function mapCannibalizationIssues(
 ): CannibalizationIssue[] {
   return response.issues.map((issue) => {
     // Calculate split clicks from competing pages
-    const totalClicks = issue.competing_pages.reduce(
-      (sum, page) => sum + (page.clicks || 0),
-      0
-    );
+    const totalClicks = issue.competing_pages.reduce((sum, page) => sum + (page.clicks || 0), 0);
     const splitClicks =
       totalClicks > 0
         ? issue.competing_pages
@@ -58,7 +51,8 @@ export function mapSilos(response: SiloResponse[]): Silo[] {
       url: silo.target_page?.url || '',
       status: 'published',
       entities: silo.target_page?.entities || [],
-      pageType: (silo.target_page?.page_type_classification || 'money') as import('@/app/dashboard/types').PageClassificationType,
+      pageType: (silo.target_page?.page_type_classification ||
+        'money') as import('@/app/dashboard/types').PageClassificationType,
       pageTypeOverride: silo.target_page?.page_type_override || false,
     },
     supportingPages: (silo.supporting_pages || []).map((page) => ({
@@ -109,10 +103,7 @@ export function mapRecommendationsToPendingChanges(
     }));
 }
 
-function mapRiskLevel(
-  type: string,
-  apiRisk: 'safe' | 'destructive'
-): PendingChange['risk'] {
+function mapRiskLevel(type: string, apiRisk: 'safe' | 'destructive'): PendingChange['risk'] {
   // Derive a more specific risk label from the change type
   switch (type) {
     case 'redirect':

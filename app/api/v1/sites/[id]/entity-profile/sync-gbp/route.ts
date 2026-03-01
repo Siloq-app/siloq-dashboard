@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SITES_ENDPOINTS } from '@/lib/backend-api';
+import { SITES_ENDPOINTS } from '@/lib/backend';
 
-function getAuthHeader(r: NextRequest) { return r.headers.get('authorization'); }
+function getAuthHeader(r: NextRequest) {
+  return r.headers.get('authorization');
+}
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = getAuthHeader(req);
@@ -16,5 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.ok ? 200 : res.status });
-  } catch { return NextResponse.json({ message: 'Unable to reach backend' }, { status: 502 }); }
+  } catch {
+    return NextResponse.json({ message: 'Unable to reach backend' }, { status: 502 });
+  }
 }

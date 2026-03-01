@@ -87,9 +87,7 @@ export default function ApprovalModal({ onClose, issue }: Props) {
             <div className="space-y-3 rounded-lg bg-slate-100 p-4 dark:bg-slate-800">
               {issue.recommendations.map((rec, i) => (
                 <div key={i} className="text-sm text-slate-800 dark:text-slate-200">
-                  <span className="mr-2 text-emerald-600 dark:text-emerald-400">
-                    {i + 1}.
-                  </span>
+                  <span className="mr-2 text-emerald-600 dark:text-emerald-400">{i + 1}.</span>
                   {rec.action}{' '}
                   <code className="rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
                     {rec.url}

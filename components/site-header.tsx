@@ -2,10 +2,11 @@
 
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Shield, Check, ChevronDown, LogOut } from 'lucide-react';
+import { Check, ChevronDown, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchWithAuth } from '@/lib/auth';
 
 export type AutomationMode = 'manual' | 'semi' | 'full';
 
@@ -39,15 +40,13 @@ export function SiteHeader({
   selectedSite = null,
 }: SiteHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        await fetch('/api/v1/auth/logout', {
+        await fetchWithAuth('/api/auth/logout', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
         });
       } catch (err) {
         console.error('Server logout error:', err);
@@ -59,7 +58,7 @@ export function SiteHeader({
   };
 
   return (
-    <header className="bg-background flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear lg:px-6">
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear lg:px-6">
       <div className="flex w-full items-center gap-1 lg:gap-2">
         <SidebarTrigger className="-ml-1 h-7 w-7" />
         <Separator orientation="vertical" className="mx-2 h-4" />
@@ -92,7 +91,7 @@ export function SiteHeader({
                     : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
               )}
             >
-              <span className="hidden text-xs text-gray-600 sm:inline dark:text-gray-400">
+              <span className="hidden text-xs text-gray-600 dark:text-gray-400 sm:inline">
                 Automation
               </span>
               <span className="font-medium">
@@ -117,12 +116,8 @@ export function SiteHeader({
                         : 'text-slate-700 hover:bg-slate-50'
                     )}
                   >
-                    {automationMode === mode.id && (
-                      <Check className="h-4 w-4" />
-                    )}
-                    <span
-                      className={automationMode === mode.id ? 'ml-0' : 'ml-6'}
-                    >
+                    {automationMode === mode.id && <Check className="h-4 w-4" />}
+                    <span className={automationMode === mode.id ? 'ml-0' : 'ml-6'}>
                       {mode.label}
                     </span>
                   </button>

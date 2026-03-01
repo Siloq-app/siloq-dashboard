@@ -86,9 +86,7 @@ export default function GenerateModal({ silos, onClose }: Props) {
             <code className="block rounded bg-white px-3 py-2 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300">
               {generatedContent.internalLink}
             </code>
-            <p className="mt-2 text-xs text-slate-500">
-              Linking to: {generatedContent.targetPage}
-            </p>
+            <p className="mt-2 text-xs text-slate-500">Linking to: {generatedContent.targetPage}</p>
           </div>
 
           <div className="flex gap-3">
@@ -164,9 +162,7 @@ export default function GenerateModal({ silos, onClose }: Props) {
             />
           </div>
           {!selectedSilo && (
-            <p className="mt-1 text-xs text-red-500">
-              Please select a target silo
-            </p>
+            <p className="mt-1 text-xs text-red-500">Please select a target silo</p>
           )}
         </div>
 
@@ -205,13 +201,10 @@ export default function GenerateModal({ silos, onClose }: Props) {
             className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
           />
           {!entityCluster && (
-            <p className="mt-1 text-xs text-red-500">
-              Entity cluster is required
-            </p>
+            <p className="mt-1 text-xs text-red-500">Entity cluster is required</p>
           )}
           <div className="mt-1.5 text-[11px] text-slate-500">
-            Entity sources: NLP extraction • Google Knowledge Graph • GSC
-            queries
+            Entity sources: NLP extraction • Google Knowledge Graph • GSC queries
           </div>
         </div>
 
@@ -228,7 +221,8 @@ export default function GenerateModal({ silos, onClose }: Props) {
             <div className="flex items-start gap-2">
               <span className="text-indigo-500">•</span>
               <span className="font-medium text-indigo-600">
-                Include internal link to Target Page ({selectedSilo?.targetPage.title || 'None selected'})
+                Include internal link to Target Page (
+                {selectedSilo?.targetPage.title || 'None selected'})
               </span>
             </div>
             <div className="flex items-start gap-2">

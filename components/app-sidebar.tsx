@@ -4,6 +4,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { fetchWithAuth } from '@/lib/auth';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -99,15 +100,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const token = localStorage.getItem('token');
     if (token) {
-      fetch('/api/v1/auth/me/', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
+      fetchWithAuth('/api/auth/me/')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
           if (data?.user) {
-            const name = data.user.name ||
+            const name =
+              data.user.name ||
               [data.user.first_name, data.user.last_name].filter(Boolean).join(' ') ||
-              data.user.email || cachedName;
+              data.user.email ||
+              cachedName;
             const email = data.user.email || cachedEmail;
             const subscriptionTier = data.user.subscription_tier || '';
             localStorage.setItem('userName', name);
@@ -127,10 +128,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div
-                  className="flex aspect-square size-8 items-center justify-center overflow-hidden"
-                  style={{ backgroundColor: 'transparent' }}
-                >
+                <div className="flex aspect-square size-8 items-center justify-center overflow-hidden bg-transparent">
                   <Image
                     src="/symbol.png"
                     alt="Siloq"
@@ -157,10 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive}>
-                    <Link
-                      href={item.url}
-                      className="flex items-center gap-2 font-medium"
-                    >
+                    <Link href={item.url} className="flex items-center gap-2 font-medium">
                       <item.icon className="size-4" />
                       {item.title}
                     </Link>
@@ -181,10 +176,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={isActive}>
-                  <Link
-                    href={item.url}
-                    className="flex items-center gap-2 font-medium"
-                  >
+                  <Link href={item.url} className="flex items-center gap-2 font-medium">
                     <item.icon className="size-4" />
                     {item.title}
                   </Link>

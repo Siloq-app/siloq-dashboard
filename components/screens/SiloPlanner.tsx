@@ -2,21 +2,21 @@
 
 import { useState } from 'react';
 import {
-  Plus,
-  Eye,
-  Link2,
-  ArrowUp,
-  Crown,
-  FileText,
-  ChevronRight,
-  GitBranch,
-  RefreshCw,
-} from 'lucide-react';
+  PlusIcon,
+  EyeIcon,
+  LinkIcon,
+  ArrowUpIcon,
+  StarIcon,
+  DocumentTextIcon,
+  ChevronRightIcon,
+  CodeBracketIcon,
+  ArrowPathIcon,
+} from '@heroicons/react/24/outline';
 import { Silo } from '@/app/dashboard/types';
 import { cn } from '@/lib/utils';
 import { SiloTreeView } from '@/components/modals/SiloTreeView';
 import { PageTypeBadge } from '@/components/ui/page-type-badge';
-import { fetchWithAuth } from '@/lib/auth-headers';
+import { fetchWithAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 import type { PageClassificationType } from '@/app/dashboard/types';
 
@@ -71,37 +71,38 @@ export default function SiloPlanner({
             <button
               onClick={handleReclassify}
               disabled={isReclassifying}
-              className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
             >
-              <RefreshCw size={16} className={isReclassifying ? 'animate-spin' : ''} />
+              <ArrowPathIcon className={`h-4 w-4 ${isReclassifying ? 'animate-spin' : ''}`} />
               {isReclassifying ? 'Classifying...' : 'Reclassify Pages'}
             </button>
           )}
           <button
             onClick={() => setIsTreeViewOpen(true)}
-            className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
           >
-            <GitBranch size={16} />
+            <CodeBracketIcon className="h-4 w-4" />
             View Architecture
           </button>
           <button
             onClick={onGenerateClick}
-            className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
           >
             Generate Page
-            <Plus size={16} />
+            <PlusIcon className="h-4 w-4" />
           </button>
         </div>
       </div>
 
       {displaySilos.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-16 dark:border-slate-700 dark:bg-slate-800/50">
-          <GitBranch size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
+          <CodeBracketIcon className="mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
           <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
             No silos created yet
           </h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm text-center">
-            Silos organize your content into topic clusters. Sync your pages first, then Siloq will automatically detect and suggest silo structures.
+          <p className="mt-1 max-w-sm text-center text-sm text-slate-500 dark:text-slate-400">
+            Silos organize your content into topic clusters. Sync your pages first, then Siloq will
+            automatically detect and suggest silo structures.
           </p>
         </div>
       )}
@@ -115,7 +116,7 @@ export default function SiloPlanner({
             <div className="relative p-5">
               <div className="flex items-start gap-4">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/20">
-                  <Crown size={18} className="text-white" />
+                  <StarIcon className="h-5 w-5 text-white" />
                 </div>
 
                 <div className="min-w-0 flex-1 space-y-1.5">
@@ -123,23 +124,27 @@ export default function SiloPlanner({
                     <PageTypeBadge
                       pageType={silo.targetPage.pageType || 'money'}
                       isOverride={silo.targetPage.pageTypeOverride}
-                      onChangeType={siteId && silo.targetPage.id ? async (newType: PageClassificationType) => {
-                        try {
-                          const res = await fetchWithAuth(
-                            `/api/v1/sites/${siteId}/pages/${silo.targetPage.id}/page-type/`,
-                            {
-                              method: 'PATCH',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ page_type: newType }),
+                      onChangeType={
+                        siteId && silo.targetPage.id
+                          ? async (newType: PageClassificationType) => {
+                              try {
+                                const res = await fetchWithAuth(
+                                  `/api/v1/sites/${siteId}/pages/${silo.targetPage.id}/page-type/`,
+                                  {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ page_type: newType }),
+                                  }
+                                );
+                                if (!res.ok) throw new Error('Failed to update page type');
+                                toast.success('Page type updated');
+                                onRefresh?.();
+                              } catch {
+                                toast.error('Failed to update page type');
+                              }
                             }
-                          );
-                          if (!res.ok) throw new Error('Failed to update page type');
-                          toast.success('Page type updated');
-                          onRefresh?.();
-                        } catch {
-                          toast.error('Failed to update page type');
-                        }
-                      } : undefined}
+                          : undefined
+                      }
                     />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -161,9 +166,9 @@ export default function SiloPlanner({
                   </div>
                 </div>
 
-                <button className="focus-visible:ring-ring ml-auto flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
+                <button className="ml-auto flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
                   View
-                  <Eye size={16} />
+                  <EyeIcon className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -174,7 +179,7 @@ export default function SiloPlanner({
             <div className="absolute bottom-8 left-0 top-0 w-px bg-gradient-to-b from-indigo-300 via-indigo-200 to-transparent dark:from-indigo-800 dark:via-indigo-900" />
 
             <div className="mb-3 ml-2 flex items-center gap-2">
-              <ArrowUp size={14} className="text-indigo-500" />
+              <ArrowUpIcon className="h-3.5 w-3.5 text-indigo-500" />
               <span className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
                 Supporting Content
               </span>
@@ -187,7 +192,7 @@ export default function SiloPlanner({
               {silo.supportingPages.map((page, i) => (
                 <div
                   key={i}
-                  className="bg-card text-card-foreground group relative flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow transition-all hover:border-indigo-200 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-indigo-800"
+                  className="group relative flex items-center gap-3 rounded-xl border border-slate-200 bg-card bg-white p-3 text-card-foreground shadow transition-all hover:border-indigo-200 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-indigo-800"
                 >
                   <div
                     className={cn(
@@ -199,7 +204,7 @@ export default function SiloPlanner({
                           : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                     )}
                   >
-                    <FileText size={12} />
+                    <DocumentTextIcon className="h-3 w-3" />
                   </div>
 
                   <div className="min-w-0 flex-1 space-y-1.5">
@@ -243,19 +248,16 @@ export default function SiloPlanner({
                   <div className="ml-auto flex flex-shrink-0 items-center gap-2">
                     {page.linked ? (
                       <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                        <Link2 size={14} className="mr-1" />
+                        <LinkIcon className="mr-1 h-3.5 w-3.5" />
                         Linked
                       </span>
                     ) : (
-                      <button className="focus-visible:ring-ring flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-slate-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
+                      <button className="flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-slate-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
                         Link
-                        <Link2 size={16} />
+                        <LinkIcon className="h-4 w-4" />
                       </button>
                     )}
-                    <ChevronRight
-                      size={14}
-                      className="text-slate-300 dark:text-slate-600"
-                    />
+                    <ChevronRightIcon className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
                   </div>
                 </div>
               ))}
@@ -265,7 +267,7 @@ export default function SiloPlanner({
                 onClick={onGenerateClick}
                 className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-indigo-200 p-4 text-indigo-600 transition-all hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:border-indigo-800 dark:hover:bg-indigo-950/20"
               >
-                <Plus size={14} />
+                <PlusIcon className="h-3.5 w-3.5" />
                 <span className="text-sm font-medium">Add Supporting Content</span>
               </button>
             </div>

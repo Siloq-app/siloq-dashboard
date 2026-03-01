@@ -4,26 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Google Icon Component
 const GoogleIcon = () => (
-  <svg
-    className="mr-2 h-4 w-4"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
+  <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path
       fill="#4285F4"
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -56,7 +45,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/v1/auth/login/', {
+      const res = await fetch('/api/auth/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -71,16 +60,19 @@ export default function LoginPage() {
       localStorage.setItem('token', data.token);
       // Save user name for sidebar display
       if (data.user) {
-        const name = data.user.name || 
-          [data.user.first_name, data.user.last_name].filter(Boolean).join(' ') || 
-          data.user.email || '';
+        const name =
+          data.user.name ||
+          [data.user.first_name, data.user.last_name].filter(Boolean).join(' ') ||
+          data.user.email ||
+          '';
         if (name) localStorage.setItem('userName', name);
         if (data.user.email) localStorage.setItem('userEmail', data.user.email);
       }
       // Redirect to invite acceptance page if coming from an invite link
-      const inviteToken = typeof window !== 'undefined'
-        ? new URLSearchParams(window.location.search).get('invite')
-        : null;
+      const inviteToken =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('invite')
+          : null;
       router.push(inviteToken ? `/invite?token=${inviteToken}` : '/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -90,12 +82,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-[#020618] p-6 md:p-10">
+    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-sidebar p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2 self-center font-medium text-white"
-        >
+        <Link href="/" className="flex items-center gap-2 self-center font-medium text-white">
           <Image
             src="/symbol.png"
             alt="Siloq"
@@ -108,9 +97,7 @@ export default function LoginPage() {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Welcome back</CardTitle>
-            <CardDescription>
-              Login with your Google account
-            </CardDescription>
+            <CardDescription>Login with your Google account</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-6">
@@ -162,17 +149,18 @@ export default function LoginPage() {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="duration-350 w-full transition-[color,background-color,border-color,box-shadow,transform] hover:bg-[#005DCF] dark:bg-[#006FF9] dark:hover:bg-[#005DCF]"
+                    disabled={isLoading}
+                  >
                     {isLoading ? 'Logging in...' : 'Login'}
                   </Button>
                 </div>
               </form>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{' '}
-                <Link
-                  href="/auth/register"
-                  className="underline underline-offset-4"
-                >
+                <Link href="/auth/register" className="underline underline-offset-4">
                   Sign up
                 </Link>
               </div>

@@ -3,14 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search,
-  Filter,
   Star,
   ExternalLink,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
-  CheckCircle2,
   BarChart3,
   Sparkles,
   Loader2,
@@ -25,13 +23,18 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { fetchWithAuth } from '@/lib/auth-headers';
+import { fetchWithAuth } from '@/lib/auth';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NoSiteSelected } from '@/components/ui/no-site-selected';
 import { useToast } from '@/components/ui/use-toast';
-import { analysisService, entityProfileService, PageAnalysis, Recommendation } from '@/lib/services/api';
+import {
+  analysisService,
+  entityProfileService,
+  PageAnalysis,
+  Recommendation,
+} from '@/lib/services/api';
 import { FileText } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -55,7 +58,7 @@ interface Page {
 }
 
 interface PagesScreenProps {
-  onAnalyze?: (pageIds: number[]) => void;
+  _onAnalyze?: (pageIds: number[]) => void;
   siteId?: number | string;
   onNavigateToSettings?: () => void;
 }
@@ -106,9 +109,9 @@ function sortPages(pages: Page[], analyses: Record<string, PageAnalysis>): Page[
 
     const tier = (score: number | null) => {
       if (score === null) return 1; // unanalyzed
-      if (score < 60) return 0;    // red — highest priority
-      if (score < 80) return 0;    // yellow — also highest priority
-      return 2;                    // green — last
+      if (score < 60) return 0; // red — highest priority
+      if (score < 80) return 0; // yellow — also highest priority
+      return 2; // green — last
     };
 
     const aTier = tier(aScore);
@@ -143,54 +146,48 @@ function RecommendationItem({ rec, selected, onToggle }: RecommendationItemProps
           type="checkbox"
           checked={selected}
           onChange={() => onToggle(rec.id)}
-          className="mt-0.5 w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
         />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex items-center gap-2">
             <span
-              className={`text-xs font-semibold uppercase px-2 py-0.5 rounded border ${priorityBadgeClass(
+              className={`rounded border px-2 py-0.5 text-xs font-semibold uppercase ${priorityBadgeClass(
                 rec.priority
               )}`}
             >
               {rec.priority}
             </span>
-            {rec.field && (
-              <span className="text-xs text-slate-400 font-mono">{rec.field}</span>
-            )}
+            {rec.field && <span className="font-mono text-xs text-slate-400">{rec.field}</span>}
           </div>
-          <p className="text-sm font-medium text-slate-800 mb-1">{rec.issue}</p>
+          <p className="mb-1 text-sm font-medium text-slate-800">{rec.issue}</p>
           <p className="text-sm text-slate-600">{rec.recommendation}</p>
 
           {(rec.before || rec.after) && (
             <Collapsible open={beforeAfterOpen} onOpenChange={setBeforeAfterOpen}>
               <CollapsibleTrigger asChild>
-                <button className="mt-2 flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 font-medium">
-                  {beforeAfterOpen ? (
-                    <ChevronUp size={12} />
-                  ) : (
-                    <ChevronDown size={12} />
-                  )}
+                <button className="mt-2 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700">
+                  {beforeAfterOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                   {beforeAfterOpen ? 'Hide' : 'Show'} before / after
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
                   {rec.before && (
-                    <div className="rounded bg-red-50 border border-red-100 p-3">
-                      <p className="text-xs font-semibold text-red-600 mb-1 uppercase tracking-wide">
+                    <div className="rounded border border-red-100 bg-red-50 p-3">
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-red-600">
                         Before
                       </p>
-                      <p className="text-xs text-slate-700 font-mono whitespace-pre-wrap break-all">
+                      <p className="whitespace-pre-wrap break-all font-mono text-xs text-slate-700">
                         {rec.before}
                       </p>
                     </div>
                   )}
                   {rec.after && (
-                    <div className="rounded bg-green-50 border border-green-100 p-3">
-                      <p className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">
+                    <div className="rounded border border-green-100 bg-green-50 p-3">
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-green-600">
                         After
                       </p>
-                      <p className="text-xs text-slate-700 font-mono whitespace-pre-wrap break-all">
+                      <p className="whitespace-pre-wrap break-all font-mono text-xs text-slate-700">
                         {rec.after}
                       </p>
                     </div>
@@ -226,32 +223,30 @@ function LayerTabContent({
     <div className="space-y-4">
       {/* Score bar */}
       <div className="flex items-center gap-3">
-        <div className="text-sm font-medium text-slate-600 w-20 shrink-0">
-          {layerKey} Score
-        </div>
-        <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
+        <div className="w-20 shrink-0 text-sm font-medium text-slate-600">{layerKey} Score</div>
+        <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
           {score !== null ? (
             <div
               className={`h-full rounded-full transition-all duration-500 ${barColor}`}
               style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
             />
           ) : (
-            <div className="h-full bg-slate-200 rounded-full" style={{ width: '100%' }} />
+            <div className="h-full rounded-full bg-slate-200" style={{ width: '100%' }} />
           )}
         </div>
-        <div className="text-sm font-bold text-slate-800 w-10 text-right shrink-0">
+        <div className="w-10 shrink-0 text-right text-sm font-bold text-slate-800">
           {score !== null ? score : '—'}
         </div>
       </div>
 
       {/* Recommendations */}
       {recommendations.length === 0 ? (
-        <div className="py-6 text-center text-slate-400 text-sm">
+        <div className="py-6 text-center text-sm text-slate-400">
           No {layerKey} recommendations — great work!
         </div>
       ) : (
         <div className="space-y-3">
-          {recommendations.map(rec => (
+          {recommendations.map((rec) => (
             <RecommendationItem
               key={rec.id}
               rec={rec}
@@ -285,17 +280,17 @@ function RecommendationPanel({
   const { toast } = useToast();
   const [isApplying, setIsApplying] = useState(false);
   const [applied, setApplied] = useState(false);
-  const [applyResult, setApplyResult] = useState<{verified: string[], unverified: string[], failed: Array<{rec_id: string, error: string}>} | null>(null);
+  const [applyResult, setApplyResult] = useState<{
+    verified: string[];
+    unverified: string[];
+    failed: Array<{ rec_id: string; error: string }>;
+  } | null>(null);
 
   const handleApply = async () => {
     if (selectedRecs.size === 0) return;
     setIsApplying(true);
     try {
-      await analysisService.approveRecommendations(
-        siteId,
-        analysis.id,
-        Array.from(selectedRecs)
-      );
+      await analysisService.approveRecommendations(siteId, analysis.id, Array.from(selectedRecs));
       const result = await analysisService.applyToWordPress(siteId, analysis.id);
       setApplied(true);
       const verified = (result as any)?.verified || [];
@@ -306,22 +301,30 @@ function RecommendationPanel({
       setApplyResult({ verified, unverified, failed });
 
       if (failedCount === 0) {
-        toast({ title: `✅ ${appliedCount} change${appliedCount !== 1 ? 's' : ''} applied to WordPress` });
+        toast({
+          title: `✅ ${appliedCount} change${appliedCount !== 1 ? 's' : ''} applied to WordPress`,
+        });
       } else if (appliedCount > 0) {
-        toast({ title: `⚠️ ${appliedCount} applied, ${failedCount} needed attention`, variant: 'default' });
+        toast({
+          title: `⚠️ ${appliedCount} applied, ${failedCount} needed attention`,
+          variant: 'default',
+        });
       } else {
-        toast({ title: `❌ Changes could not be applied — check recommendations`, variant: 'destructive' });
+        toast({
+          title: `❌ Changes could not be applied — check recommendations`,
+          variant: 'destructive',
+        });
       }
       // Optimistically mark applied
       onApplySuccess({
         ...analysis,
-        geo_recommendations: analysis.geo_recommendations.map(r =>
+        geo_recommendations: analysis.geo_recommendations.map((r) =>
           selectedRecs.has(r.id) ? { ...r, status: 'applied' as const } : r
         ),
-        seo_recommendations: analysis.seo_recommendations.map(r =>
+        seo_recommendations: analysis.seo_recommendations.map((r) =>
           selectedRecs.has(r.id) ? { ...r, status: 'applied' as const } : r
         ),
-        cro_recommendations: analysis.cro_recommendations.map(r =>
+        cro_recommendations: analysis.cro_recommendations.map((r) =>
           selectedRecs.has(r.id) ? { ...r, status: 'applied' as const } : r
         ),
       });
@@ -343,7 +346,7 @@ function RecommendationPanel({
   ];
 
   return (
-    <div className="border-t border-slate-200 bg-slate-50 rounded-b-lg p-4 space-y-4">
+    <div className="space-y-4 rounded-b-lg border-t border-slate-200 bg-slate-50 p-4">
       <Tabs defaultValue="GEO">
         <TabsList className="mb-4">
           <TabsTrigger value="GEO">GEO</TabsTrigger>
@@ -381,47 +384,60 @@ function RecommendationPanel({
       </Tabs>
 
       {/* Actions */}
-      <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+      <div className="flex items-center justify-between border-t border-slate-200 pt-3">
         <div className="flex items-center gap-3">
           {applied ? (
             <div className="flex flex-col gap-1">
               {(() => {
-                const appliedCount = (applyResult?.verified?.length ?? 0) + (applyResult?.unverified?.length ?? 0);
+                const appliedCount =
+                  (applyResult?.verified?.length ?? 0) + (applyResult?.unverified?.length ?? 0);
                 const failedCount = applyResult?.failed?.length ?? 0;
-                const manualCount = applyResult?.failed?.filter(f => f.error === 'requires_manual_action').length ?? 0;
+                const manualCount =
+                  applyResult?.failed?.filter((f) => f.error === 'requires_manual_action').length ??
+                  0;
                 const trueFailCount = failedCount - manualCount;
                 return (
                   <>
                     {appliedCount > 0 && (
-                      <div className="flex items-center gap-2 text-green-600 font-medium text-sm">
+                      <div className="flex items-center gap-2 text-sm font-medium text-green-600">
                         <Check size={16} />
                         {appliedCount} change{appliedCount !== 1 ? 's' : ''} applied to WordPress
-                        {applyResult?.unverified?.length ? <span className="text-yellow-600 font-normal text-xs">(⏳ pending verification)</span> : null}
+                        {applyResult?.unverified?.length ? (
+                          <span className="text-xs font-normal text-yellow-600">
+                            (⏳ pending verification)
+                          </span>
+                        ) : null}
                       </div>
                     )}
                     {manualCount > 0 && (
-                      <div className="text-amber-600 text-xs font-medium">
-                        ⚠️ {manualCount} recommendation{manualCount !== 1 ? 's' : ''} require manual action — see panel
+                      <div className="text-xs font-medium text-amber-600">
+                        ⚠️ {manualCount} recommendation{manualCount !== 1 ? 's' : ''} require manual
+                        action — see panel
                       </div>
                     )}
-                    {trueFailCount > 0 && (() => {
-                      const trueFailures = applyResult?.failed?.filter(f => f.error !== 'requires_manual_action') ?? [];
-                      const firstError = trueFailures[0]?.error ?? '';
-                      const friendlyError = firstError.includes('schema') || firstError.includes('No schema')
-                        ? 'schema not generated — re-run Analyze first'
-                        : firstError.includes('404') || firstError.includes('not found')
-                        ? 'page not found in WordPress — try re-syncing'
-                        : firstError.includes('401') || firstError.includes('403')
-                        ? 'plugin auth failed — check API key'
-                        : 'check plugin connection';
-                      return (
-                        <div className="text-red-600 text-xs font-medium">
-                          ❌ {trueFailCount} failed — {friendlyError}
-                        </div>
-                      );
-                    })()}
+                    {trueFailCount > 0 &&
+                      (() => {
+                        const trueFailures =
+                          applyResult?.failed?.filter(
+                            (f) => f.error !== 'requires_manual_action'
+                          ) ?? [];
+                        const firstError = trueFailures[0]?.error ?? '';
+                        const friendlyError =
+                          firstError.includes('schema') || firstError.includes('No schema')
+                            ? 'schema not generated — re-run Analyze first'
+                            : firstError.includes('404') || firstError.includes('not found')
+                              ? 'page not found in WordPress — try re-syncing'
+                              : firstError.includes('401') || firstError.includes('403')
+                                ? 'plugin auth failed — check API key'
+                                : 'check plugin connection';
+                        return (
+                          <div className="text-xs font-medium text-red-600">
+                            ❌ {trueFailCount} failed — {friendlyError}
+                          </div>
+                        );
+                      })()}
                     {appliedCount === 0 && failedCount > 0 && manualCount === failedCount && (
-                      <div className="flex items-center gap-2 text-amber-600 font-medium text-sm">
+                      <div className="flex items-center gap-2 text-sm font-medium text-amber-600">
                         ⚠️ These recommendations require manual action in WordPress
                       </div>
                     )}
@@ -433,7 +449,7 @@ function RecommendationPanel({
             <Button
               onClick={handleApply}
               disabled={selectedRecs.size === 0 || isApplying}
-              className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+              className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
               size="sm"
             >
               {isApplying ? (
@@ -446,7 +462,7 @@ function RecommendationPanel({
                   <Sparkles size={14} className="mr-2" />
                   Apply Selected to WordPress
                   {selectedRecs.size > 0 && (
-                    <span className="ml-1.5 bg-purple-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                    <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-purple-500 text-xs font-bold text-white">
                       {selectedRecs.size}
                     </span>
                   )}
@@ -475,7 +491,11 @@ function RecommendationPanel({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }: PagesScreenProps) {
+export default function PagesScreen({
+  _onAnalyze,
+  siteId,
+  onNavigateToSettings,
+}: PagesScreenProps) {
   const { toast } = useToast();
   const [showProfileWarning, setShowProfileWarning] = useState(false);
 
@@ -500,34 +520,41 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
   const loadedAnalysesRef = useRef(false);
 
   // ── Load pages ──
-  const loadPages = useCallback(async (signal?: AbortSignal) => {
-    // Never fetch without a valid siteId — would return all user pages mixed together
-    if (!siteId) {
-      setPages([]);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    setError('');
-    try {
-      const url = `/api/v1/pages/?site_id=${siteId}`;
-      const res = await fetchWithAuth(url, signal ? { signal } : undefined);
-      if (signal?.aborted) return;
-      const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.message || data.detail || 'Failed to load pages');
+  const loadPages = useCallback(
+    async (signal?: AbortSignal) => {
+      // Never fetch without a valid siteId — would return all user pages mixed together
+      if (!siteId) {
+        setPages([]);
+        setIsLoading(false);
+        return;
+      }
+      setIsLoading(true);
+      setError('');
+      try {
+        const url = `/api/v1/pages/?site_id=${siteId}`;
+        const res = await fetchWithAuth(url, signal ? { signal } : undefined);
+        if (signal?.aborted) return;
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load pages');
 
-      const results: Page[] = Array.isArray(data) ? data : data.results || [];
-      setPages(results);
-      setTotalPages(Math.ceil(results.length / itemsPerPage) || 1);
-    } catch (e: unknown) {
-      if (signal?.aborted) return; // Ignore cancellations from site switching
-      setError(e instanceof Error ? e.message : 'Failed to load pages');
-      setPages([]);
-    } finally {
-      if (!signal?.aborted) setIsLoading(false);
-    }
-  }, [siteId]);
+        const results: Page[] = Array.isArray(data) ? data : data.results || [];
+        setPages(results);
+        setTotalPages(Math.ceil(results.length / itemsPerPage) || 1);
+      } catch (e: unknown) {
+        if (signal?.aborted) return; // Ignore cancellations from site switching
+        // Handle AbortError specifically
+        if (e instanceof Error && e.name === 'AbortError') {
+          console.log('Pages load was aborted');
+          return;
+        }
+        setError(e instanceof Error ? e.message : 'Failed to load pages');
+        setPages([]);
+      } finally {
+        if (!signal?.aborted) setIsLoading(false);
+      }
+    },
+    [siteId]
+  );
 
   // ── Reset stale state immediately when site changes ──
   useEffect(() => {
@@ -568,7 +595,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
         );
       }
       if (Object.keys(results).length > 0) {
-        setPageAnalyses(prev => ({ ...prev, ...results }));
+        setPageAnalyses((prev) => ({ ...prev, ...results }));
       }
     };
 
@@ -580,17 +607,20 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
     if (!siteId || analyzingPages.has(page.url)) return;
 
     // Check business profile completeness — show non-blocking warning if empty
-    entityProfileService.get(siteId).then(profile => {
-      if (!profile?.business_name) setShowProfileWarning(true);
-    }).catch(() => {});
+    entityProfileService
+      .get(siteId)
+      .then((profile) => {
+        if (!profile?.business_name) setShowProfileWarning(true);
+      })
+      .catch(() => {});
 
-    setAnalyzingPages(prev => new Set(prev).add(page.url));
+    setAnalyzingPages((prev) => new Set(prev).add(page.url));
     setExpandedAnalysis(null);
     setSelectedRecommendations(new Set());
 
     try {
       const analysis = await analysisService.analyzePageContent(siteId, page.url);
-      setPageAnalyses(prev => ({ ...prev, [page.url]: analysis }));
+      setPageAnalyses((prev) => ({ ...prev, [page.url]: analysis }));
       setExpandedAnalysis(page.url);
     } catch (e: unknown) {
       toast({
@@ -599,7 +629,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
         variant: 'destructive',
       });
     } finally {
-      setAnalyzingPages(prev => {
+      setAnalyzingPages((prev) => {
         const next = new Set(prev);
         next.delete(page.url);
         return next;
@@ -608,7 +638,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
   };
 
   const handleToggleRec = (id: string) => {
-    setSelectedRecommendations(prev => {
+    setSelectedRecommendations((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
@@ -625,7 +655,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
   };
 
   const handleApplySuccess = (pageUrl: string, updated: PageAnalysis) => {
-    setPageAnalyses(prev => ({ ...prev, [pageUrl]: updated }));
+    setPageAnalyses((prev) => ({ ...prev, [pageUrl]: updated }));
     setSelectedRecommendations(new Set());
   };
 
@@ -638,8 +668,8 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
       });
       if (!res.ok) throw new Error(`Failed to toggle money page status (${res.status})`);
       const data = await res.json();
-      setPages(prev =>
-        prev.map(p => (p.id === pageId ? { ...p, is_money_page: data.is_money_page } : p))
+      setPages((prev) =>
+        prev.map((p) => (p.id === pageId ? { ...p, is_money_page: data.is_money_page } : p))
       );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to toggle');
@@ -649,7 +679,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
   };
 
   // ── Filter ──
-  const filteredPages = pages.filter(page => {
+  const filteredPages = pages.filter((page) => {
     const matchesSearch =
       page.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       page.url.toLowerCase().includes(searchTerm.toLowerCase());
@@ -658,8 +688,8 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
       moneyPageFilter === 'all'
         ? true
         : moneyPageFilter === 'money'
-        ? page.is_money_page
-        : !page.is_money_page;
+          ? page.is_money_page
+          : !page.is_money_page;
     return matchesSearch && matchesStatus && matchesMoneyPage;
   });
 
@@ -672,7 +702,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
     currentPage * itemsPerPage
   );
 
-  const moneyPageCount = pages.filter(p => p.is_money_page).length;
+  const moneyPageCount = pages.filter((p) => p.is_money_page).length;
   const analyzedCount = Object.keys(pageAnalyses).length;
 
   // ── Guards ──
@@ -725,14 +755,14 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
           <span className="flex-1">
             <strong>Business Profile incomplete</strong> — schema generation accuracy is reduced.{' '}
             <button
-              className="underline font-medium hover:text-yellow-900"
+              className="font-medium underline hover:text-yellow-900"
               onClick={() => onNavigateToSettings?.()}
             >
               Set it up in 2 min →
             </button>
           </span>
           <button
-            className="text-yellow-500 hover:text-yellow-700 transition-colors"
+            className="text-yellow-500 transition-colors hover:text-yellow-700"
             onClick={() => setShowProfileWarning(false)}
             title="Dismiss"
           >
@@ -742,7 +772,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -750,7 +780,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                 <p className="text-sm font-medium text-slate-600">Total Pages</p>
                 <p className="text-3xl font-bold text-slate-900">{pages.length}</p>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
+              <div className="rounded-lg bg-blue-100 p-2">
                 <BarChart3 size={20} className="text-blue-600" />
               </div>
             </div>
@@ -763,7 +793,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                 <p className="text-sm font-medium text-slate-600">Money Pages</p>
                 <p className="text-3xl font-bold text-slate-900">{moneyPageCount}</p>
               </div>
-              <div className="p-2 bg-amber-100 rounded-lg">
+              <div className="rounded-lg bg-amber-100 p-2">
                 <Star size={20} className="text-amber-600" fill="currentColor" />
               </div>
             </div>
@@ -776,7 +806,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                 <p className="text-sm font-medium text-slate-600">Analyzed</p>
                 <p className="text-3xl font-bold text-slate-900">{analyzedCount}</p>
               </div>
-              <div className="p-2 bg-purple-100 rounded-lg">
+              <div className="rounded-lg bg-purple-100 p-2">
                 <Sparkles size={20} className="text-purple-600" />
               </div>
             </div>
@@ -787,8 +817,8 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
+          <div className="flex flex-col gap-4 md:flex-row">
+            <div className="relative flex-1">
               <Search
                 size={16}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -796,15 +826,15 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
               <Input
                 placeholder="Search pages…"
                 value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
             <div className="flex gap-2">
               <select
                 value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="all">All Status</option>
                 <option value="publish">Published</option>
@@ -813,8 +843,8 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
               </select>
               <select
                 value={moneyPageFilter}
-                onChange={e => setMoneyPageFilter(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                onChange={(e) => setMoneyPageFilter(e.target.value)}
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="all">All Pages</option>
                 <option value="money">Money Pages Only</option>
@@ -827,7 +857,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
 
       {/* Error banner */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
           <AlertCircle size={18} />
           <span className="text-sm">{error}</span>
         </div>
@@ -840,16 +870,17 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
             <CardTitle className="text-lg font-semibold text-slate-900">All Pages</CardTitle>
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" /> Needs attention
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" /> Needs
+                attention
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block" /> Needs work
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-yellow-400" /> Needs work
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" /> Optimized
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" /> Optimized
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" /> Not analyzed
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-slate-300" /> Not analyzed
               </span>
             </div>
           </div>
@@ -861,7 +892,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
             </div>
           ) : (
             <div className="divide-y">
-              {paginatedPages.map(page => {
+              {paginatedPages.map((page) => {
                 const analysis = pageAnalyses[page.url];
                 const dot = getHealthDot(analysis);
                 const isAnalyzing = analyzingPages.has(page.url);
@@ -870,39 +901,37 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                 return (
                   <div key={page.id} className="transition-colors">
                     {/* Page row */}
-                    <div className="p-4 hover:bg-slate-50 transition-colors">
+                    <div className="p-4 transition-colors hover:bg-slate-50">
                       <div className="flex items-start gap-4">
                         {/* Health dot */}
-                        <div className="flex items-center justify-center mt-1.5 shrink-0">
+                        <div className="mt-1.5 flex shrink-0 items-center justify-center">
                           <div
-                            className={`w-3 h-3 rounded-full ${dot.color} shrink-0`}
+                            className={`h-3 w-3 rounded-full ${dot.color} shrink-0`}
                             title={dot.label}
                           />
                         </div>
 
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
                             {/* Title + URL */}
                             <div>
-                              <h3 className="font-semibold text-slate-900 text-base">
+                              <h3 className="text-base font-semibold text-slate-900">
                                 {page.title || 'Untitled'}
                               </h3>
                               <a
                                 href={page.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1 mt-0.5 font-normal"
+                                className="mt-0.5 flex items-center gap-1 text-sm font-normal text-slate-500 hover:text-indigo-600"
                               >
-                                <span className="truncate max-w-xs">{page.url}</span>
+                                <span className="max-w-xs truncate">{page.url}</span>
                                 <ExternalLink size={11} className="shrink-0" />
                               </a>
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center gap-2 shrink-0">
-                              <Badge
-                                variant={page.status === 'publish' ? 'default' : 'secondary'}
-                              >
+                            <div className="flex shrink-0 items-center gap-2">
+                              <Badge variant={page.status === 'publish' ? 'default' : 'secondary'}>
                                 {page.status}
                               </Badge>
 
@@ -910,7 +939,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                               <button
                                 onClick={() => toggleMoneyPage(page.id)}
                                 disabled={isToggling === page.id}
-                                className={`p-1.5 rounded-md transition-colors ${
+                                className={`rounded-md p-1.5 transition-colors ${
                                   page.is_money_page
                                     ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
                                     : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
@@ -934,7 +963,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                                 variant="outline"
                                 onClick={() => handleAnalyzePage(page)}
                                 disabled={isAnalyzing}
-                                className="text-purple-700 border-purple-200 hover:bg-purple-50 hover:border-purple-300 disabled:opacity-70"
+                                className="border-purple-200 text-purple-700 hover:border-purple-300 hover:bg-purple-50 disabled:opacity-70"
                               >
                                 {isAnalyzing ? (
                                   <>
@@ -957,24 +986,18 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                               {/* Expand/collapse toggle (only when analysis exists) */}
                               {analysis && (
                                 <button
-                                  onClick={() =>
-                                    setExpandedAnalysis(isExpanded ? null : page.url)
-                                  }
-                                  className="p-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+                                  onClick={() => setExpandedAnalysis(isExpanded ? null : page.url)}
+                                  className="rounded-md bg-slate-100 p-1.5 text-slate-500 transition-colors hover:bg-slate-200"
                                   title={isExpanded ? 'Collapse' : 'View recommendations'}
                                 >
-                                  {isExpanded ? (
-                                    <ChevronUp size={16} />
-                                  ) : (
-                                    <ChevronDown size={16} />
-                                  )}
+                                  {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                 </button>
                               )}
                             </div>
                           </div>
 
                           {/* GSC metrics row */}
-                          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm font-medium text-slate-600">
+                          <div className="mt-2 flex flex-wrap items-center gap-4 text-sm font-medium text-slate-600">
                             {page.gsc_impressions > 0 && (
                               <span className="flex items-center gap-1 text-blue-600">
                                 <BarChart3 size={13} />
@@ -987,9 +1010,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                               </span>
                             )}
                             {page.gsc_position !== null && page.gsc_position > 0 && (
-                              <span className="text-purple-600">
-                                Avg pos: {page.gsc_position}
-                              </span>
+                              <span className="text-purple-600">Avg pos: {page.gsc_position}</span>
                             )}
                             {dot.score !== null && (
                               <span className="text-slate-500">
@@ -999,8 +1020,8 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                                     dot.score >= 80
                                       ? 'text-green-600'
                                       : dot.score >= 60
-                                      ? 'text-yellow-600'
-                                      : 'text-red-600'
+                                        ? 'text-yellow-600'
+                                        : 'text-red-600'
                                   }
                                 >
                                   {dot.score}
@@ -1013,7 +1034,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                                 {page.issue_count} issues
                               </span>
                             )}
-                            <span className="text-slate-400 text-xs">
+                            <span className="text-xs text-slate-400">
                               Synced:{' '}
                               {page.last_synced_at
                                 ? new Date(page.last_synced_at).toLocaleDateString()
@@ -1032,7 +1053,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                         selectedRecs={selectedRecommendations}
                         onToggleRec={handleToggleRec}
                         onDismiss={handleDismissPanel}
-                        onApplySuccess={updated => handleApplySuccess(page.url, updated)}
+                        onApplySuccess={(updated) => handleApplySuccess(page.url, updated)}
                       />
                     )}
                   </div>
@@ -1049,7 +1070,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
           >
             <ChevronLeft size={16} />
@@ -1060,7 +1081,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
           >
             <ChevronRight size={16} />

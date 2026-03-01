@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { AIUsageLog, AICostEstimate, ProjectAISettings } from '@/lib/billing/types';
+import { AIUsageLog, ProjectAISettings } from '@/lib/billing/types';
 
 // In-memory store for demo (replace with database in production)
 const usageLogs: AIUsageLog[] = [];
@@ -21,10 +21,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
     if (!projectId) {
-      return NextResponse.json(
-        { error: 'Project ID required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Project ID required' }, { status: 400 });
     }
 
     // Filter logs for this project
@@ -40,12 +37,15 @@ export async function GET(request: NextRequest) {
 
     // Get settings for trial info
     const settings = projectSettings.get(projectId);
-    const trialInfo = settings?.billingMode === 'trial' ? {
-      pagesUsed: settings.trialPagesUsed,
-      pagesLimit: settings.trialPagesLimit,
-      pagesRemaining: settings.trialPagesLimit - settings.trialPagesUsed,
-      endDate: settings.trialEndDate,
-    } : null;
+    const trialInfo =
+      settings?.billingMode === 'trial'
+        ? {
+            pagesUsed: settings.trialPagesUsed,
+            pagesLimit: settings.trialPagesLimit,
+            pagesRemaining: settings.trialPagesLimit - settings.trialPagesUsed,
+            endDate: settings.trialEndDate,
+          }
+        : null;
 
     return NextResponse.json({
       logs: projectLogs,
@@ -64,10 +64,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching usage logs:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch usage logs' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch usage logs' }, { status: 500 });
   }
 }
 
@@ -91,10 +88,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!projectId || !provider || !model) {
-      return NextResponse.json(
-        { error: 'Required fields missing' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Required fields missing' }, { status: 400 });
     }
 
     // Create usage log
@@ -127,13 +121,12 @@ export async function POST(request: NextRequest) {
       success: true,
       log,
       trialPagesUsed: settings?.trialPagesUsed,
-      trialPagesRemaining: settings ? settings.trialPagesLimit - settings.trialPagesUsed : undefined,
+      trialPagesRemaining: settings
+        ? settings.trialPagesLimit - settings.trialPagesUsed
+        : undefined,
     });
   } catch (error) {
     console.error('Error logging usage:', error);
-    return NextResponse.json(
-      { error: 'Failed to log usage' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to log usage' }, { status: 500 });
   }
 }

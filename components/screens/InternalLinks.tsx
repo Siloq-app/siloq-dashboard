@@ -96,10 +96,33 @@ export default function InternalLinks({ opportunities }: InternalLinksProps) {
       {/* Priority Stats Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: 'All', value: stats.total, active: filter === 'all', onClick: () => setFilter('all') },
-          { label: 'High', value: stats.high, active: filter === 'high', onClick: () => setFilter('high'), color: 'rose' },
-          { label: 'Medium', value: stats.medium, active: filter === 'medium', onClick: () => setFilter('medium'), color: 'amber' },
-          { label: 'Low', value: stats.low, active: filter === 'low', onClick: () => setFilter('low'), color: 'slate' },
+          {
+            label: 'All',
+            value: stats.total,
+            active: filter === 'all',
+            onClick: () => setFilter('all'),
+          },
+          {
+            label: 'High',
+            value: stats.high,
+            active: filter === 'high',
+            onClick: () => setFilter('high'),
+            color: 'rose',
+          },
+          {
+            label: 'Medium',
+            value: stats.medium,
+            active: filter === 'medium',
+            onClick: () => setFilter('medium'),
+            color: 'amber',
+          },
+          {
+            label: 'Low',
+            value: stats.low,
+            active: filter === 'low',
+            onClick: () => setFilter('low'),
+            color: 'slate',
+          },
         ].map((item) => (
           <button
             key={item.label}
@@ -111,10 +134,24 @@ export default function InternalLinks({ opportunities }: InternalLinksProps) {
                 : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'
             )}
           >
-            <span className={cn('text-2xl font-bold', item.active ? 'text-white dark:text-slate-900' : 'text-slate-900 dark:text-slate-100')}>
+            <span
+              className={cn(
+                'text-2xl font-bold',
+                item.active
+                  ? 'text-white dark:text-slate-900'
+                  : 'text-slate-900 dark:text-slate-100'
+              )}
+            >
               {item.value}
             </span>
-            <span className={cn('text-xs', item.active ? 'text-slate-300 dark:text-slate-600' : 'text-slate-500 dark:text-slate-400')}>
+            <span
+              className={cn(
+                'text-xs',
+                item.active
+                  ? 'text-slate-300 dark:text-slate-600'
+                  : 'text-slate-500 dark:text-slate-400'
+              )}
+            >
               {item.label} Priority
             </span>
           </button>
@@ -156,7 +193,8 @@ export default function InternalLinks({ opportunities }: InternalLinksProps) {
                       getPriorityColor(opportunity.priority)
                     )}
                   >
-                    {opportunity.priority.charAt(0).toUpperCase() + opportunity.priority.slice(1)} Priority
+                    {opportunity.priority.charAt(0).toUpperCase() + opportunity.priority.slice(1)}{' '}
+                    Priority
                   </span>
                   {opportunity.siloContext && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400">
@@ -191,7 +229,10 @@ export default function InternalLinks({ opportunities }: InternalLinksProps) {
 
                   {/* Arrow & Anchor Text */}
                   <div className="flex items-center gap-2 sm:flex-col sm:items-center">
-                    <ArrowRight size={16} className="rotate-90 text-slate-300 dark:text-slate-600 sm:rotate-0" />
+                    <ArrowRight
+                      size={16}
+                      className="rotate-90 text-slate-300 dark:text-slate-600 sm:rotate-0"
+                    />
                     <div className="flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1.5 dark:bg-indigo-950/30">
                       <Link2 size={12} className="text-indigo-600 dark:text-indigo-400" />
                       <span className="text-xs font-medium text-indigo-700 dark:text-indigo-400">

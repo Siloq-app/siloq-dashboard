@@ -5,19 +5,30 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { SubscriptionTier, TIER_CONFIGS } from '@/lib/billing/types';
 
 const STRIPE_PRICE_MAP: Record<string, string> = {
-  pro: process.env.STRIPE_PRICE_ID_PRO || process.env.STRIPE_PRICE_PRO || 'price_1SyxO5KDs3XWQBFA19JTyI1o',
-  builder_plus: process.env.STRIPE_PRICE_ID_BUILDER || process.env.STRIPE_PRICE_BUILDER || 'price_1SyxODKDs3XWQBFAZbLZPUZA',
-  architect: process.env.STRIPE_PRICE_ID_ARCHITECT || process.env.STRIPE_PRICE_ARCHITECT || 'price_1SyxOMKDs3XWQBFAfF69thcn',
-  empire: process.env.STRIPE_PRICE_ID_EMPIRE || process.env.STRIPE_PRICE_EMPIRE || 'price_1SyxOTKDs3XWQBFAN1GOBpJq',
+  pro:
+    process.env.STRIPE_PRICE_ID_PRO ||
+    process.env.STRIPE_PRICE_PRO ||
+    'price_1SyxO5KDs3XWQBFA19JTyI1o',
+  builder_plus:
+    process.env.STRIPE_PRICE_ID_BUILDER ||
+    process.env.STRIPE_PRICE_BUILDER ||
+    'price_1SyxODKDs3XWQBFAZbLZPUZA',
+  architect:
+    process.env.STRIPE_PRICE_ID_ARCHITECT ||
+    process.env.STRIPE_PRICE_ARCHITECT ||
+    'price_1SyxOMKDs3XWQBFAfF69thcn',
+  empire:
+    process.env.STRIPE_PRICE_ID_EMPIRE ||
+    process.env.STRIPE_PRICE_EMPIRE ||
+    'price_1SyxOTKDs3XWQBFAN1GOBpJq',
 };
 
 function getStripe(): Stripe | null {
   const apiKey = process.env.STRIPE_SECRET_KEY;
   if (!apiKey) return null;
-  return new Stripe(apiKey, { apiVersion: '2026-01-28.clover' });
+  return new Stripe(apiKey, { apiVersion: '2026-02-25.clover' });
 }
 
 export async function POST(request: NextRequest) {

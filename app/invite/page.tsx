@@ -8,7 +8,14 @@ type InviteState =
   | { status: 'loading' }
   | { status: 'accepted'; siteName: string; role: string }
   | { status: 'already_member'; siteName: string }
-  | { status: 'register'; email: string; token: string; siteName: string; invitedBy: string; role: string }
+  | {
+      status: 'register';
+      email: string;
+      token: string;
+      siteName: string;
+      invitedBy: string;
+      role: string;
+    }
   | { status: 'error'; message: string };
 
 function InviteContent() {
@@ -19,6 +26,7 @@ function InviteContent() {
 
   useEffect(() => {
     if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState({ status: 'error', message: 'Invalid invitation link — no token found.' });
       return;
     }
@@ -50,12 +58,19 @@ function InviteContent() {
           if (data.already_had_access) {
             setState({ status: 'already_member', siteName: data.site?.name || 'the site' });
           } else {
-            setState({ status: 'accepted', siteName: data.site?.name || 'the site', role: data.role });
+            setState({
+              status: 'accepted',
+              siteName: data.site?.name || 'the site',
+              role: data.role,
+            });
           }
           return;
         }
 
-        setState({ status: 'error', message: data.error || 'Something went wrong. The link may have expired.' });
+        setState({
+          status: 'error',
+          message: data.error || 'Something went wrong. The link may have expired.',
+        });
       } catch {
         setState({ status: 'error', message: 'Unable to reach Siloq. Please try again.' });
       }
@@ -86,7 +101,7 @@ function InviteContent() {
         </p>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white hover:bg-indigo-700"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#005acc] px-6 py-3 font-semibold text-white transition-colors duration-300 ease-in-out hover:bg-[#006ff9]"
         >
           Go to Dashboard →
         </Link>
@@ -106,7 +121,7 @@ function InviteContent() {
         </p>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white hover:bg-indigo-700"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#005acc] px-6 py-3 font-semibold text-white transition-colors duration-300 ease-in-out hover:bg-[#006ff9]"
         >
           Go to Dashboard →
         </Link>
@@ -124,9 +139,8 @@ function InviteContent() {
         </div>
         <h1 className="mb-2 text-2xl font-bold text-slate-900">You&apos;ve been invited!</h1>
         <p className="mb-1 text-slate-600">
-          <strong>{state.invitedBy}</strong> invited you to join{' '}
-          <strong>{state.siteName}</strong> as a{' '}
-          <strong className="capitalize">{state.role}</strong>.
+          <strong>{state.invitedBy}</strong> invited you to join <strong>{state.siteName}</strong>{' '}
+          as a <strong className="capitalize">{state.role}</strong>.
         </p>
         <p className="mb-6 text-sm text-slate-500">
           Invited as <strong>{state.email}</strong>
@@ -134,13 +148,13 @@ function InviteContent() {
         <div className="flex flex-col gap-3">
           <Link
             href={registerUrl}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white hover:bg-indigo-700"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#005acc] px-6 py-3 font-semibold text-white transition-colors duration-300 ease-in-out hover:bg-[#006ff9]"
           >
             Create your account →
           </Link>
           <Link
             href={loginUrl}
-            className="text-sm text-indigo-600 underline hover:text-indigo-800"
+            className="text-sm text-[#005acc] underline transition-colors duration-300 ease-in-out hover:text-[#006ff9]"
           >
             Already have an account? Log in
           </Link>
@@ -156,10 +170,12 @@ function InviteContent() {
         ❌
       </div>
       <h1 className="mb-2 text-2xl font-bold text-slate-900">Invalid invitation</h1>
-      <p className="mb-6 text-slate-600">{(state as { status: 'error'; message: string }).message}</p>
+      <p className="mb-6 text-slate-600">
+        {(state as { status: 'error'; message: string }).message}
+      </p>
       <Link
         href="/auth/login"
-        className="text-sm text-indigo-600 underline hover:text-indigo-800"
+        className="text-sm text-[#005acc] underline transition-colors duration-300 ease-in-out hover:text-[#006ff9]"
       >
         Go to login
       </Link>
@@ -172,13 +188,9 @@ export default function InvitePage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
         <div className="mb-6 text-center">
-          <h2 className="text-3xl font-bold text-indigo-600">Siloq</h2>
+          <h2 className="text-3xl font-bold text-[#006ff9]">Siloq</h2>
         </div>
-        <Suspense
-          fallback={
-            <div className="text-center text-slate-500">Loading…</div>
-          }
-        >
+        <Suspense fallback={<div className="text-center text-slate-500">Loading…</div>}>
           <InviteContent />
         </Suspense>
       </div>

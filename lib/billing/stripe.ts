@@ -4,12 +4,7 @@
  */
 
 import Stripe from 'stripe';
-import {
-  SubscriptionTier,
-  TIER_CONFIGS,
-  AIBillingMode,
-  ProjectAISettings,
-} from './types';
+import { SubscriptionTier, TIER_CONFIGS, AIBillingMode, ProjectAISettings } from './types';
 
 // Lazy initialization of Stripe - only create when needed
 let stripeInstance: Stripe | null = null;
@@ -21,7 +16,7 @@ function getStripe(): Stripe {
       throw new Error('STRIPE_SECRET_KEY environment variable is not set');
     }
     stripeInstance = new Stripe(apiKey, {
-      apiVersion: '2026-01-28.clover',
+      apiVersion: '2026-02-25.clover',
     });
   }
   return stripeInstance;
@@ -39,10 +34,7 @@ const STRIPE_PRICE_IDS: Record<SubscriptionTier, string | null> = {
 /**
  * Create a Stripe customer
  */
-export async function createStripeCustomer(
-  email: string,
-  name?: string
-): Promise<Stripe.Customer> {
+export async function createStripeCustomer(email: string, name?: string): Promise<Stripe.Customer> {
   return await getStripe().customers.create({
     email,
     name,
@@ -57,7 +49,7 @@ export async function createSubscription(
   tier: SubscriptionTier
 ): Promise<Stripe.Subscription | null> {
   const priceId = STRIPE_PRICE_IDS[tier];
-  
+
   if (!priceId) {
     return null; // Trial tier doesn't need subscription
   }
@@ -73,9 +65,7 @@ export async function createSubscription(
 /**
  * Cancel a subscription
  */
-export async function cancelSubscription(
-  subscriptionId: string
-): Promise<Stripe.Subscription> {
+export async function cancelSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
   return await getStripe().subscriptions.cancel(subscriptionId);
 }
 
@@ -110,7 +100,7 @@ export async function capturePreauthPayment(
   amountToCaptureUsd?: number
 ): Promise<Stripe.PaymentIntent> {
   const captureOptions: Stripe.PaymentIntentCaptureParams = {};
-  
+
   if (amountToCaptureUsd) {
     captureOptions.amount_to_capture = Math.round(amountToCaptureUsd * 100);
   }
@@ -121,18 +111,14 @@ export async function capturePreauthPayment(
 /**
  * Cancel a pre-authorized payment
  */
-export async function cancelPreauthPayment(
-  paymentIntentId: string
-): Promise<Stripe.PaymentIntent> {
+export async function cancelPreauthPayment(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
   return await getStripe().paymentIntents.cancel(paymentIntentId);
 }
 
 /**
  * Create a setup intent for saving payment method
  */
-export async function createSetupIntent(
-  customerId: string
-): Promise<Stripe.SetupIntent> {
+export async function createSetupIntent(customerId: string): Promise<Stripe.SetupIntent> {
   return await getStripe().setupIntents.create({
     customer: customerId,
     payment_method_types: ['card'],
@@ -153,7 +139,10 @@ export async function getDefaultPaymentMethod(
     return null;
   }
 
-  return (customer as Stripe.Customer).invoice_settings?.default_payment_method as Stripe.PaymentMethod || null;
+  return (
+    ((customer as Stripe.Customer).invoice_settings
+      ?.default_payment_method as Stripe.PaymentMethod) || null
+  );
 }
 
 /**
@@ -172,12 +161,10 @@ export async function createBillingPortalSession(
 /**
  * Get subscription details
  */
-export async function getSubscription(
-  subscriptionId: string
-): Promise<Stripe.Subscription | null> {
+export async function getSubscription(subscriptionId: string): Promise<Stripe.Subscription | null> {
   try {
     return await getStripe().subscriptions.retrieve(subscriptionId);
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -185,9 +172,7 @@ export async function getSubscription(
 /**
  * Handle subscription webhook events
  */
-export async function handleSubscriptionWebhook(
-  event: Stripe.Event
-): Promise<{
+export async function handleSubscriptionWebhook(event: Stripe.Event): Promise<{
   type: string;
   customerId?: string;
   subscriptionId?: string;
@@ -211,7 +196,7 @@ export async function handleSubscriptionWebhook(
       result.customerId = subscription.customer as string;
       result.subscriptionId = subscription.id;
       result.status = subscription.status;
-      
+
       // Determine tier from price ID
       const priceId = subscription.items.data[0]?.price.id;
       if (priceId) {
@@ -254,10 +239,7 @@ export async function handleSubscriptionWebhook(
 /**
  * Verify webhook signature
  */
-export function verifyWebhookSignature(
-  payload: string | Buffer,
-  signature: string
-): Stripe.Event {
+export function verifyWebhookSignature(payload: string | Buffer, signature: string): Stripe.Event {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
   return getStripe().webhooks.constructEvent(payload, signature, webhookSecret);
 }

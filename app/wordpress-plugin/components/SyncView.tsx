@@ -2,7 +2,18 @@
 
 import React, { useState } from 'react';
 import { MockPage } from '../types';
-import { RefreshCw, Check, CloudOff, Search, Layers, Clock, Loader2, Hash, Cloud, User } from 'lucide-react';
+import {
+  RefreshCw,
+  Check,
+  CloudOff,
+  Search,
+  Layers,
+  Clock,
+  Loader2,
+  Hash,
+  Cloud,
+  User,
+} from 'lucide-react';
 import { fetchWithApiKey } from '../lib/api-with-key';
 import { toast } from 'sonner';
 
@@ -20,7 +31,7 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'publish' | 'draft' | 'private'>('all');
 
   const handleSync = async (id: number) => {
-    const page = pages.find(p => p.id === id);
+    const page = pages.find((p) => p.id === id);
     if (!page) return;
 
     setSyncingId(id);
@@ -28,15 +39,17 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
       const response = await fetchWithApiKey('/api/v1/pages/sync/', {
         method: 'POST',
         body: JSON.stringify({
-          pages: [{
-            wp_post_id: page.id,
-            title: page.title,
-            url: page.url || `http://localhost:10013/?p=${page.id}`,
-            content: page.excerpt || '',
-            status: page.status,
-            author: page.author,
-            date_published: page.date || new Date().toISOString(),
-          }]
+          pages: [
+            {
+              wp_post_id: page.id,
+              title: page.title,
+              url: page.url || `http://localhost:10013/?p=${page.id}`,
+              content: page.excerpt || '',
+              status: page.status,
+              author: page.author,
+              date_published: page.date || new Date().toISOString(),
+            },
+          ],
         }),
       });
 
@@ -46,14 +59,16 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
       }
 
       const data = await response.json();
-      
+
       if (data.results && data.results[0]?.success) {
-        setPages(prev => prev.map(p => {
-          if (p.id === id) {
-            return { ...p, synced: true, lastSyncedAt: new Date().toLocaleString() };
-          }
-          return p;
-        }));
+        setPages((prev) =>
+          prev.map((p) => {
+            if (p.id === id) {
+              return { ...p, synced: true, lastSyncedAt: new Date().toLocaleString() };
+            }
+            return p;
+          })
+        );
         toast.success(`"${page.title}" synced successfully`);
       } else {
         throw new Error(data.results?.[0]?.error || 'Sync failed');
@@ -66,7 +81,7 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
   };
 
   const handleBulkSync = async () => {
-    const unsyncedPages = pages.filter(p => !p.synced);
+    const unsyncedPages = pages.filter((p) => !p.synced);
     if (unsyncedPages.length === 0) return;
 
     setIsBulkSyncing(true);
@@ -74,7 +89,7 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
       const response = await fetchWithApiKey('/api/v1/pages/sync/', {
         method: 'POST',
         body: JSON.stringify({
-          pages: unsyncedPages.map(page => ({
+          pages: unsyncedPages.map((page) => ({
             wp_post_id: page.id,
             title: page.title,
             url: page.url || `http://localhost:10013/?p=${page.id}`,
@@ -82,7 +97,7 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
             status: page.status,
             author: page.author,
             date_published: page.date || new Date().toISOString(),
-          }))
+          })),
         }),
       });
 
@@ -92,14 +107,16 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
       }
 
       const data = await response.json();
-      
+
       if (data.synced_count > 0) {
-        setPages(prev => prev.map(p => {
-          if (!p.synced) {
-            return { ...p, synced: true, lastSyncedAt: new Date().toLocaleString() };
-          }
-          return p;
-        }));
+        setPages((prev) =>
+          prev.map((p) => {
+            if (!p.synced) {
+              return { ...p, synced: true, lastSyncedAt: new Date().toLocaleString() };
+            }
+            return p;
+          })
+        );
         toast.success(`${data.synced_count} pages synced successfully`);
       } else {
         toast.error('No pages were synced');
@@ -113,12 +130,12 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
 
   const counts = {
     all: pages.length,
-    publish: pages.filter(p => p.status === 'publish').length,
-    draft: pages.filter(p => p.status === 'draft').length,
-    private: pages.filter(p => p.status === 'private').length,
+    publish: pages.filter((p) => p.status === 'publish').length,
+    draft: pages.filter((p) => p.status === 'draft').length,
+    private: pages.filter((p) => p.status === 'private').length,
   };
 
-  const filteredPages = pages.filter(p => {
+  const filteredPages = pages.filter((p) => {
     const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
     const matchesId = idFilter === '' || p.id.toString().includes(idFilter);
@@ -126,21 +143,23 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
     return matchesSearch && matchesStatus && matchesId && matchesAuthor;
   });
 
-  const unsyncedCount = pages.filter(p => !p.synced).length;
+  const unsyncedCount = pages.filter((p) => !p.synced).length;
 
   return (
-    <div className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-normal text-gray-800 flex items-center gap-2">
+          <h1 className="flex items-center gap-2 text-2xl font-normal text-gray-800">
             Page Synchronization
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Import your WordPress pages to NextGen for analysis.</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Import your WordPress pages to NextGen for analysis.
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="relative w-20">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <Hash size={14} aria-hidden="true" />
             </div>
             <input
@@ -149,12 +168,12 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
               aria-label="Filter by Page ID"
               value={idFilter}
               onChange={(e) => setIdFilter(e.target.value.replace(/\D/g, ''))}
-              className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#2271b1] focus:ring-1 focus:ring-[#2271b1]"
+              className="w-full rounded border border-gray-300 py-2 pl-8 pr-3 text-sm focus:border-[#2271b1] focus:outline-none focus:ring-1 focus:ring-[#2271b1]"
             />
           </div>
 
           <div className="relative w-32">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <User size={14} aria-hidden="true" />
             </div>
             <input
@@ -163,14 +182,14 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
               aria-label="Filter by Author"
               value={authorFilter}
               onChange={(e) => setAuthorFilter(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#2271b1] focus:ring-1 focus:ring-[#2271b1]"
+              className="w-full rounded border border-gray-300 py-2 pl-8 pr-3 text-sm focus:border-[#2271b1] focus:outline-none focus:ring-1 focus:ring-[#2271b1]"
             />
           </div>
 
           <button
             onClick={handleBulkSync}
             disabled={isBulkSyncing || unsyncedCount === 0}
-            className="px-4 py-2 bg-[#2271b1] hover:bg-[#135e96] text-white text-sm font-medium rounded transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 rounded bg-[#2271b1] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#135e96] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isBulkSyncing ? <Loader2 size={16} className="animate-spin" /> : <Cloud size={16} />}
             {isBulkSyncing ? 'Syncing...' : `Sync All (${unsyncedCount})`}
@@ -179,9 +198,9 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded shadow-sm border border-gray-200 p-4">
+      <div className="rounded border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-gray-600 flex items-center gap-1 mr-2">
+          <span className="mr-2 flex items-center gap-1 text-sm text-gray-600">
             <Search size={14} /> Search:
           </span>
           <input
@@ -189,15 +208,15 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
             placeholder="Page title..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 min-w-[200px] px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#2271b1] focus:ring-1 focus:ring-[#2271b1]"
+            className="min-w-[200px] flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-[#2271b1] focus:outline-none focus:ring-1 focus:ring-[#2271b1]"
           />
 
-          <div className="flex items-center gap-1 ml-2">
+          <div className="ml-2 flex items-center gap-1">
             {(['all', 'publish', 'draft', 'private'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-3 py-1.5 rounded text-xs font-medium capitalize transition-colors ${
+                className={`rounded px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
                   statusFilter === status
                     ? 'bg-[#2271b1] text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -211,8 +230,8 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
       </div>
 
       {/* Pages Table */}
-      <div className="bg-white rounded shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 grid grid-cols-12 gap-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+      <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
+        <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-gray-600">
           <div className="col-span-1">ID</div>
           <div className="col-span-5">Title</div>
           <div className="col-span-2">Author</div>
@@ -225,22 +244,26 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
             filteredPages.map((page) => (
               <div
                 key={page.id}
-                className="px-6 py-4 grid grid-cols-12 gap-4 items-center hover:bg-gray-50 transition-colors"
+                className="grid grid-cols-12 items-center gap-4 px-6 py-4 transition-colors hover:bg-gray-50"
               >
                 <div className="col-span-1 text-sm text-gray-500">#{page.id}</div>
                 <div className="col-span-5">
                   <div className="text-sm font-medium text-gray-800">{page.title}</div>
-                  <div className="text-xs text-gray-400 truncate">{page.excerpt.substring(0, 60)}...</div>
+                  <div className="truncate text-xs text-gray-400">
+                    {page.excerpt.substring(0, 60)}...
+                  </div>
                 </div>
                 <div className="col-span-2 text-sm text-gray-600">{page.author}</div>
                 <div className="col-span-2">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    page.status === 'publish'
-                      ? 'bg-green-100 text-green-800'
-                      : page.status === 'draft'
-                      ? 'bg-gray-100 text-gray-800'
-                      : 'bg-purple-100 text-purple-800'
-                  }`}>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                      page.status === 'publish'
+                        ? 'bg-green-100 text-green-800'
+                        : page.status === 'draft'
+                          ? 'bg-gray-100 text-gray-800'
+                          : 'bg-purple-100 text-purple-800'
+                    }`}
+                  >
                     {page.status}
                   </span>
                 </div>
@@ -249,24 +272,32 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
                     <button
                       onClick={() => handleSync(page.id)}
                       disabled={syncingId === page.id}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                     >
                       {syncingId === page.id ? (
-                        <><Loader2 size={14} className="animate-spin" /> Syncing...</>
+                        <>
+                          <Loader2 size={14} className="animate-spin" /> Syncing...
+                        </>
                       ) : (
-                        <><RefreshCw size={14} /> Re-sync</>
+                        <>
+                          <RefreshCw size={14} /> Re-sync
+                        </>
                       )}
                     </button>
                   ) : (
                     <button
                       onClick={() => handleSync(page.id)}
                       disabled={syncingId === page.id}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-medium rounded transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded bg-[#2271b1] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#135e96] disabled:opacity-50"
                     >
                       {syncingId === page.id ? (
-                        <><Loader2 size={14} className="animate-spin" /> Syncing...</>
+                        <>
+                          <Loader2 size={14} className="animate-spin" /> Syncing...
+                        </>
                       ) : (
-                        <><Cloud size={14} /> Sync</>
+                        <>
+                          <Cloud size={14} /> Sync
+                        </>
                       )}
                     </button>
                   )}
@@ -288,7 +319,7 @@ export function SyncView({ pages, setPages }: SyncViewProps) {
             <Layers size={14} /> Total: {pages.length}
           </span>
           <span className="flex items-center gap-1 text-green-600">
-            <Check size={14} /> Synced: {pages.filter(p => p.synced).length}
+            <Check size={14} /> Synced: {pages.filter((p) => p.synced).length}
           </span>
           <span className="flex items-center gap-1 text-gray-400">
             <CloudOff size={14} /> Pending: {unsyncedCount}

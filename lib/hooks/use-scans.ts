@@ -1,12 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  scansService,
-  Scan,
-  ScanReport,
-  CreateScanInput,
-} from '@/lib/services/api';
+import { scansService, Scan, ScanReport, CreateScanInput } from '@/lib/services/api';
 
 export interface ScansState {
   scans: Scan[];

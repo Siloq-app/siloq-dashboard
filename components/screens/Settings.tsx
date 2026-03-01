@@ -4,27 +4,21 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Check,
-  Copy,
   Plus,
-  Trash2,
   User,
   Key,
   Users,
   Shield,
   Bell,
   Mail,
-  UserCircle,
   Link as LinkIcon,
-  Eye,
-  EyeOff,
   Building2,
 } from 'lucide-react';
 import { AutomationMode } from '@/app/dashboard/types';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 const BusinessProfileSettings = lazy(() => import('@/components/settings/BusinessProfileSettings'));
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { fetchWithAuth } from '@/lib/auth-headers';
+import { fetchWithAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 import { SubscriptionTier, TIER_CONFIGS } from '@/lib/billing/types';
 
@@ -106,19 +100,21 @@ export default function Settings({
   useEffect(() => {
     // Fetch tier from billing endpoint (same one Subscription page uses)
     fetchWithAuth('/api/v1/billing/subscription/current/')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
         if (data?.tier) setResolvedTier(data.tier as SubscriptionTier);
       })
       .catch(() => {});
     // Also try /auth/me as backup
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
-      fetch('/api/v1/auth/me', { headers: { 'Authorization': `Bearer ${token}` } })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data?.user?.subscription_tier) setResolvedTier(data.user.subscription_tier as SubscriptionTier);
-          if (data?.user?.is_superuser || data?.user?.is_staff) setResolvedTier('empire' as SubscriptionTier);
+      fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.user?.subscription_tier)
+            setResolvedTier(data.user.subscription_tier as SubscriptionTier);
+          if (data?.user?.is_superuser || data?.user?.is_staff)
+            setResolvedTier('empire' as SubscriptionTier);
         })
         .catch(() => {});
     }
@@ -126,9 +122,18 @@ export default function Settings({
   const router = useRouter();
   const settingsParams = useSearchParams();
   const sectionParam = settingsParams.get('section');
-  const initialTab = (sectionParam && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications', 'business-profile'].includes(sectionParam)) 
-    ? sectionParam as TabId 
-    : 'profile';
+  const initialTab =
+    sectionParam &&
+    [
+      'profile',
+      'api-keys',
+      'team',
+      'agent-permissions',
+      'notifications',
+      'business-profile',
+    ].includes(sectionParam)
+      ? (sectionParam as TabId)
+      : 'profile';
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -136,7 +141,17 @@ export default function Settings({
   // Pick up subtab navigation from sessionStorage (set by onboarding nudges)
   useEffect(() => {
     const subtab = sessionStorage.getItem('siloq_settings_subtab');
-    if (subtab && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications', 'business-profile'].includes(subtab)) {
+    if (
+      subtab &&
+      [
+        'profile',
+        'api-keys',
+        'team',
+        'agent-permissions',
+        'notifications',
+        'business-profile',
+      ].includes(subtab)
+    ) {
       sessionStorage.removeItem('siloq_settings_subtab');
       setActiveTab(subtab as TabId);
     }
@@ -154,27 +169,71 @@ export default function Settings({
 
   // Notification preferences state
   const [emailNotifPrefs, setEmailNotifPrefs] = useState([
-    { label: 'Daily digest email', desc: 'Summary of all changes made by agents (Full-Auto mode)', enabled: true },
-    { label: 'Immediate alerts for BLOCK errors', desc: 'Critical issues that require immediate attention', enabled: true },
-    { label: 'Weekly governance report', desc: 'Comprehensive report on site health and recommendations', enabled: false },
-    { label: 'Team member activity', desc: 'Notifications when team members make changes', enabled: false },
-    { label: 'New approval requests', desc: 'Alert when destructive changes need approval', enabled: true },
+    {
+      label: 'Daily digest email',
+      desc: 'Summary of all changes made by agents (Full-Auto mode)',
+      enabled: true,
+    },
+    {
+      label: 'Immediate alerts for BLOCK errors',
+      desc: 'Critical issues that require immediate attention',
+      enabled: true,
+    },
+    {
+      label: 'Weekly governance report',
+      desc: 'Comprehensive report on site health and recommendations',
+      enabled: false,
+    },
+    {
+      label: 'Team member activity',
+      desc: 'Notifications when team members make changes',
+      enabled: false,
+    },
+    {
+      label: 'New approval requests',
+      desc: 'Alert when destructive changes need approval',
+      enabled: true,
+    },
   ]);
 
   const [appNotifPrefs, setAppNotifPrefs] = useState([
-    { label: 'Show toast notifications', desc: 'Display brief popup notifications for important events', enabled: true },
+    {
+      label: 'Show toast notifications',
+      desc: 'Display brief popup notifications for important events',
+      enabled: true,
+    },
     { label: 'Play sound alerts', desc: 'Audio notification for critical alerts', enabled: false },
-    { label: 'Browser push notifications', desc: 'Allow notifications when app is not in focus', enabled: false },
+    {
+      label: 'Browser push notifications',
+      desc: 'Allow notifications when app is not in focus',
+      enabled: false,
+    },
   ]);
 
   // Agent permissions state
   const [agentPerms, setAgentPerms] = useState([
-    { label: 'Allow content generation', desc: 'Agents can create new content blocks', enabled: true },
-    { label: 'Allow internal linking', desc: 'Agents can add internal links between pages', enabled: true },
-    { label: 'Allow meta tag updates', desc: 'Agents can modify title and description tags', enabled: true },
+    {
+      label: 'Allow content generation',
+      desc: 'Agents can create new content blocks',
+      enabled: true,
+    },
+    {
+      label: 'Allow internal linking',
+      desc: 'Agents can add internal links between pages',
+      enabled: true,
+    },
+    {
+      label: 'Allow meta tag updates',
+      desc: 'Agents can modify title and description tags',
+      enabled: true,
+    },
     { label: 'Allow URL redirects', desc: 'Agents can create 301 redirects', enabled: false },
     { label: 'Allow page deletion', desc: 'Agents can delete or archive pages', enabled: false },
-    { label: 'Allow schema markup changes', desc: 'Agents can modify structured data', enabled: true },
+    {
+      label: 'Allow schema markup changes',
+      desc: 'Agents can modify structured data',
+      enabled: true,
+    },
   ]);
 
   // Fetch team members
@@ -210,9 +269,11 @@ export default function Settings({
     setTeamError(null);
 
     // Check limit
-    const nonOwnerCount = teamMembers.filter(m => m.role !== 'owner').length;
+    const nonOwnerCount = teamMembers.filter((m) => m.role !== 'owner').length;
     if (nonOwnerCount >= maxTeammates) {
-      setTeamError(`You've reached the teammate limit for your ${tierConfig.name} plan. Upgrade to add more.`);
+      setTeamError(
+        `You've reached the teammate limit for your ${tierConfig.name} plan. Upgrade to add more.`
+      );
       setIsInviting(false);
       return;
     }
@@ -227,25 +288,34 @@ export default function Settings({
         const data = await res.json();
         const initials = inviteEmail.substring(0, 2).toUpperCase();
         const colors = ['indigo', 'rose', 'amber', 'emerald', 'purple', 'cyan'];
-        setTeamMembers(prev => [...prev, {
-          id: Date.now().toString(),
-          name: inviteEmail.split('@')[0],
-          email: inviteEmail,
-          role: inviteRole,
-          status: 'pending',
-          avatar: initials,
-          color: colors[prev.length % colors.length],
-        }]);
+        setTeamMembers((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            name: inviteEmail.split('@')[0],
+            email: inviteEmail,
+            role: inviteRole,
+            status: 'pending',
+            avatar: initials,
+            color: colors[prev.length % colors.length],
+          },
+        ]);
         setInviteEmail('');
         setShowInviteForm(false);
       } else {
         const errData = await res.json().catch(() => ({}));
-        setTeamError(errData.error || errData.detail || `Unable to send invite (${res.status}). Please try again.`);
+        setTeamError(
+          errData.error ||
+            errData.detail ||
+            `Unable to send invite (${res.status}). Please try again.`
+        );
       }
     } catch (err) {
       // Bug fix: Graceful error handling
       console.error('Invite error:', err);
-      setTeamError('Unable to send invite. Team features may not be available yet. Please try again later.');
+      setTeamError(
+        'Unable to send invite. Team features may not be available yet. Please try again later.'
+      );
     } finally {
       setIsInviting(false);
     }
@@ -264,8 +334,8 @@ export default function Settings({
         body: JSON.stringify({ role: newRole }),
       });
       if (res.ok) {
-        setTeamMembers(prev =>
-          prev.map(m => m.id === memberId ? { ...m, role: newRole } : m)
+        setTeamMembers((prev) =>
+          prev.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
         );
         setEditingMemberId(null);
         toast.success('Role updated');
@@ -280,13 +350,15 @@ export default function Settings({
     }
   };
 
-  const [apiKeys, setApiKeys] = useState<{
-    id: string;
-    name: string;
-    key: string;
-    created: string;
-    lastUsed: string;
-  }[]>([]);
+  const [apiKeys, setApiKeys] = useState<
+    {
+      id: string;
+      name: string;
+      key: string;
+      created: string;
+      lastUsed: string;
+    }[]
+  >([]);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [newKeyName, setNewKeyName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -307,7 +379,8 @@ export default function Settings({
         if (response.ok) {
           const data = await response.json();
           const user = data.user || data;
-          const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.name || '';
+          const fullName =
+            [user.first_name, user.last_name].filter(Boolean).join(' ') || user.name || '';
           setProfile({
             name: fullName,
             email: user.email || '',
@@ -412,7 +485,7 @@ export default function Settings({
 
       toast.success('Profile saved successfully');
       setSaveSuccess(true);
-      
+
       // Hide success message after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
@@ -451,13 +524,11 @@ export default function Settings({
                 if (errors.name) setErrors({ ...errors, name: undefined });
               }}
               placeholder="Your name"
-              className={`border-input file:text-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 ${
+              className={`flex h-9 w-full rounded-md border border-input border-slate-200 bg-transparent px-3 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:font-medium file:text-foreground placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 ${
                 errors.name ? 'border-red-500' : ''
               }`}
             />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name}</p>
-            )}
+            {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
           </div>
 
           <div className="Field space-y-2">
@@ -476,13 +547,11 @@ export default function Settings({
                 if (errors.email) setErrors({ ...errors, email: undefined });
               }}
               placeholder="your@email.com"
-              className={`border-input file:text-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 ${
+              className={`flex h-9 w-full rounded-md border border-input border-slate-200 bg-transparent px-3 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:font-medium file:text-foreground placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 ${
                 errors.email ? 'border-red-500' : ''
               }`}
             />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email}</p>
-            )}
+            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
           </div>
         </div>
       </div>
@@ -499,7 +568,7 @@ export default function Settings({
       <button
         onClick={handleSaveProfile}
         disabled={isSaving}
-        className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+        className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
       >
         {isSaving ? (
           <>
@@ -523,8 +592,8 @@ export default function Settings({
           API Keys for WordPress
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Manage sites and generate API keys per site (like GitHub tokens). Use
-          the Siloq plugin with each key.
+          Manage sites and generate API keys per site (like GitHub tokens). Use the Siloq plugin
+          with each key.
         </p>
       </div>
 
@@ -535,22 +604,20 @@ export default function Settings({
           </div>
           <div className="flex-1">
             <p className="mb-4 text-sm text-indigo-900 dark:text-indigo-300">
-              Add WordPress sites in <strong>Sites</strong>, then create a token
-              for each site. Paste the token and API URL in your WordPress
-              plugin (Settings → Siloq).
+              Add WordPress sites in <strong>Sites</strong>, then create a token for each site.
+              Paste the token and API URL in your WordPress plugin (Settings → Siloq).
             </p>
             {onNavigateToSites ? (
               <button
                 onClick={onNavigateToSites}
-                className="focus-visible:ring-ring inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white shadow transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white shadow transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <LinkIcon size={16} />
                 <span className="truncate">Manage sites & API keys</span>
               </button>
             ) : (
               <p className="text-sm text-indigo-700 dark:text-indigo-400">
-                Go to <strong>Sites</strong> in the sidebar to manage sites and
-                API keys.
+                Go to <strong>Sites</strong> in the sidebar to manage sites and API keys.
               </p>
             )}
           </div>
@@ -564,13 +631,16 @@ export default function Settings({
             <Key className="text-amber-600 dark:text-amber-400" size={20} />
           </div>
           <div className="flex-1">
-            <h4 className="mb-1 text-sm font-semibold text-amber-900 dark:text-amber-200">Master API Key</h4>
+            <h4 className="mb-1 text-sm font-semibold text-amber-900 dark:text-amber-200">
+              Master API Key
+            </h4>
             <p className="mb-4 text-sm text-amber-900 dark:text-amber-300">
-              Generate a master API key for full account-level access. Use it for backend integrations and automation.
+              Generate a master API key for full account-level access. Use it for backend
+              integrations and automation.
             </p>
             <button
               onClick={() => router.push('/dashboard/settings/api-keys')}
-              className="focus-visible:ring-ring inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-amber-600 px-3 py-2 text-xs font-medium text-white shadow transition-colors hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-amber-600 px-3 py-2 text-xs font-medium text-white shadow transition-colors hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
             >
               <Key size={16} />
               <span className="truncate">Manage API Keys &amp; Master Key</span>
@@ -609,7 +679,7 @@ export default function Settings({
   );
 
   const renderTeamTab = () => {
-    const nonOwnerCount = teamMembers.filter(m => m.role !== 'owner').length;
+    const nonOwnerCount = teamMembers.filter((m) => m.role !== 'owner').length;
     const atLimit = nonOwnerCount >= maxTeammates;
     const avatarColors: Record<string, string> = {
       indigo: 'bg-indigo-600 dark:bg-indigo-500',
@@ -637,7 +707,7 @@ export default function Settings({
             <button
               onClick={() => setShowInviteForm(true)}
               disabled={atLimit}
-              className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
             >
               Invite Member <Plus size={16} />
             </button>
@@ -726,7 +796,7 @@ export default function Settings({
           {teamMembers.map((member) => (
             <Card
               key={member.id}
-              className="bg-card flex flex-col justify-between gap-3 border-slate-200 p-4 sm:flex-row sm:items-center dark:border-slate-700"
+              className="flex flex-col justify-between gap-3 border-slate-200 bg-card p-4 dark:border-slate-700 sm:flex-row sm:items-center"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -753,7 +823,7 @@ export default function Settings({
                   <>
                     <select
                       value={editingRole}
-                      onChange={e => setEditingRole(e.target.value as TeamRole)}
+                      onChange={(e) => setEditingRole(e.target.value as TeamRole)}
                       className="h-8 rounded border border-slate-200 bg-white px-2 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                       disabled={isUpdatingRole}
                     >
@@ -782,8 +852,11 @@ export default function Settings({
                     </span>
                     {member.role !== 'owner' && (
                       <button
-                        onClick={() => { setEditingMemberId(member.id); setEditingRole(member.role); }}
-                        className="focus-visible:ring-ring inline-flex h-8 items-center justify-center rounded-md px-3 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 dark:text-slate-300 dark:hover:bg-slate-800"
+                        onClick={() => {
+                          setEditingMemberId(member.id);
+                          setEditingRole(member.role);
+                        }}
+                        className="inline-flex h-8 items-center justify-center rounded-md px-3 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:text-slate-300 dark:hover:bg-slate-800"
                       >
                         Edit
                       </button>
@@ -841,9 +914,7 @@ export default function Settings({
                   border: selected
                     ? 'border-emerald-500 dark:border-emerald-400'
                     : 'border-slate-200 dark:border-slate-700',
-                  bg: selected
-                    ? 'bg-emerald-50 dark:bg-emerald-950/30'
-                    : 'bg-card',
+                  bg: selected ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'bg-card',
                   label: 'text-emerald-700 dark:text-emerald-400',
                   check: 'bg-emerald-500 dark:bg-emerald-400',
                 },
@@ -878,9 +949,7 @@ export default function Settings({
                       >
                         {mode.label}
                       </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
-                        {mode.desc}
-                      </div>
+                      <div className="text-sm text-slate-600 dark:text-slate-400">{mode.desc}</div>
                     </div>
                   </div>
                   {isSelected && (
@@ -905,15 +974,13 @@ export default function Settings({
           {agentPerms.map((perm, i) => (
             <div
               key={i}
-              className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
+              className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-card p-3 dark:border-slate-700 sm:p-4"
             >
               <div>
                 <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                   {perm.label}
                 </div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {perm.desc}
-                </div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">{perm.desc}</div>
               </div>
               <div
                 onClick={() => {
@@ -923,9 +990,7 @@ export default function Settings({
                   toast.success(`${perm.label} ${!perm.enabled ? 'enabled' : 'disabled'}`);
                 }}
                 className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
-                  perm.enabled
-                    ? 'bg-emerald-500'
-                    : 'bg-slate-300 dark:bg-slate-600'
+                  perm.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >
                 <div
@@ -939,7 +1004,7 @@ export default function Settings({
         </div>
       </div>
 
-      <Card className="bg-card border-slate-200 p-5 dark:border-slate-700">
+      <Card className="border-slate-200 bg-card p-5 dark:border-slate-700">
         <h4 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
           Change Classification Reference
         </h4>
@@ -991,15 +1056,13 @@ export default function Settings({
         {emailNotifPrefs.map((pref, i) => (
           <div
             key={i}
-            className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
+            className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-card p-3 dark:border-slate-700 sm:p-4"
           >
             <div>
               <div className="mb-1 truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                 {pref.label}
               </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {pref.desc}
-              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">{pref.desc}</div>
             </div>
             <div
               onClick={() => {
@@ -1009,9 +1072,7 @@ export default function Settings({
                 toast.success(`${pref.label} ${!pref.enabled ? 'enabled' : 'disabled'}`);
               }}
               className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
-                pref.enabled
-                  ? 'bg-emerald-500'
-                  : 'bg-slate-300 dark:bg-slate-600'
+                pref.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div
@@ -1031,15 +1092,13 @@ export default function Settings({
         {appNotifPrefs.map((pref, i) => (
           <div
             key={i}
-            className="bg-card flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
+            className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-card p-3 dark:border-slate-700 sm:p-4"
           >
             <div>
               <div className="mb-1 truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                 {pref.label}
               </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {pref.desc}
-              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">{pref.desc}</div>
             </div>
             <div
               onClick={() => {
@@ -1049,9 +1108,7 @@ export default function Settings({
                 toast.success(`${pref.label} ${!pref.enabled ? 'enabled' : 'disabled'}`);
               }}
               className={`h-6 w-10 cursor-pointer rounded-full p-1 transition-colors ${
-                pref.enabled
-                  ? 'bg-emerald-500'
-                  : 'bg-slate-300 dark:bg-slate-600'
+                pref.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div
@@ -1064,20 +1121,16 @@ export default function Settings({
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center dark:border-slate-700 dark:bg-slate-800/50">
+      <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50 md:flex-row md:items-center">
         <div className="flex items-center gap-3">
-          <Mail
-            className="shrink-0 text-slate-600 dark:text-slate-400"
-            size={20}
-          />
+          <Mail className="shrink-0 text-slate-600 dark:text-slate-400" size={20} />
           <div className="text-sm text-slate-700 dark:text-slate-300">
-            <span className="font-medium">Primary email:</span>{' '}
-            {profile.email || 'Loading...'}
+            <span className="font-medium">Primary email:</span> {profile.email || 'Loading...'}
           </div>
         </div>
         <button
           onClick={() => setActiveTab('profile')}
-          className="focus-visible:ring-ring inline-flex h-9 w-fit items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 md:ml-auto dark:text-slate-300 dark:hover:bg-slate-700"
+          className="inline-flex h-9 w-fit items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-700 md:ml-auto"
         >
           Change
         </button>
@@ -1106,7 +1159,7 @@ export default function Settings({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-600" />
         <p className="text-sm text-slate-500 dark:text-slate-400">Loading...</p>
       </div>
@@ -1115,11 +1168,9 @@ export default function Settings({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
-        Settings
-      </h3>
+      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Settings</h3>
 
-      <div className="border-border border-b">
+      <div className="border-b border-border">
         <div className="scrollbar-hide flex gap-1 overflow-x-auto lg:overflow-visible">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -1141,9 +1192,7 @@ export default function Settings({
         </div>
       </div>
 
-      <Card className="bg-card border-border p-4 sm:p-6">
-        {tabContent[activeTab]()}
-      </Card>
+      <Card className="border-border bg-card p-4 sm:p-6">{tabContent[activeTab]()}</Card>
     </div>
   );
 }

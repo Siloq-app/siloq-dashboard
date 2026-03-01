@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SCAN_ENDPOINTS } from '@/lib/backend-api';
+import { SCAN_ENDPOINTS } from '@/lib/backend';
 
 function getAuthHeader(request: NextRequest): string | null {
   return request.headers.get('authorization');
@@ -21,10 +21,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch (e) {
     console.error('Scans list proxy error:', e);
-    return NextResponse.json(
-      { message: 'Unable to reach backend' },
-      { status: 502 }
-    );
+    return NextResponse.json({ message: 'Unable to reach backend' }, { status: 502 });
   }
 }
 
@@ -51,9 +48,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: res.status });
   } catch (e) {
     console.error('Scan create proxy error:', e);
-    return NextResponse.json(
-      { message: 'Unable to reach backend' },
-      { status: 502 }
-    );
+    return NextResponse.json({ message: 'Unable to reach backend' }, { status: 502 });
   }
 }

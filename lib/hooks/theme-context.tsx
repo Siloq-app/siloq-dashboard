@@ -17,9 +17,9 @@ export interface Theme {
   green: string;
   greenBg: string;
   greenBorder: string;
-  orange: string;
-  orangeBg: string;
-  orangeBorder: string;
+  gold: string;
+  goldBg: string;
+  goldBorder: string;
   red: string;
   redBg: string;
   redBorder: string;
@@ -38,67 +38,67 @@ export interface Theme {
 
 const themes: Record<ThemeMode, Theme> = {
   light: {
-    bg: "#f5f6fa",
-    sidebar: "#ffffff",
-    card: "#ffffff",
-    cardHover: "#f8f9fc",
-    border: "#e2e4eb",
-    accent: "#6C63FF",
-    accentHover: "#5B52EE",
-    accentGlow: "rgba(108,99,255,0.08)",
-    accentLight: "rgba(108,99,255,0.06)",
-    green: "#16a34a",
-    greenBg: "rgba(22,163,74,0.06)",
-    greenBorder: "rgba(22,163,74,0.2)",
-    orange: "#d97706",
-    orangeBg: "rgba(217,119,6,0.06)",
-    orangeBorder: "rgba(217,119,6,0.2)",
-    red: "#dc2626",
-    redBg: "rgba(220,38,38,0.05)",
-    redBorder: "rgba(220,38,38,0.2)",
-    text: "#1e1e2e",
-    textSecondary: "#4a4a5a",
-    textMuted: "#6b7080",
-    textDim: "#9ca3b0",
-    white: "#ffffff",
-    shadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-    shadowHover: "0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)",
-    topbar: "#ffffff",
-    tableAlt: "#fafbfd",
-    inputBg: "#ffffff",
-    consoleBar: "#f0f1f5",
+    bg: '#f5f6fa',
+    sidebar: '#ffffff',
+    card: '#ffffff',
+    cardHover: '#f8f9fc',
+    border: '#e2e4eb',
+    accent: '#006ff9',
+    accentHover: '#005acc',
+    accentGlow: '#006ff914',
+    accentLight: '#006ff90F',
+    green: '#16a34a',
+    greenBg: '#16A34A0F',
+    greenBorder: '#16A34A33',
+    gold: '#d97706',
+    goldBg: '#D977060F',
+    goldBorder: '#D9770633',
+    red: '#dc2626',
+    redBg: '#DC26260D',
+    redBorder: '#DC262633',
+    text: '#1e1e2e',
+    textSecondary: '#4a4a5a',
+    textMuted: '#6b7080',
+    textDim: '#9ca3b0',
+    white: '#ffffff',
+    shadow: '0 1px 3px #0000000F, 0 1px 2px #0000000A',
+    shadowHover: '0 4px 12px #00000014, 0 2px 4px #0000000A',
+    topbar: '#ffffff',
+    tableAlt: '#fafbfd',
+    inputBg: '#ffffff',
+    consoleBar: '#f0f1f5',
   },
   dark: {
-    bg: "#0f1117",
-    sidebar: "#141620",
-    card: "#1a1d2e",
-    cardHover: "#1f2336",
-    border: "#2a2d3e",
-    accent: "#6C63FF",
-    accentHover: "#7B73FF",
-    accentGlow: "rgba(108,99,255,0.15)",
-    accentLight: "rgba(108,99,255,0.1)",
-    green: "#22c55e",
-    greenBg: "rgba(34,197,94,0.1)",
-    greenBorder: "rgba(34,197,94,0.25)",
-    orange: "#f59e0b",
-    orangeBg: "rgba(245,158,11,0.1)",
-    orangeBorder: "rgba(245,158,11,0.25)",
-    red: "#ef4444",
-    redBg: "rgba(239,68,68,0.08)",
-    redBorder: "rgba(239,68,68,0.3)",
-    text: "#e4e4e7",
-    textSecondary: "#c4c4cc",
-    textMuted: "#71717a",
-    textDim: "#52525b",
-    white: "#ffffff",
-    shadow: "0 1px 3px rgba(0,0,0,0.3)",
-    shadowHover: "0 4px 12px rgba(0,0,0,0.4)",
-    topbar: "#141620",
-    tableAlt: "#141822",
-    inputBg: "#0f1117",
-    consoleBar: "#111322",
-  }
+    bg: '#15141B', // Base: refined dark background
+    sidebar: '#15141B', // Sidebar: consistent with main background
+    card: '#1A1D27', // Surface: cards, panels, modals
+    cardHover: '#22263A', // Elevated: dropdowns, tooltips, hover states
+    border: '#2C3050', // Borders & Dividers: subtle blue-tinted separator
+    accent: '#006ff9', // Primary action: blue
+    accentHover: '#005acc', // Hover: darker blue
+    accentGlow: '#006ff926', // Blue glow with opacity
+    accentLight: '#006ff91A', // Subtle blue tint
+    green: '#3DD68C', // Success: bright green
+    greenBg: '#3DD68C1A', // Success background
+    greenBorder: '#3DD68C40', // Success border
+    gold: '#FFD700', // Warning/attention: gold
+    goldBg: '#FFD7001A', // Gold background
+    goldBorder: '#FFD70040', // Gold border
+    red: '#F04438', // Error: bright red
+    redBg: '#F044381A', // Error background
+    redBorder: '#F0443840', // Error border
+    text: '#E8EAF0', // Primary: soft white, easier on eyes
+    textSecondary: '#7B82A0', // Secondary: muted labels, metadata
+    textMuted: '#9BA3BF', // Additional muted text
+    textDim: '#454B66', // Disabled: very muted
+    white: '#ffffff',
+    shadow: '0 1px 3px #00000066, 0 1px 2px #0000004D',
+    shadowHover: '0 4px 12px #00000080, 0 2px 4px #0000004D',
+    topbar: '#1A1D27', // Topbar using surface color
+    tableAlt: '#141622', // Table alternate rows
+    inputBg: '#1A1D27', // Input background using surface
+    consoleBar: '#111318', // Console bar using sidebar color
+  },
 };
 
 interface ThemeContextType {
@@ -117,6 +117,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem('siloq-theme') as ThemeMode | null;
     if (stored === 'light' || stored === 'dark') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setModeState(stored);
     }
     setMounted(true);
@@ -141,16 +142,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const theme = themes[mode];
 
-  // Prevent flash of wrong theme
+  // Prevent flash of wrong theme - render with default theme instead of null
   if (!mounted) {
-    return null;
+    return (
+      <ThemeContext.Provider value={{ mode: 'light', setMode, theme: themes.light }}>
+        {children}
+      </ThemeContext.Provider>
+    );
   }
 
-  return (
-    <ThemeContext.Provider value={{ mode, setMode, theme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ mode, setMode, theme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme(): ThemeContextType {

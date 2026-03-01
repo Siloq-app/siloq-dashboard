@@ -6,11 +6,9 @@ interface NoSiteSelectedProps {
   message?: string;
 }
 
-export function NoSiteSelected({
-  message = 'Select a site to get started',
-}: NoSiteSelectedProps) {
+export function NoSiteSelected({ message = 'Select a site to get started' }: NoSiteSelectedProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-8 text-center">
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
         <Globe className="h-7 w-7 text-slate-400 dark:text-slate-500" />
       </div>

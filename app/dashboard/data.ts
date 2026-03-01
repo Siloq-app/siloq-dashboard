@@ -87,11 +87,7 @@ export const cannibalizationIssues: CannibalizationIssue[] = [
   {
     id: 1,
     keyword: 'kitchen remodeling',
-    pages: [
-      '/kitchen-remodel-cost',
-      '/kitchen-renovation-guide',
-      '/remodel-your-kitchen',
-    ],
+    pages: ['/kitchen-remodel-cost', '/kitchen-renovation-guide', '/remodel-your-kitchen'],
     severity: 'high',
     impressions: 12400,
     splitClicks: '34% / 41% / 25%',
@@ -204,8 +200,7 @@ export const pendingChanges: PendingChange[] = [
   {
     id: 4,
     type: 'entity_assign',
-    description:
-      'Assign entities [pendant lights, task lighting] to /kitchen-lighting',
+    description: 'Assign entities [pendant lights, task lighting] to /kitchen-lighting',
     risk: 'safe',
     impact: 'Improves semantic targeting',
     doctrine: 'ENTITY_001',

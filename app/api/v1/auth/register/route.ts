@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AUTH_ENDPOINTS } from '@/lib/backend-api';
+import { AUTH_ENDPOINTS } from '@/lib/backend';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,10 +7,7 @@ export async function POST(request: NextRequest) {
     const { name, email, password } = body;
 
     if (!email || !password) {
-      return NextResponse.json(
-        { message: 'Email and password are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
     }
 
     if (password.length < 8) {
@@ -41,8 +38,7 @@ export async function POST(request: NextRequest) {
         'Registration failed';
       return NextResponse.json(
         {
-          message:
-            typeof message === 'string' ? message : 'Registration failed',
+          message: typeof message === 'string' ? message : 'Registration failed',
         },
         { status: res.status >= 500 ? 500 : res.status }
       );

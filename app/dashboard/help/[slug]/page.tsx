@@ -17,7 +17,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { helpArticles, getArticleBySlug } from '@/lib/help-content';
+import { helpArticles, getArticleBySlug } from '@/lib/content';
 
 function SimpleMarkdown({ content }: { content: string }) {
   const lines = content.split('\n');
@@ -40,15 +40,21 @@ function SimpleMarkdown({ content }: { content: string }) {
       if (match[2]) {
         parts.push(<strong key={key++}>{match[2]}</strong>);
       } else if (match[3] && match[4]) {
-        const href = match[4].startsWith('./') ? `/dashboard/help/${match[4].replace('./', '').replace('.md', '')}` : match[4];
+        const href = match[4].startsWith('./')
+          ? `/dashboard/help/${match[4].replace('./', '').replace('.md', '')}`
+          : match[4];
         parts.push(
-          <Link key={key++} href={href} className="text-primary underline underline-offset-4 hover:text-primary/80">
+          <Link
+            key={key++}
+            href={href}
+            className="text-primary underline underline-offset-4 hover:text-primary/80"
+          >
             {match[3]}
           </Link>
         );
       } else if (match[5]) {
         parts.push(
-          <code key={key++} className="rounded bg-muted px-1.5 py-0.5 text-sm font-mono">
+          <code key={key++} className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">
             {match[5]}
           </code>
         );
@@ -62,14 +68,16 @@ function SimpleMarkdown({ content }: { content: string }) {
   const flushTable = () => {
     if (tableRows.length < 2) return;
     const headers = tableRows[0];
-    const dataRows = tableRows.slice(1).filter(r => !r.every(c => /^[-:]+$/.test(c.trim())));
+    const dataRows = tableRows.slice(1).filter((r) => !r.every((c) => /^[-:]+$/.test(c.trim())));
     elements.push(
       <div key={`table-${i}`} className="my-4 overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b">
               {headers.map((h, hi) => (
-                <th key={hi} className="text-left p-2 font-semibold">{parseInline(h.trim())}</th>
+                <th key={hi} className="p-2 text-left font-semibold">
+                  {parseInline(h.trim())}
+                </th>
               ))}
             </tr>
           </thead>
@@ -77,7 +85,9 @@ function SimpleMarkdown({ content }: { content: string }) {
             {dataRows.map((row, ri) => (
               <tr key={ri} className="border-b last:border-0">
                 {row.map((cell, ci) => (
-                  <td key={ci} className="p-2">{parseInline(cell.trim())}</td>
+                  <td key={ci} className="p-2">
+                    {parseInline(cell.trim())}
+                  </td>
                 ))}
               </tr>
             ))}
@@ -104,14 +114,25 @@ function SimpleMarkdown({ content }: { content: string }) {
     }
 
     if (line.startsWith('## ')) {
-      elements.push(<h2 key={i} className="text-xl font-semibold mt-8 mb-3">{parseInline(line.slice(3))}</h2>);
+      elements.push(
+        <h2 key={i} className="mb-3 mt-8 text-xl font-semibold">
+          {parseInline(line.slice(3))}
+        </h2>
+      );
     } else if (line.startsWith('### ')) {
-      elements.push(<h3 key={i} className="text-lg font-semibold mt-6 mb-2">{parseInline(line.slice(4))}</h3>);
+      elements.push(
+        <h3 key={i} className="mb-2 mt-6 text-lg font-semibold">
+          {parseInline(line.slice(4))}
+        </h3>
+      );
     } else if (line.startsWith('---')) {
       elements.push(<Separator key={i} className="my-6" />);
     } else if (line.startsWith('> ')) {
       elements.push(
-        <blockquote key={i} className="border-l-4 border-primary/30 pl-4 py-1 my-3 text-muted-foreground italic">
+        <blockquote
+          key={i}
+          className="my-3 border-l-4 border-primary/30 py-1 pl-4 italic text-muted-foreground"
+        >
           {parseInline(line.slice(2))}
         </blockquote>
       );
@@ -122,8 +143,10 @@ function SimpleMarkdown({ content }: { content: string }) {
         items.push(lines[i].trim().replace(/^\d+\.\s/, ''));
       }
       elements.push(
-        <ol key={i} className="list-decimal list-inside space-y-1 my-3 ml-2">
-          {items.map((item, idx) => <li key={idx}>{parseInline(item)}</li>)}
+        <ol key={i} className="my-3 ml-2 list-inside list-decimal space-y-1">
+          {items.map((item, idx) => (
+            <li key={idx}>{parseInline(item)}</li>
+          ))}
         </ol>
       );
     } else if (line.trim().startsWith('- ')) {
@@ -133,14 +156,20 @@ function SimpleMarkdown({ content }: { content: string }) {
         items.push(lines[i].trim().slice(2));
       }
       elements.push(
-        <ul key={i} className="list-disc list-inside space-y-1 my-3 ml-2">
-          {items.map((item, idx) => <li key={idx}>{parseInline(item)}</li>)}
+        <ul key={i} className="my-3 ml-2 list-inside list-disc space-y-1">
+          {items.map((item, idx) => (
+            <li key={idx}>{parseInline(item)}</li>
+          ))}
         </ul>
       );
     } else if (line.trim() === '') {
       // skip
     } else {
-      elements.push(<p key={i} className="my-2 leading-7">{parseInline(line)}</p>);
+      elements.push(
+        <p key={i} className="my-2 leading-7">
+          {parseInline(line)}
+        </p>
+      );
     }
     i++;
   }
@@ -183,15 +212,15 @@ function ArticleContent({ params }: { params: Promise<{ slug: string }> }) {
         </Breadcrumb>
       </header>
 
-      <div className="flex-1 p-6 max-w-3xl mx-auto w-full">
+      <div className="mx-auto w-full max-w-3xl flex-1 p-6">
         <Link href="/dashboard/help">
-          <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground">
-            <ArrowLeft className="h-4 w-4 mr-1" />
+          <Button variant="ghost" size="sm" className="-ml-2 mb-6 text-muted-foreground">
+            <ArrowLeft className="mr-1 h-4 w-4" />
             Back to Help Center
           </Button>
         </Link>
 
-        <h1 className="text-3xl font-bold tracking-tight mb-6">{article.title}</h1>
+        <h1 className="mb-6 text-3xl font-bold tracking-tight">{article.title}</h1>
 
         <SimpleMarkdown content={article.content} />
 
@@ -201,7 +230,7 @@ function ArticleContent({ params }: { params: Promise<{ slug: string }> }) {
           {prev ? (
             <Link href={`/dashboard/help/${prev.slug}`}>
               <Button variant="outline" size="sm">
-                <ChevronLeft className="h-4 w-4 mr-1" />
+                <ChevronLeft className="mr-1 h-4 w-4" />
                 {prev.title}
               </Button>
             </Link>
@@ -212,7 +241,7 @@ function ArticleContent({ params }: { params: Promise<{ slug: string }> }) {
             <Link href={`/dashboard/help/${next.slug}`}>
               <Button variant="outline" size="sm">
                 {next.title}
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
           ) : (

@@ -3,28 +3,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, Loader2, Check, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Google Icon Component
 const GoogleIcon = () => (
-  <svg
-    className="mr-2 h-4 w-4"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
+  <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path
       fill="#4285F4"
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -139,23 +128,16 @@ export default function RegisterPage() {
     const isNameValid = validateName(formData.name);
     const isEmailValid = validateEmail(formData.email);
     const isPasswordValid = validatePassword(formData.password);
-    const isConfirmPasswordValid = validateConfirmPassword(
-      formData.confirmPassword
-    );
+    const isConfirmPasswordValid = validateConfirmPassword(formData.confirmPassword);
 
-    if (
-      !isNameValid ||
-      !isEmailValid ||
-      !isPasswordValid ||
-      !isConfirmPasswordValid
-    ) {
+    if (!isNameValid || !isEmailValid || !isPasswordValid || !isConfirmPasswordValid) {
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/v1/auth/register', {
+      const res = await fetch('/api/auth/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,9 +156,10 @@ export default function RegisterPage() {
       setIsSuccess(true);
       setTimeout(() => {
         // If user came from an invite link, send them back to complete acceptance
-        const inviteToken = typeof window !== 'undefined'
-          ? new URLSearchParams(window.location.search).get('invite')
-          : null;
+        const inviteToken =
+          typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('invite')
+            : null;
         router.push(inviteToken ? `/invite?token=${inviteToken}` : '/auth/login');
       }, 2000);
     } catch (err: any) {
@@ -192,14 +175,13 @@ export default function RegisterPage() {
 
     // Redirect to Google OAuth endpoint
     const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') ||
-      'https://api.siloq.ai';
+      process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'https://api.siloq.ai';
     window.location.href = `${backendUrl}/api/v1/auth/google/login/`;
   };
 
   if (isSuccess) {
     return (
-      <div className="flex min-h-svh w-full items-center justify-center bg-[#020618] p-6 md:p-10">
+      <div className="flex min-h-svh w-full items-center justify-center bg-sidebar p-6 md:p-10">
         <div className="w-full max-w-sm">
           <Card>
             <CardContent className="pt-6">
@@ -218,8 +200,7 @@ export default function RegisterPage() {
                   ></path>
                 </svg>
                 <AlertDescription>
-                  <span className="font-medium">Account created!</span>{' '}
-                  Redirecting to login...
+                  <span className="font-medium">Account created!</span> Redirecting to login...
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -230,12 +211,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-[#020618] p-6 md:p-10">
+    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-sidebar p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2 self-center font-medium text-white"
-        >
+        <Link href="/" className="flex items-center gap-2 self-center font-medium text-white">
           <Image
             src="/symbol.png"
             alt="Siloq"
@@ -248,9 +226,7 @@ export default function RegisterPage() {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Welcome</CardTitle>
-            <CardDescription>
-              Create an account with your Google account
-            </CardDescription>
+            <CardDescription>Create an account with your Google account</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-6">
@@ -300,17 +276,13 @@ export default function RegisterPage() {
                       type="text"
                       placeholder="John Doe"
                       value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       onBlur={() => validateName(formData.name)}
                       required
                       disabled={isLoading}
                       className={fieldErrors.name ? 'border-red-500' : ''}
                     />
-                    {fieldErrors.name && (
-                      <p className="text-xs text-red-500">{fieldErrors.name}</p>
-                    )}
+                    {fieldErrors.name && <p className="text-xs text-red-500">{fieldErrors.name}</p>}
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="email">
@@ -321,18 +293,14 @@ export default function RegisterPage() {
                       type="email"
                       placeholder="m@example.com"
                       value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       onBlur={() => validateEmail(formData.email)}
                       required
                       disabled={isLoading}
                       className={fieldErrors.email ? 'border-red-500' : ''}
                     />
                     {fieldErrors.email && (
-                      <p className="text-xs text-red-500">
-                        {fieldErrors.email}
-                      </p>
+                      <p className="text-xs text-red-500">{fieldErrors.email}</p>
                     )}
                   </div>
                   <div className="grid gap-2">
@@ -344,17 +312,11 @@ export default function RegisterPage() {
                         id="password"
                         type={showPassword ? 'text' : 'password'}
                         value={formData.password}
-                        onChange={(e) =>
-                          setFormData({ ...formData, password: e.target.value })
-                        }
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         onBlur={() => validatePassword(formData.password)}
                         required
                         disabled={isLoading}
-                        className={
-                          fieldErrors.password
-                            ? 'border-red-500 pr-10'
-                            : 'pr-10'
-                        }
+                        className={fieldErrors.password ? 'border-red-500 pr-10' : 'pr-10'}
                       />
                       <button
                         type="button"
@@ -373,9 +335,7 @@ export default function RegisterPage() {
                       Must be at least 8 characters
                     </p>
                     {fieldErrors.password && (
-                      <p className="text-xs text-red-500">
-                        {fieldErrors.password}
-                      </p>
+                      <p className="text-xs text-red-500">{fieldErrors.password}</p>
                     )}
                   </div>
                   <div className="grid gap-2">
@@ -393,22 +353,14 @@ export default function RegisterPage() {
                             confirmPassword: e.target.value,
                           })
                         }
-                        onBlur={() =>
-                          validateConfirmPassword(formData.confirmPassword)
-                        }
+                        onBlur={() => validateConfirmPassword(formData.confirmPassword)}
                         required
                         disabled={isLoading}
-                        className={
-                          fieldErrors.confirmPassword
-                            ? 'border-red-500 pr-10'
-                            : 'pr-10'
-                        }
+                        className={fieldErrors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
                       />
                       <button
                         type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute right-0 top-0 flex h-full items-center justify-center rounded-r-md px-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                         tabIndex={-1}
                       >
@@ -420,14 +372,12 @@ export default function RegisterPage() {
                       </button>
                     </div>
                     {fieldErrors.confirmPassword && (
-                      <p className="text-xs text-red-500">
-                        {fieldErrors.confirmPassword}
-                      </p>
+                      <p className="text-xs text-red-500">{fieldErrors.confirmPassword}</p>
                     )}
                   </div>
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="duration-350 w-full transition-[color,background-color,border-color,box-shadow,transform] hover:bg-[#005DCF] dark:bg-[#006FF9] dark:hover:bg-[#005DCF]"
                     disabled={
                       isLoading ||
                       !formData.name ||
@@ -448,10 +398,7 @@ export default function RegisterPage() {
                 </div>
                 <div className="mt-4 text-center text-xs text-gray-600 dark:text-gray-400">
                   Already have an account?{' '}
-                  <Link
-                    href="/auth/login"
-                    className="underline underline-offset-4"
-                  >
+                  <Link href="/auth/login" className="underline underline-offset-4">
                     Login
                   </Link>
                 </div>

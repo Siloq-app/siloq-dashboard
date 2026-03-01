@@ -7,7 +7,6 @@ interface ToastOptions {
 }
 
 function toast(opts: ToastOptions) {
-  const msg = opts.description || opts.title || '';
   if (opts.variant === 'destructive') {
     sonnerToast.error(opts.title || 'Error', { description: opts.description });
   } else {

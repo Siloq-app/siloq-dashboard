@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         ...(request.headers.get('cookie') ? { cookie: request.headers.get('cookie')! } : {}),
-        ...(request.headers.get('authorization') ? { authorization: request.headers.get('authorization')! } : {}),
+        ...(request.headers.get('authorization')
+          ? { authorization: request.headers.get('authorization')! }
+          : {}),
       },
       body: JSON.stringify({ email, role: role || 'viewer' }),
     });
@@ -50,7 +52,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Team invite error:', error);
     // Graceful fallback
-    const body = await request.clone().json().catch(() => ({}));
+    const body = await request
+      .clone()
+      .json()
+      .catch(() => ({}));
     return NextResponse.json({
       success: true,
       message: `Invitation sent to ${(body as Record<string, string>).email || 'user'}`,
@@ -70,7 +75,9 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         ...(request.headers.get('cookie') ? { cookie: request.headers.get('cookie')! } : {}),
-        ...(request.headers.get('authorization') ? { authorization: request.headers.get('authorization')! } : {}),
+        ...(request.headers.get('authorization')
+          ? { authorization: request.headers.get('authorization')! }
+          : {}),
       },
     });
 

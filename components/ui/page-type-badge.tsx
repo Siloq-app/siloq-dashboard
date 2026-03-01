@@ -5,14 +5,17 @@ import { Crown, ArrowUp, Settings, Target, Archive, ShoppingCart, Lock } from 'l
 import { cn } from '@/lib/utils';
 import type { PageClassificationType } from '@/app/dashboard/types';
 
-const PAGE_TYPE_CONFIG: Record<PageClassificationType, {
-  label: string;
-  icon: typeof Crown;
-  bg: string;
-  text: string;
-  darkBg: string;
-  darkText: string;
-}> = {
+const PAGE_TYPE_CONFIG: Record<
+  PageClassificationType,
+  {
+    label: string;
+    icon: typeof Crown;
+    bg: string;
+    text: string;
+    darkBg: string;
+    darkText: string;
+  }
+> = {
   money: {
     label: 'Money Page',
     icon: Crown,
@@ -63,7 +66,14 @@ const PAGE_TYPE_CONFIG: Record<PageClassificationType, {
   },
 };
 
-const ALL_TYPES: PageClassificationType[] = ['money', 'supporting', 'utility', 'conversion', 'archive', 'product'];
+const ALL_TYPES: PageClassificationType[] = [
+  'money',
+  'supporting',
+  'utility',
+  'conversion',
+  'archive',
+  'product',
+];
 
 interface PageTypeBadgeProps {
   pageType: PageClassificationType;
@@ -72,7 +82,12 @@ interface PageTypeBadgeProps {
   onChangeType?: (newType: PageClassificationType) => void;
 }
 
-export function PageTypeBadge({ pageType, isOverride, className, onChangeType }: PageTypeBadgeProps) {
+export function PageTypeBadge({
+  pageType,
+  isOverride,
+  className,
+  onChangeType,
+}: PageTypeBadgeProps) {
   const config = PAGE_TYPE_CONFIG[pageType] || PAGE_TYPE_CONFIG.supporting;
   const Icon = config.icon;
   const [open, setOpen] = useState(false);
@@ -92,7 +107,7 @@ export function PageTypeBadge({ pageType, isOverride, className, onChangeType }:
   return (
     <div className="relative inline-block" ref={ref}>
       <span
-        onClick={onChangeType ? () => setOpen(o => !o) : undefined}
+        onClick={onChangeType ? () => setOpen((o) => !o) : undefined}
         className={cn(
           'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
           config.bg,
@@ -121,7 +136,7 @@ export function PageTypeBadge({ pageType, isOverride, className, onChangeType }:
                   setOpen(false);
                 }}
                 className={cn(
-                  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-slate-50 dark:hover:bg-slate-700',
+                  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-[color,background-color,border-color,box-shadow] duration-150 ease-in-out hover:bg-slate-50 dark:hover:bg-slate-700',
                   type === pageType && 'bg-slate-50 dark:bg-slate-700'
                 )}
               >

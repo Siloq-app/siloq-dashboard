@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AUTH_ENDPOINTS } from '@/lib/backend-api';
+import { AUTH_ENDPOINTS } from '@/lib/backend';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,33 +7,20 @@ export async function POST(request: NextRequest) {
     const { code } = body;
 
     if (!code) {
-      return NextResponse.json(
-        { message: 'Authorization code is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: 'Authorization code is required' }, { status: 400 });
     }
 
-    const res = await fetch(
-      `${AUTH_ENDPOINTS.login().replace('/login/', '/google/callback/')}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      }
-    );
+    const res = await fetch(`${AUTH_ENDPOINTS.login().replace('/login/', '/google/callback/')}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
 
     const data = await res.json();
 
     if (!res.ok) {
-      const message =
-        data.message ||
-        data.detail ||
-        data.error ||
-        'Google authentication failed';
-      return NextResponse.json(
-        { message },
-        { status: res.status >= 500 ? 500 : res.status }
-      );
+      const message = data.message || data.detail || data.error || 'Google authentication failed';
+      return NextResponse.json({ message }, { status: res.status >= 500 ? 500 : res.status });
     }
 
     return NextResponse.json({
@@ -55,8 +42,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         {
-          message:
-            'Cannot connect to backend server. Please ensure the Django backend is running.',
+          message: 'Cannot connect to backend server. Please ensure the Django backend is running.',
         },
         { status: 502 }
       );

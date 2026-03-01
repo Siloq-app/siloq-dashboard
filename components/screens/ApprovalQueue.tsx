@@ -109,23 +109,15 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
   const { toast } = useToast();
 
   // Filter out already-processed items
-  const activeChanges = pendingChanges.filter(
-    (c) => !processedIds.has(c.id)
-  );
-  const safeChanges = activeChanges.filter(
-    (c) => c.risk === 'safe' || c.risk === 'meta_update'
-  );
-  const destructiveChanges = activeChanges.filter(
-    (c) => c.risk === 'destructive'
-  );
+  const activeChanges = pendingChanges.filter((c) => !processedIds.has(c.id));
+  const safeChanges = activeChanges.filter((c) => c.risk === 'safe' || c.risk === 'meta_update');
+  const destructiveChanges = activeChanges.filter((c) => c.risk === 'destructive');
 
   const displayedChanges = activeChanges.slice(0, visibleCount);
   const hasMore = visibleCount < activeChanges.length;
 
   const handleLoadMore = () => {
-    setVisibleCount((prev) =>
-      Math.min(prev + ITEMS_PER_PAGE, activeChanges.length)
-    );
+    setVisibleCount((prev) => Math.min(prev + ITEMS_PER_PAGE, activeChanges.length));
   };
 
   const markProcessed = useCallback((id: number) => {
@@ -135,7 +127,11 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
   const setLoading = useCallback((id: number, loading: boolean) => {
     setLoadingIds((prev) => {
       const next = new Set(prev);
-      loading ? next.add(id) : next.delete(id);
+      if (loading) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
       return next;
     });
   }, []);
@@ -155,8 +151,7 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
         console.error('Approve failed:', err);
         toast({
           title: 'Approval failed',
-          description:
-            err instanceof Error ? err.message : 'Something went wrong.',
+          description: err instanceof Error ? err.message : 'Something went wrong.',
           variant: 'destructive',
         });
       } finally {
@@ -224,14 +219,14 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
           <button
             onClick={handleApproveAllSafe}
             disabled={safeChanges.length === 0}
-            className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
           >
             <Check size={14} /> Approve All Safe ({safeChanges.length})
           </button>
           <button
             onClick={handleApproveAll}
             disabled={activeChanges.length === 0}
-            className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
           >
             <Check size={14} /> Approve All
           </button>
@@ -240,42 +235,36 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
 
       {/* Queue Stats */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="bg-card text-card-foreground relative overflow-hidden rounded-xl border p-4 shadow">
+        <div className="relative overflow-hidden rounded-xl border bg-card p-4 text-card-foreground shadow">
           <div className="absolute right-0 top-0 h-16 w-16 rounded-full bg-blue-400/10 blur-xl" />
           <div className="relative">
             <div className="mb-1 flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                Total Pending
-              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Total Pending</div>
             </div>
             <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
               {activeChanges.length}
             </div>
           </div>
         </div>
-        <div className="bg-card text-card-foreground relative overflow-hidden rounded-xl border border-emerald-200 p-4 shadow dark:border-emerald-900/30">
+        <div className="relative overflow-hidden rounded-xl border border-emerald-200 bg-card p-4 text-card-foreground shadow dark:border-emerald-900/30">
           <div className="absolute right-0 top-0 h-16 w-16 rounded-full bg-emerald-400/10 blur-xl" />
           <div className="relative">
             <div className="mb-1 flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-emerald-500" />
-              <div className="text-xs text-emerald-600 dark:text-emerald-400">
-                Safe Changes
-              </div>
+              <div className="text-xs text-emerald-600 dark:text-emerald-400">Safe Changes</div>
             </div>
             <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
               {safeChanges.length}
             </div>
           </div>
         </div>
-        <div className="bg-card text-card-foreground relative overflow-hidden rounded-xl border border-red-200 p-4 shadow dark:border-red-900/30">
+        <div className="relative overflow-hidden rounded-xl border border-red-200 bg-card p-4 text-card-foreground shadow dark:border-red-900/30">
           <div className="absolute right-0 top-0 h-16 w-16 rounded-full bg-red-400/10 blur-xl" />
           <div className="relative">
             <div className="mb-1 flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-red-500" />
-              <div className="text-xs text-red-600 dark:text-red-400">
-                Needs Review
-              </div>
+              <div className="text-xs text-red-600 dark:text-red-400">Needs Review</div>
             </div>
             <div className="text-2xl font-semibold text-red-600 dark:text-red-400">
               {destructiveChanges.length}
@@ -287,12 +276,13 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
       {/* Empty State */}
       {activeChanges.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-16 dark:border-slate-700 dark:bg-slate-800/50">
-          <Check size={48} className="text-emerald-400 mb-4" />
+          <Check size={48} className="mb-4 text-emerald-400" />
           <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
             No pending changes
           </h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm text-center">
-            All caught up! Siloq will generate new recommendations when conflicts or optimization opportunities are detected.
+          <p className="mt-1 max-w-sm text-center text-sm text-slate-500 dark:text-slate-400">
+            All caught up! Siloq will generate new recommendations when conflicts or optimization
+            opportunities are detected.
           </p>
         </div>
       )}
@@ -308,10 +298,9 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
             <div
               key={change.id}
               className={cn(
-                'bg-card text-card-foreground relative overflow-hidden rounded-xl border p-5 shadow transition-opacity',
-                change.risk === 'destructive' &&
-                  'border-red-200 dark:border-red-900/30',
-                isLoading && 'opacity-60 pointer-events-none'
+                'relative overflow-hidden rounded-xl border bg-card p-5 text-card-foreground shadow transition-opacity',
+                change.risk === 'destructive' && 'border-red-200 dark:border-red-900/30',
+                isLoading && 'pointer-events-none opacity-60'
               )}
             >
               <div
@@ -383,18 +372,14 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
                   <button
                     onClick={() => handleDeny(change)}
                     disabled={isLoading}
-                    className="focus-visible:ring-ring inline-flex h-9 flex-1 items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 sm:flex-initial dark:border-red-900/30 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-red-950/20"
+                    className="inline-flex h-9 flex-1 items-center justify-center whitespace-nowrap rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 dark:border-red-900/30 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-red-950/20 sm:flex-initial"
                   >
-                    {isLoading ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      'Deny'
-                    )}
+                    {isLoading ? <Loader2 size={14} className="animate-spin" /> : 'Deny'}
                   </button>
                   <button
                     onClick={() => handleApprove(change)}
                     disabled={isLoading}
-                    className="focus-visible:ring-ring inline-flex h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 sm:flex-initial [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                    className="inline-flex h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:flex-initial [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                   >
                     {isLoading ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -416,7 +401,7 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
         <div className="flex justify-center pt-4">
           <button
             onClick={handleLoadMore}
-            className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-6 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
           >
             Load More
             <span className="text-xs text-slate-400">
@@ -429,7 +414,7 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
       {/* Confirmation Dialog */}
       {showConfirmDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card text-card-foreground mx-4 max-w-md rounded-xl border p-6 shadow-lg">
+          <div className="mx-4 max-w-md rounded-xl border bg-card p-6 text-card-foreground shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">Approve All Changes?</h3>
             <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
               This will approve all {activeChanges.length} pending changes
@@ -445,13 +430,13 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowConfirmDialog(false)}
-                className="focus-visible:ring-ring inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50"
+                className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmApproveAll}
-                className="focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Check size={14} /> Confirm Approve All
               </button>

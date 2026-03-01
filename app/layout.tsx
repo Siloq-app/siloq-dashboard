@@ -41,20 +41,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}>
-      <body
-        className="font-sans text-slate-200 antialiased"
-        suppressHydrationWarning
-      >
-        <AppProviders>
-          {children}
-        </AppProviders>
+    <html
+      lang="en"
+      className={`${dmSans.variable} ${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
+    >
+      <body className="font-sans text-slate-900 antialiased" suppressHydrationWarning>
+        <AppProviders>{children}</AppProviders>
         <Toaster position="top-right" richColors />
       </body>
     </html>

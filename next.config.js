@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   reactStrictMode: true,
   trailingSlash: false,
   eslint: {
@@ -10,24 +9,23 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   webpack: (config, { dev, isServer }) => {
-    // Fix for webpack cache issues
-    if (dev) {
-      config.cache = {
-        type: 'filesystem',
-        buildDependencies: {
-          config: [__filename],
-        },
-        maxMemoryGenerations: 1,
-        compression: false,
+    // Fix chunk loading issues
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
       };
     }
-    
-    // Handle file system issues
-    config.watchOptions = {
-      poll: 1000,
-      aggregateTimeout: 300,
-    };
-    
+
+    // Simplified webpack config to avoid module resolution issues
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+    }
+
     return config;
   },
 };

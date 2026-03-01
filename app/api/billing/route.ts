@@ -4,14 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  createStripeCustomer,
-  createSubscription,
-  cancelSubscription,
-  createSetupIntent,
-  createBillingPortalSession,
-  getSubscription,
-} from '@/lib/billing/stripe';
+import { createStripeCustomer, createSubscription, cancelSubscription } from '@/lib/billing/stripe';
 import {
   SubscriptionTier,
   ProjectAISettings,
@@ -33,10 +26,7 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get('projectId');
 
     if (!projectId) {
-      return NextResponse.json(
-        { error: 'Project ID required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Project ID required' }, { status: 400 });
     }
 
     let settings = projectSettings.get(projectId);
@@ -50,10 +40,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ settings });
   } catch (error) {
     console.error('Error fetching billing settings:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch billing settings' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch billing settings' }, { status: 500 });
   }
 }
 
@@ -66,18 +53,12 @@ export async function POST(request: NextRequest) {
     const { projectId, tier, email, name, paymentMethodId } = body;
 
     if (!projectId || !tier || !email) {
-      return NextResponse.json(
-        { error: 'Project ID, tier, and email required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Project ID, tier, and email required' }, { status: 400 });
     }
 
     // Validate tier
     if (!TIER_CONFIGS[tier as SubscriptionTier]) {
-      return NextResponse.json(
-        { error: 'Invalid subscription tier' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid subscription tier' }, { status: 400 });
     }
 
     // Create Stripe customer
@@ -105,11 +86,10 @@ export async function POST(request: NextRequest) {
       trialPagesUsed: 0,
       trialPagesLimit: 10,
       trialStartDate: tier === 'free_trial' ? new Date() : undefined,
-      trialEndDate: tier === 'free_trial' 
-        ? new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) 
-        : undefined,
+      trialEndDate:
+        tier === 'free_trial' ? new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) : undefined,
       automationMode: 'manual',
-      preauthLimitUsd: 10.00,
+      preauthLimitUsd: 10.0,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -119,16 +99,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       settings,
-      clientSecret: subscription 
-        ? (subscription.latest_invoice as any)?.payment_intent?.client_secret 
+      clientSecret: subscription
+        ? (subscription.latest_invoice as any)?.payment_intent?.client_secret
         : null,
     });
   } catch (error) {
     console.error('Error creating subscription:', error);
-    return NextResponse.json(
-      { error: 'Failed to create subscription' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create subscription' }, { status: 500 });
   }
 }
 
@@ -141,35 +118,32 @@ export async function PUT(request: NextRequest) {
     const { projectId, updates } = body;
 
     if (!projectId) {
-      return NextResponse.json(
-        { error: 'Project ID required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Project ID required' }, { status: 400 });
     }
 
     const existingSettings = projectSettings.get(projectId);
     if (!existingSettings) {
-      return NextResponse.json(
-        { error: 'Settings not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Settings not found' }, { status: 404 });
     }
 
     // Update allowed fields
     const allowedUpdates: Partial<ProjectAISettings> = {};
-    
+
     if (updates.billingMode && ['trial', 'byok', 'siloq_managed'].includes(updates.billingMode)) {
       allowedUpdates.billingMode = updates.billingMode as AIBillingMode;
     }
-    
-    if (updates.automationMode && ['manual', 'semi_auto', 'full_auto'].includes(updates.automationMode)) {
+
+    if (
+      updates.automationMode &&
+      ['manual', 'semi_auto', 'full_auto'].includes(updates.automationMode)
+    ) {
       allowedUpdates.automationMode = updates.automationMode as AutomationMode;
     }
-    
+
     if (updates.apiKeyEncrypted !== undefined) {
       allowedUpdates.apiKeyEncrypted = updates.apiKeyEncrypted;
     }
-    
+
     if (updates.preauthLimitUsd !== undefined) {
       allowedUpdates.preauthLimitUsd = updates.preauthLimitUsd;
     }
@@ -185,10 +159,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ settings: updatedSettings });
   } catch (error) {
     console.error('Error updating billing settings:', error);
-    return NextResponse.json(
-      { error: 'Failed to update billing settings' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update billing settings' }, { status: 500 });
   }
 }
 
@@ -201,18 +172,12 @@ export async function DELETE(request: NextRequest) {
     const projectId = searchParams.get('projectId');
 
     if (!projectId) {
-      return NextResponse.json(
-        { error: 'Project ID required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Project ID required' }, { status: 400 });
     }
 
     const settings = projectSettings.get(projectId);
     if (!settings?.stripeSubscriptionId) {
-      return NextResponse.json(
-        { error: 'No active subscription found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'No active subscription found' }, { status: 404 });
     }
 
     // Cancel in Stripe
@@ -229,9 +194,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true, settings });
   } catch (error) {
     console.error('Error canceling subscription:', error);
-    return NextResponse.json(
-      { error: 'Failed to cancel subscription' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 });
   }
 }

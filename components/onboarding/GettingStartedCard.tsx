@@ -26,6 +26,7 @@ export default function GettingStartedCard({ siteId, onNavigate }: GettingStarte
   useEffect(() => {
     const dismissKey = `siloq_onboarding_done_${siteId}`;
     if (localStorage.getItem(dismissKey)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDismissed(true);
       return;
     }
@@ -35,9 +36,12 @@ export default function GettingStartedCard({ siteId, onNavigate }: GettingStarte
     if (localStorage.getItem(analysisKey)) setFirstAnalysisDone(true);
 
     // Check business profile
-    entityProfileService.get(siteId).then(profile => {
-      setProfileComplete(!!(profile?.business_name));
-    }).catch(() => {});
+    entityProfileService
+      .get(siteId)
+      .then((profile) => {
+        setProfileComplete(!!profile?.business_name);
+      })
+      .catch(() => {});
   }, [siteId]);
 
   const steps: Step[] = [
@@ -65,13 +69,14 @@ export default function GettingStartedCard({ siteId, onNavigate }: GettingStarte
     },
   ];
 
-  const completedCount = steps.filter(s => s.done).length;
+  const completedCount = steps.filter((s) => s.done).length;
   const allDone = completedCount === steps.length;
 
   // Auto-dismiss when all steps done
   useEffect(() => {
     if (allDone) {
       localStorage.setItem(`siloq_onboarding_done_${siteId}`, '1');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDismissed(true);
     }
   }, [allDone, siteId]);
@@ -85,14 +90,16 @@ export default function GettingStartedCard({ siteId, onNavigate }: GettingStarte
 
   return (
     <div className="mb-4 rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5 shadow-sm">
-      <div className="flex items-start justify-between mb-3">
+      <div className="mb-3 flex items-start justify-between">
         <div>
           <h3 className="text-sm font-semibold text-indigo-900">🚀 Finish setting up Siloq</h3>
-          <p className="text-xs text-indigo-600 mt-0.5">{completedCount} of {steps.length} steps complete</p>
+          <p className="mt-0.5 text-xs text-indigo-600">
+            {completedCount} of {steps.length} steps complete
+          </p>
         </div>
         <button
           onClick={handleDismiss}
-          className="text-indigo-300 hover:text-indigo-500 transition-colors"
+          className="text-indigo-300 transition-colors hover:text-indigo-500"
           title="Dismiss"
         >
           <X className="h-4 w-4" />
@@ -100,15 +107,15 @@ export default function GettingStartedCard({ siteId, onNavigate }: GettingStarte
       </div>
 
       {/* Progress bar */}
-      <div className="w-full bg-indigo-100 rounded-full h-1.5 mb-4">
+      <div className="mb-4 h-1.5 w-full rounded-full bg-indigo-100">
         <div
-          className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500"
+          className="h-1.5 rounded-full bg-indigo-500 transition-all duration-500"
           style={{ width: `${(completedCount / steps.length) * 100}%` }}
         />
       </div>
 
       <div className="space-y-2.5">
-        {steps.map(step => (
+        {steps.map((step) => (
           <div key={step.id} className="flex items-start gap-3">
             <div className="mt-0.5 flex-shrink-0">
               {step.done ? (
@@ -117,18 +124,18 @@ export default function GettingStartedCard({ siteId, onNavigate }: GettingStarte
                 <Circle className="h-4 w-4 text-indigo-200" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium ${step.done ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+            <div className="min-w-0 flex-1">
+              <p
+                className={`text-sm font-medium ${step.done ? 'text-slate-400 line-through' : 'text-slate-800'}`}
+              >
                 {step.label}
               </p>
-              {!step.done && (
-                <p className="text-xs text-slate-500 mt-0.5">{step.description}</p>
-              )}
+              {!step.done && <p className="mt-0.5 text-xs text-slate-500">{step.description}</p>}
             </div>
             {!step.done && step.action && (
               <button
                 onClick={step.action}
-                className="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                className="flex flex-shrink-0 items-center gap-1 text-xs font-medium text-indigo-600 transition-colors hover:text-indigo-800"
               >
                 {step.cta}
                 <ChevronRight className="h-3 w-3" />

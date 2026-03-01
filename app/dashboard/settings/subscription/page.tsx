@@ -15,7 +15,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardProvider } from '@/lib/hooks/dashboard-context';
 import Header from '@/app/dashboard/header';
-import { fetchWithAuth } from '@/lib/auth-headers';
+import { fetchWithAuth } from '@/lib/auth';
 
 export default function SubscriptionPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +36,8 @@ export default function SubscriptionPage() {
         if (res.ok) {
           const data = await res.json();
           if (data.tier) setCurrentTier(data.tier);
-          if (data.billing_mode || data.billingMode) setBillingMode(data.billing_mode || data.billingMode);
+          if (data.billing_mode || data.billingMode)
+            setBillingMode(data.billing_mode || data.billingMode);
           const tpu = data.trial_pages_used ?? data.trialPagesUsed;
           const tpl = data.trial_pages_limit ?? data.trialPagesLimit;
           if (tpu !== undefined) setTrialPagesUsed(tpu);
@@ -105,88 +106,89 @@ export default function SubscriptionPage() {
 
   return (
     <DashboardProvider>
-    <SidebarProvider>
-      <Suspense fallback={null}>
-        <AppSidebar />
-      </Suspense>
-      <SidebarInset>
-        <Header
-          automationMode="manual"
-          onAutomationChange={() => {}}
-          activeTab="settings"
-        />
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <div className="flex-1 p-4">
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-3">
-                  <CreditCard className="h-5 w-5" />
-                  Subscription & Billing
-                </h1>
-                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                  Manage your subscription tier, AI billing preferences, and view usage.
-                </p>
-              </div>
-
-              {(isLoading || isFetching) && (
-                <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                    <span>{isFetching ? 'Loading...' : 'Processing...'}</span>
-                  </div>
+      <SidebarProvider>
+        <Suspense fallback={null}>
+          <AppSidebar />
+        </Suspense>
+        <SidebarInset>
+          <Header automationMode="manual" onAutomationChange={() => {}} activeTab="settings" />
+          <div className="flex flex-1 flex-col gap-4 p-4">
+            <div className="flex-1 p-4">
+              <div className="space-y-6">
+                <div>
+                  <h1 className="flex items-center gap-3 text-xl font-semibold text-slate-900 dark:text-slate-100">
+                    <CreditCard className="h-5 w-5" />
+                    Subscription & Billing
+                  </h1>
+                  <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                    Manage your subscription tier, AI billing preferences, and view usage.
+                  </p>
                 </div>
-              )}
 
-              <SubscriptionManager
-                currentTier={currentTier}
-                billingMode={billingMode}
-                trialPagesUsed={trialPagesUsed}
-                trialPagesLimit={trialPagesLimit}
-                sitesCount={sitesCount}
-                silosCount={silosCount}
-                onUpgrade={handleUpgrade}
-                onChangeBillingMode={handleChangeBillingMode}
-              />
+                {(isLoading || isFetching) && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span>{isFetching ? 'Loading...' : 'Processing...'}</span>
+                    </div>
+                  </div>
+                )}
 
-              <Separator />
+                <SubscriptionManager
+                  currentTier={currentTier}
+                  billingMode={billingMode}
+                  trialPagesUsed={trialPagesUsed}
+                  trialPagesLimit={trialPagesLimit}
+                  sitesCount={sitesCount}
+                  silosCount={silosCount}
+                  onUpgrade={handleUpgrade}
+                  onChangeBillingMode={handleChangeBillingMode}
+                />
 
-              <Separator />
+                <Separator />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">Billing Portal</CardTitle>
-                  <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
-                    Manage your payment methods, view invoices, and update billing information.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const res = await fetchWithAuth('/api/v1/billing/portal/create_session/', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ returnUrl: window.location.href }),
-                        });
-                        if (res.ok) {
-                          const data = await res.json();
-                          if (data.url) window.location.href = data.url;
+                <Separator />
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Billing Portal
+                    </CardTitle>
+                    <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
+                      Manage your payment methods, view invoices, and update billing information.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetchWithAuth(
+                            '/api/v1/billing/portal/create_session/',
+                            {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ returnUrl: window.location.href }),
+                            }
+                          );
+                          if (res.ok) {
+                            const data = await res.json();
+                            if (data.url) window.location.href = data.url;
+                          }
+                        } catch (err) {
+                          console.error('Portal error:', err);
                         }
-                      } catch (err) {
-                        console.error('Portal error:', err);
-                      }
-                    }}
-                    className="inline-flex w-full sm:w-auto items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                  >
-                    Open Billing Portal
-                  </button>
-                </CardContent>
-              </Card>
+                      }}
+                      className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+                    >
+                      Open Billing Portal
+                    </button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
     </DashboardProvider>
   );
 }

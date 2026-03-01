@@ -43,7 +43,11 @@ interface CannibalizationModalProps {
   analysisResults?: AnalysisResults | null;
 }
 
-export default function CannibalizationModal({ pageIds, onClose, analysisResults }: CannibalizationModalProps) {
+export default function CannibalizationModal({
+  pageIds,
+  onClose,
+  analysisResults,
+}: CannibalizationModalProps) {
   const [step, setStep] = useState<'analyzing' | 'results' | 'recommendations'>(
     analysisResults ? 'results' : 'analyzing'
   );
@@ -76,7 +80,7 @@ export default function CannibalizationModal({ pageIds, onClose, analysisResults
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[800px] max-h-[90vh] overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+        className="max-h-[90vh] w-full max-w-[800px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -89,9 +93,7 @@ export default function CannibalizationModal({ pageIds, onClose, analysisResults
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Cannibalization Analysis
               </h2>
-              <p className="text-sm text-slate-500">
-                Analyzing {pageIds.length} selected pages
-              </p>
+              <p className="text-sm text-slate-500">Analyzing {pageIds.length} selected pages</p>
             </div>
           </div>
           <button
@@ -115,7 +117,9 @@ export default function CannibalizationModal({ pageIds, onClose, analysisResults
         {step === 'results' && !hasResults && (
           <div className="py-12 text-center">
             <CheckCircle className="mx-auto mb-4 h-12 w-12 text-emerald-500" />
-            <p className="text-lg font-medium text-slate-900 dark:text-slate-100">No competing pages detected</p>
+            <p className="text-lg font-medium text-slate-900 dark:text-slate-100">
+              No competing pages detected
+            </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               The selected pages don&apos;t appear to be competing for the same keywords.
             </p>
@@ -131,16 +135,14 @@ export default function CannibalizationModal({ pageIds, onClose, analysisResults
           <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-3 gap-4">
-              <Card className="bg-red-50 border-red-200">
+              <Card className="border-red-200 bg-red-50">
                 <CardContent className="p-4 text-center">
                   <AlertTriangle className="mx-auto mb-2 h-6 w-6 text-red-600" />
-                  <p className="text-2xl font-bold text-red-700">
-                    {analysisResults!.issuesFound}
-                  </p>
+                  <p className="text-2xl font-bold text-red-700">{analysisResults!.issuesFound}</p>
                   <p className="text-xs text-red-600">Issues Found</p>
                 </CardContent>
               </Card>
-              <Card className="bg-amber-50 border-amber-200">
+              <Card className="border-amber-200 bg-amber-50">
                 <CardContent className="p-4 text-center">
                   <Target className="mx-auto mb-2 h-6 w-6 text-amber-600" />
                   <p className="text-2xl font-bold text-amber-700">
@@ -149,7 +151,7 @@ export default function CannibalizationModal({ pageIds, onClose, analysisResults
                   <p className="text-xs text-amber-600">Competing Keywords</p>
                 </CardContent>
               </Card>
-              <Card className="bg-indigo-50 border-indigo-200">
+              <Card className="border-indigo-200 bg-indigo-50">
                 <CardContent className="p-4 text-center">
                   <CheckCircle className="mx-auto mb-2 h-6 w-6 text-indigo-600" />
                   <p className="text-2xl font-bold text-indigo-700">
@@ -171,9 +173,7 @@ export default function CannibalizationModal({ pageIds, onClose, analysisResults
                     <CardContent className="p-4">
                       <div className="mb-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Badge
-                            variant={issue.severity === 'high' ? 'destructive' : 'default'}
-                          >
+                          <Badge variant={issue.severity === 'high' ? 'destructive' : 'default'}>
                             {issue.severity.toUpperCase()}
                           </Badge>
                           <span className="font-medium text-slate-900">
@@ -191,15 +191,12 @@ export default function CannibalizationModal({ pageIds, onClose, analysisResults
                             className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
                           >
                             <span className="text-slate-700">{page.title}</span>
-                            <span className="text-slate-500">
-                              {page.traffic} visits/mo
-                            </span>
+                            <span className="text-slate-500">{page.traffic} visits/mo</span>
                           </div>
                         ))}
                       </div>
                       <p className="mt-3 text-sm text-slate-600">
-                        <span className="font-medium">Recommendation:</span>{' '}
-                        {issue.recommendation}
+                        <span className="font-medium">Recommendation:</span> {issue.recommendation}
                       </p>
                     </CardContent>
                   </Card>
@@ -224,28 +221,20 @@ export default function CannibalizationModal({ pageIds, onClose, analysisResults
 
         {step === 'recommendations' && hasResults && (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Recommended Actions
-            </h3>
+            <h3 className="text-sm font-semibold text-slate-900">Recommended Actions</h3>
             <div className="space-y-3">
               {analysisResults!.recommendations.map((rec) => (
                 <Card
                   key={rec.id}
                   className={`overflow-hidden transition-colors ${
-                    selectedRecommendation === rec.id
-                      ? 'ring-2 ring-indigo-500'
-                      : ''
+                    selectedRecommendation === rec.id ? 'ring-2 ring-indigo-500' : ''
                   }`}
                 >
                   <CardContent className="p-4">
                     <div className="mb-3 flex items-start justify-between">
                       <div>
                         <div className="mb-1 flex items-center gap-2">
-                          <Badge
-                            variant={
-                              rec.impact === 'High' ? 'destructive' : 'default'
-                            }
-                          >
+                          <Badge variant={rec.impact === 'High' ? 'destructive' : 'default'}>
                             {rec.impact} Impact
                           </Badge>
                           <Badge variant="outline">{rec.effort} Effort</Badge>

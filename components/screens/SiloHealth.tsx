@@ -15,12 +15,9 @@ function getScoreColor(score: number): string {
 }
 
 function getScoreLabel(score: number, conflictCount: number): string {
-  if (score === 100)
-    return '🟢 No competing pages detected. Your site structure looks clean!';
-  if (score >= 80)
-    return `🟢 Minor issues detected. ${conflictCount} low-severity conflicts.`;
-  if (score >= 60)
-    return `🟡 Moderate issues. ${conflictCount} conflicts need attention.`;
+  if (score === 100) return '🟢 No competing pages detected. Your site structure looks clean!';
+  if (score >= 80) return `🟢 Minor issues detected. ${conflictCount} low-severity conflicts.`;
+  if (score >= 60) return `🟡 Moderate issues. ${conflictCount} conflicts need attention.`;
   if (score >= 40)
     return `🟠 Significant cannibalization detected. ${conflictCount} conflicts impacting rankings.`;
   return `🔴 Critical. ${conflictCount} conflicts are actively hurting your search performance.`;
@@ -53,7 +50,7 @@ export default function SiloHealth() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+        <Loader2 className="mb-4 h-8 w-8 animate-spin text-muted-foreground" />
         <p className="text-sm text-muted-foreground">Calculating content health scores...</p>
       </div>
     );
@@ -62,9 +59,11 @@ export default function SiloHealth() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <AlertTriangle className="h-8 w-8 text-amber-500 mb-4" />
+        <AlertTriangle className="mb-4 h-8 w-8 text-amber-500" />
         <p className="text-sm text-muted-foreground">{error}</p>
-        <Button variant="outline" className="mt-4" onClick={load}>Retry</Button>
+        <Button variant="outline" className="mt-4" onClick={load}>
+          Retry
+        </Button>
       </div>
     );
   }
@@ -72,9 +71,9 @@ export default function SiloHealth() {
   if (silos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <span className="text-4xl mb-4">📊</span>
-        <h3 className="text-lg font-semibold mb-2">No silos configured yet</h3>
-        <p className="text-sm text-muted-foreground max-w-md">
+        <span className="mb-4 text-4xl">📊</span>
+        <h3 className="mb-2 text-lg font-semibold">No silos configured yet</h3>
+        <p className="max-w-md text-sm text-muted-foreground">
           Silo health scores will appear once your site structure is analyzed.
         </p>
       </div>
@@ -82,9 +81,10 @@ export default function SiloHealth() {
   }
 
   // Overall score
-  const overallScore = silos.length > 0
-    ? Math.round(silos.reduce((s, si) => s + si.health_score, 0) / silos.length)
-    : 0;
+  const overallScore =
+    silos.length > 0
+      ? Math.round(silos.reduce((s, si) => s + si.health_score, 0) / silos.length)
+      : 0;
   const totalConflicts = silos.reduce((s, si) => s + si.conflict_count, 0);
 
   return (
@@ -94,11 +94,15 @@ export default function SiloHealth() {
         <div className="flex items-center gap-6">
           <div className="relative h-20 w-20 shrink-0">
             <svg viewBox="0 0 100 100" className="-rotate-90">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(148,163,184,0.1)" strokeWidth="8" />
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#94A3B81A" strokeWidth="8" />
               <circle
-                cx="50" cy="50" r="45" fill="none"
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
                 stroke={getScoreColor(overallScore)}
-                strokeWidth="8" strokeLinecap="round"
+                strokeWidth="8"
+                strokeLinecap="round"
                 strokeDasharray={`${overallScore * 2.83} 283`}
               />
             </svg>
@@ -108,12 +112,14 @@ export default function SiloHealth() {
             </div>
           </div>
           <div>
-            <h2 className="text-lg font-semibold mb-1">Silo Health: {overallScore}</h2>
+            <h2 className="mb-1 text-lg font-semibold">Silo Health: {overallScore}</h2>
             <p className="text-sm text-muted-foreground">
               {getScoreLabel(overallScore, totalConflicts)}
             </p>
             {overallScore < 40 && (
-              <Button size="sm" variant="outline" className="mt-2">Review Plan →</Button>
+              <Button size="sm" variant="outline" className="mt-2">
+                Review Plan →
+              </Button>
             )}
           </div>
         </div>
@@ -123,8 +129,8 @@ export default function SiloHealth() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {silos.map((silo) => (
           <Card key={silo.id} className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold truncate">{silo.name}</h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="truncate text-sm font-semibold">{silo.name}</h3>
               <span
                 className="text-lg font-bold tabular-nums"
                 style={{ color: getScoreColor(silo.health_score) }}
@@ -132,7 +138,7 @@ export default function SiloHealth() {
                 {silo.health_score}
               </span>
             </div>
-            <div className="h-2 rounded-full bg-muted overflow-hidden mb-3">
+            <div className="mb-3 h-2 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
@@ -145,7 +151,7 @@ export default function SiloHealth() {
               <span>{silo.page_count} pages</span>
               <span>{silo.keyword_count} keywords</span>
               {silo.conflict_count > 0 && (
-                <span className="text-amber-600 font-medium">{silo.conflict_count} conflicts</span>
+                <span className="font-medium text-amber-600">{silo.conflict_count} conflicts</span>
               )}
             </div>
           </Card>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AUTH_ENDPOINTS } from '@/lib/backend-api';
+import { AUTH_ENDPOINTS } from '@/lib/backend';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,10 +7,7 @@ export async function POST(request: NextRequest) {
     const token = authHeader?.replace(/^Bearer\s+/i, '');
 
     if (!token) {
-      return NextResponse.json(
-        { message: 'Logged out successfully' },
-        { status: 200 }
-      );
+      return NextResponse.json({ message: 'Logged out successfully' }, { status: 200 });
     }
 
     const res = await fetch(AUTH_ENDPOINTS.logout(), {
@@ -36,9 +33,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Logout proxy error:', error);
-    return NextResponse.json(
-      { message: 'Logged out successfully' },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: 'Logged out successfully' }, { status: 200 });
   }
 }

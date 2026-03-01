@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SITES_ENDPOINTS } from '@/lib/backend-api';
+import { SITES_ENDPOINTS } from '@/lib/backend';
 
 function getAuthHeader(request: NextRequest): string | null {
   return request.headers.get('authorization');
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = getAuthHeader(request);
   if (!auth) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
@@ -33,9 +30,6 @@ export async function GET(
     return NextResponse.json(data);
   } catch (e) {
     console.error('Pages analysis proxy error:', e);
-    return NextResponse.json(
-      { message: 'Unable to reach backend' },
-      { status: 502 }
-    );
+    return NextResponse.json({ message: 'Unable to reach backend' }, { status: 502 });
   }
 }

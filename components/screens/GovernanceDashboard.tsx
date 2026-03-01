@@ -2,35 +2,25 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  AlertTriangle,
-  Zap,
-  ArrowRight,
-  ExternalLink,
-  Filter,
-  RefreshCw,
-  Eye,
-  EyeOff,
-  Loader2,
-  CheckCircle2,
-} from 'lucide-react';
+  ExclamationTriangleIcon,
+  BoltIcon,
+  ArrowRightIcon,
+  ArrowTopRightOnSquareIcon,
+  FunnelIcon,
+  ArrowPathIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  ArrowPathIcon as SpinnerIcon,
+  CheckCircleIcon,
+} from '@heroicons/react/24/outline';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Checkbox } from '../ui/checkbox';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '../ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
-import {
-  conflictsService,
-  redirectsService,
-  type ConflictResponse,
-} from '@/lib/services/api';
+import { conflictsService, redirectsService, type ConflictResponse } from '@/lib/services/api';
 import type { Conflict } from '@/app/dashboard/types';
 import { toast } from 'sonner';
 
@@ -52,11 +42,16 @@ const SEVERITY_EMOJI: Record<string, string> = {
 };
 
 const SEVERITY_HEADLINES: Record<string, (keyword: string, count: number) => string> = {
-  critical: (kw, n) => `Active cannibalization confirmed — "${kw}"\n${n} pages are splitting clicks and rankings for this keyword.`,
-  high: (kw, n) => `Strong keyword competition — "${kw}"\n${n} pages have significant overlap with measurable search visibility.`,
-  medium: (kw, n) => `Moderate overlap detected — "${kw}"\n${n} pages share keyword signals. Monitor and consider differentiation.`,
-  low: (kw, n) => `Minor similarity — "${kw}"\n${n} pages have some keyword overlap. Informational only.`,
-  info: (kw, n) => `Cosmetic similarity — "${kw}"\n${n} pages share surface-level attributes but likely don't compete in search.`,
+  critical: (kw, n) =>
+    `Active cannibalization confirmed — "${kw}"\n${n} pages are splitting clicks and rankings for this keyword.`,
+  high: (kw, n) =>
+    `Strong keyword competition — "${kw}"\n${n} pages have significant overlap with measurable search visibility.`,
+  medium: (kw, n) =>
+    `Moderate overlap detected — "${kw}"\n${n} pages share keyword signals. Monitor and consider differentiation.`,
+  low: (kw, n) =>
+    `Minor similarity — "${kw}"\n${n} pages have some keyword overlap. Informational only.`,
+  info: (kw, n) =>
+    `Cosmetic similarity — "${kw}"\n${n} pages share surface-level attributes but likely don't compete in search.`,
 };
 
 interface Props {
@@ -84,11 +79,11 @@ export default function GovernanceDashboard({
   const [error, setError] = useState<string | null>(null);
   const [hasScanned, setHasScanned] = useState(true);
 
-  // Filter states
+  // FunnelIcon states
   const [hideNoindex, setHideNoindex] = useState(true);
   const [hideResolved, setHideResolved] = useState(true);
   const [showOnlyWithImpressions, setShowOnlyWithImpressions] = useState(false);
-  
+
   // Bug fix: Local dismissed list for live-detected conflicts
   const [dismissedKeywords, setDismissedKeywords] = useState<Set<string>>(new Set());
 
@@ -124,23 +119,23 @@ export default function GovernanceDashboard({
   }, [loadConflicts]);
 
   // Apply filters
-  const noindexCount = conflicts.filter(c =>
-    c.pages?.some(p => p.is_noindex)
-  ).length;
-  const resolvedCount = conflicts.filter(c => c.status === 'resolved').length;
+  const noindexCount = conflicts.filter((c) => c.pages?.some((p) => p.is_noindex)).length;
+  const resolvedCount = conflicts.filter((c) => c.status === 'resolved').length;
 
-  const filteredConflicts = conflicts.filter(c => {
-    if (hideNoindex && c.pages?.every(p => p.is_noindex)) return false;
+  const filteredConflicts = conflicts.filter((c) => {
+    if (hideNoindex && c.pages?.every((p) => p.is_noindex)) return false;
     if (hideResolved && c.status === 'resolved') return false;
     if (showOnlyWithImpressions && c.total_impressions <= 0) return false;
     if (c.status === 'dismissed') return false;
-    // Bug fix: Filter out locally dismissed conflicts (by keyword)
+    // Bug fix: FunnelIcon out locally dismissed conflicts (by keyword)
     if (dismissedKeywords.has(c.keyword)) return false;
     return true;
   });
 
-  const activeConflicts = filteredConflicts.filter(c => c.status === 'active');
-  const allResolved = conflicts.length > 0 && conflicts.every(c => c.status === 'resolved' || c.status === 'dismissed');
+  const activeConflicts = filteredConflicts.filter((c) => c.status === 'active');
+  const allResolved =
+    conflicts.length > 0 &&
+    conflicts.every((c) => c.status === 'resolved' || c.status === 'dismissed');
 
   // Differentiation modal state
   const [differentiationModal, setDifferentiationModal] = useState<{
@@ -181,30 +176,31 @@ export default function GovernanceDashboard({
 
     try {
       const result = await conflictsService.differentiate(selectedSite!.id, {
-        pages: conflict.pages?.map(p => ({
-          url: p.url,
-          title: p.title,
-        })) || [],
+        pages:
+          conflict.pages?.map((p) => ({
+            url: p.url,
+            title: p.title,
+          })) || [],
         keyword: conflict.keyword,
         conflict_type: conflict.conflict_type,
       });
 
       // Enrich with current values for comparison
-      const enriched = result.recommendations.map(rec => ({
+      const enriched = result.recommendations.map((rec) => ({
         ...rec,
-        current_title: conflict.pages?.find(p => p.url === rec.url)?.title || '',
+        current_title: conflict.pages?.find((p) => p.url === rec.url)?.title || '',
         current_meta: '',
       }));
 
-      setDifferentiationModal(prev => ({
+      setDifferentiationModal((prev) => ({
         ...prev,
         loading: false,
         recommendations: enriched,
-        selectedPages: new Set(enriched.map(r => r.url)),
+        selectedPages: new Set(enriched.map((r) => r.url)),
       }));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to generate recommendations');
-      setDifferentiationModal(prev => ({ ...prev, open: false, loading: false }));
+      setDifferentiationModal((prev) => ({ ...prev, open: false, loading: false }));
     }
   };
 
@@ -213,8 +209,8 @@ export default function GovernanceDashboard({
     if (!recommendations || !selectedSite) return;
 
     const changes = recommendations
-      .filter(rec => selectedPages.has(rec.url))
-      .map(rec => ({
+      .filter((rec) => selectedPages.has(rec.url))
+      .map((rec) => ({
         page_id: rec.page_id,
         url: rec.url,
         new_title: rec.new_title,
@@ -228,11 +224,11 @@ export default function GovernanceDashboard({
       return;
     }
 
-    setDifferentiationModal(prev => ({ ...prev, loading: true }));
+    setDifferentiationModal((prev) => ({ ...prev, loading: true }));
 
     try {
       const result = await conflictsService.applyDifferentiation(selectedSite.id, changes);
-      
+
       if (result.successful > 0) {
         toast.success(`Successfully updated ${result.successful} page(s)`);
       }
@@ -251,12 +247,12 @@ export default function GovernanceDashboard({
       loadConflicts();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to apply changes');
-      setDifferentiationModal(prev => ({ ...prev, loading: false }));
+      setDifferentiationModal((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const togglePageSelection = (url: string) => {
-    setDifferentiationModal(prev => {
+    setDifferentiationModal((prev) => {
       const newSelected = new Set(prev.selectedPages);
       if (newSelected.has(url)) {
         newSelected.delete(url);
@@ -267,10 +263,14 @@ export default function GovernanceDashboard({
     });
   };
 
-  const updateRecommendation = (url: string, field: 'new_title' | 'new_meta_description' | 'new_slug', value: string) => {
-    setDifferentiationModal(prev => {
+  const updateRecommendation = (
+    url: string,
+    field: 'new_title' | 'new_meta_description' | 'new_slug',
+    value: string
+  ) => {
+    setDifferentiationModal((prev) => {
       if (!prev.recommendations) return prev;
-      const updated = prev.recommendations.map(rec =>
+      const updated = prev.recommendations.map((rec) =>
         rec.url === url ? { ...rec, [field]: value } : rec
       );
       return { ...prev, recommendations: updated };
@@ -280,21 +280,20 @@ export default function GovernanceDashboard({
   const handleRedirect = (conflict: Conflict) => {
     // Set up modal state
     setSelectedConflict(conflict);
-    
+
     // Auto-select winner (highest impressions page)
     const pages = conflict.pages || [];
-    const winnerPage = pages.reduce((best, current) => 
-      (current.impressions || 0) > (best.impressions || 0) ? current : best
-    , pages[0]);
-    
+    const winnerPage = pages.reduce(
+      (best, current) => ((current.impressions || 0) > (best.impressions || 0) ? current : best),
+      pages[0]
+    );
+
     setWinnerUrl(winnerPage?.url || '');
-    
+
     // Pre-select all losing pages
-    const losingUrls = pages
-      .filter(p => p.url !== winnerPage?.url)
-      .map(p => p.url);
+    const losingUrls = pages.filter((p) => p.url !== winnerPage?.url).map((p) => p.url);
     setSelectedLosers(new Set(losingUrls));
-    
+
     setRedirectModalOpen(true);
   };
 
@@ -307,7 +306,7 @@ export default function GovernanceDashboard({
     setIsCreatingRedirects(true);
 
     try {
-      const redirectPromises = Array.from(selectedLosers).map(loserUrl =>
+      const redirectPromises = Array.from(selectedLosers).map((loserUrl) =>
         redirectsService.create(selectedSite.id, {
           from_url: loserUrl,
           to_url: winnerUrl,
@@ -324,8 +323,8 @@ export default function GovernanceDashboard({
       );
 
       // Remove the conflict from the displayed list
-      setConflicts(prev => prev.filter(c => c.keyword !== selectedConflict.keyword));
-      
+      setConflicts((prev) => prev.filter((c) => c.keyword !== selectedConflict.keyword));
+
       setRedirectModalOpen(false);
       setSelectedConflict(null);
       setWinnerUrl('');
@@ -343,7 +342,7 @@ export default function GovernanceDashboard({
       (conflict.total_impressions === 0 && conflict.total_clicks === 0);
 
     // Add keyword to dismissed list immediately for responsive UI
-    setDismissedKeywords(prev => new Set(prev).add(conflict.keyword));
+    setDismissedKeywords((prev) => new Set(prev).add(conflict.keyword));
 
     // Call the appropriate API endpoint (gracefully ignore failures)
     try {
@@ -367,7 +366,9 @@ export default function GovernanceDashboard({
   if (!selectedSite) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <p className="text-sm text-muted-foreground">Select a site to view governance data and conflict detection.</p>
+        <p className="text-sm text-muted-foreground">
+          Select a site to view governance data and conflict detection.
+        </p>
       </div>
     );
   }
@@ -376,7 +377,7 @@ export default function GovernanceDashboard({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+        <SpinnerIcon className="mb-4 h-8 w-8 animate-spin text-muted-foreground" />
         <p className="text-sm text-muted-foreground">Analyzing your site structure...</p>
       </div>
     );
@@ -386,8 +387,9 @@ export default function GovernanceDashboard({
   if (error === 'gsc_not_connected') {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <p className="text-sm text-muted-foreground mb-4">
-          Google Search Console is not connected. Connect GSC to enable impression-weighted scoring and conflict detection.
+        <p className="mb-4 text-sm text-muted-foreground">
+          Google Search Console is not connected. Connect GSC to enable impression-weighted scoring
+          and conflict detection.
         </p>
         <Button variant="outline">Connect GSC →</Button>
       </div>
@@ -398,10 +400,10 @@ export default function GovernanceDashboard({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <AlertTriangle className="h-8 w-8 text-amber-500 mb-4" />
+        <ExclamationTriangleIcon className="mb-4 h-8 w-8 text-amber-500" />
         <p className="text-sm text-muted-foreground">{error}</p>
         <Button variant="outline" className="mt-4" onClick={loadConflicts}>
-          <RefreshCw className="h-4 w-4 mr-2" /> Retry
+          <ArrowPathIcon className="mr-2 h-4 w-4" /> Retry
         </Button>
       </div>
     );
@@ -409,419 +411,470 @@ export default function GovernanceDashboard({
 
   return (
     <>
-      <div className="space-y-6">
-        {/* Filter toggles */}
-        <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Filters:</span>
+      <div className="space-y-4 sm:space-y-6">
+        {/* FunnelIcon toggles */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
+            <FunnelIcon className="h-4 w-4 text-muted-foreground" />
+            <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
+              FunnelIcons:
+            </span>
+          </div>
+
+          <FunnelIconToggle
+            label="Hide noindex"
+            checked={hideNoindex}
+            onChange={setHideNoindex}
+            badge={hideNoindex && noindexCount > 0 ? `${noindexCount}` : undefined}
+          />
+          <FunnelIconToggle
+            label="Hide resolved"
+            checked={hideResolved}
+            onChange={setHideResolved}
+            badge={hideResolved && resolvedCount > 0 ? `${resolvedCount}` : undefined}
+          />
+          <FunnelIconToggle
+            label="With impressions"
+            checked={showOnlyWithImpressions}
+            onChange={setShowOnlyWithImpressions}
+          />
+
+          <Button variant="ghost" size="sm" onClick={loadConflicts}>
+            <ArrowPathIcon className="h-4 w-4" />
+            <span className="ml-2 hidden sm:inline">Refresh</span>
+          </Button>
         </div>
 
-        <FilterToggle
-          label="Hide noindex pages"
-          checked={hideNoindex}
-          onChange={setHideNoindex}
-          badge={hideNoindex && noindexCount > 0 ? `${noindexCount} noindex pages hidden` : undefined}
-        />
-        <FilterToggle
-          label="Hide resolved redirects"
-          checked={hideResolved}
-          onChange={setHideResolved}
-          badge={hideResolved && resolvedCount > 0 ? `${resolvedCount} redirected pages hidden` : undefined}
-        />
-        <FilterToggle
-          label="Show only pages with impressions"
-          checked={showOnlyWithImpressions}
-          onChange={setShowOnlyWithImpressions}
-        />
+        {/* Empty states */}
+        {!hasScanned ? (
+          <EmptyState
+            icon="⏳"
+            title="Scan in progress..."
+            message="Siloq is analyzing your site for competing pages. This typically takes 2-5 minutes depending on site size."
+          />
+        ) : allResolved ? (
+          <EmptyState
+            icon="✅"
+            title="All conflicts resolved!"
+            message="You've addressed every competing page issue. Siloq will alert you if new conflicts appear."
+          />
+        ) : filteredConflicts.length === 0 ? (
+          <EmptyState
+            icon="🎉"
+            title="No competing pages detected."
+            message="Your site structure looks clean! Siloq will continue monitoring for new conflicts."
+          />
+        ) : (
+          /* Conflict cards */
+          <div className="space-y-3 sm:space-y-4">
+            {filteredConflicts.map((conflict) => (
+              <ConflictCard
+                key={conflict.id}
+                conflict={conflict}
+                onDifferentiate={handleDifferentiate}
+                onRedirect={handleRedirect}
+                onDismiss={handleDismiss}
+              />
+            ))}
+          </div>
+        )}
 
-        <Button variant="ghost" size="sm" onClick={loadConflicts}>
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-      </div>
+        {/* Redirect Resolution Modal */}
+        <Sheet open={redirectModalOpen} onOpenChange={setRedirectModalOpen}>
+          <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+            <SheetHeader>
+              <SheetTitle>Redirect Loser → Winner</SheetTitle>
+              <SheetDescription>
+                Create 301 redirects from losing pages to the winning page. This will be pushed to
+                WordPress automatically.
+              </SheetDescription>
+            </SheetHeader>
 
-      {/* Empty states */}
-      {!hasScanned ? (
-        <EmptyState
-          icon="⏳"
-          title="Scan in progress..."
-          message="Siloq is analyzing your site for competing pages. This typically takes 2-5 minutes depending on site size."
-        />
-      ) : allResolved ? (
-        <EmptyState
-          icon="✅"
-          title="All conflicts resolved!"
-          message="You've addressed every competing page issue. Siloq will alert you if new conflicts appear."
-        />
-      ) : filteredConflicts.length === 0 ? (
-        <EmptyState
-          icon="🎉"
-          title="No competing pages detected."
-          message="Your site structure looks clean! Siloq will continue monitoring for new conflicts."
-        />
-      ) : (
-        /* Conflict cards */
-        <div className="space-y-4">
-          {filteredConflicts.map((conflict) => (
-            <ConflictCard
-              key={conflict.id}
-              conflict={conflict}
-              onDifferentiate={handleDifferentiate}
-              onRedirect={handleRedirect}
-              onDismiss={handleDismiss}
-            />
-          ))}
-        </div>
-      )}
+            {selectedConflict && (
+              <div className="mt-6 space-y-6">
+                {/* Competing Pages */}
+                <div>
+                  <Label className="mb-3 block text-sm font-semibold">Competing Pages</Label>
+                  <div className="space-y-3">
+                    {selectedConflict.pages?.map((page, i) => {
+                      const isWinner = page.url === winnerUrl;
+                      const isSelected = selectedLosers.has(page.url);
 
-      {/* Redirect Resolution Modal */}
-      <Sheet open={redirectModalOpen} onOpenChange={setRedirectModalOpen}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Redirect Loser → Winner</SheetTitle>
-            <SheetDescription>
-              Create 301 redirects from losing pages to the winning page. This will be pushed to WordPress automatically.
-            </SheetDescription>
-          </SheetHeader>
-
-          {selectedConflict && (
-            <div className="space-y-6 mt-6">
-              {/* Competing Pages */}
-              <div>
-                <Label className="text-sm font-semibold mb-3 block">Competing Pages</Label>
-                <div className="space-y-3">
-                  {selectedConflict.pages?.map((page, i) => {
-                    const isWinner = page.url === winnerUrl;
-                    const isSelected = selectedLosers.has(page.url);
-
-                    return (
-                      <div
-                        key={i}
-                        className={`rounded-lg border p-4 ${
-                          isWinner
-                            ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950'
-                            : 'border-border bg-muted/30'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          {/* Winner/Loser selection */}
-                          <div className="flex flex-col items-center gap-2 pt-1">
-                            <input
-                              type="radio"
-                              name="winner"
-                              checked={isWinner}
-                              onChange={() => {
-                                setWinnerUrl(page.url);
-                                // Remove from losers if it was selected
-                                setSelectedLosers(prev => {
-                                  const next = new Set(prev);
-                                  next.delete(page.url);
-                                  return next;
-                                });
-                              }}
-                              className="w-4 h-4 cursor-pointer"
-                            />
-                            {!isWinner && (
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={(checked) => {
-                                  setSelectedLosers(prev => {
+                      return (
+                        <div
+                          key={i}
+                          className={`rounded-lg border p-4 ${
+                            isWinner
+                              ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950'
+                              : 'border-border bg-muted/30'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Winner/Loser selection */}
+                            <div className="flex flex-col items-center gap-2 pt-1">
+                              <input
+                                type="radio"
+                                name="winner"
+                                checked={isWinner}
+                                onChange={() => {
+                                  setWinnerUrl(page.url);
+                                  // Remove from losers if it was selected
+                                  setSelectedLosers((prev) => {
                                     const next = new Set(prev);
-                                    if (checked) {
-                                      next.add(page.url);
-                                    } else {
-                                      next.delete(page.url);
-                                    }
+                                    next.delete(page.url);
                                     return next;
                                   });
                                 }}
+                                className="h-4 w-4 cursor-pointer"
                               />
-                            )}
-                          </div>
+                              {!isWinner && (
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={(checked) => {
+                                    setSelectedLosers((prev) => {
+                                      const next = new Set(prev);
+                                      if (checked) {
+                                        next.add(page.url);
+                                      } else {
+                                        next.delete(page.url);
+                                      }
+                                      return next;
+                                    });
+                                  }}
+                                />
+                              )}
+                            </div>
 
-                          {/* Page info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              {isWinner && (
-                                <span className="shrink-0 rounded bg-green-600 px-2 py-0.5 text-xs font-bold text-white uppercase">
-                                  Winner
+                            {/* Page info */}
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-1 flex items-center gap-2">
+                                {isWinner && (
+                                  <span className="shrink-0 rounded bg-green-600 px-2 py-0.5 text-xs font-bold uppercase text-white">
+                                    Winner
+                                  </span>
+                                )}
+                                <span className="truncate font-mono text-sm" title={page.url}>
+                                  {page.url}
                                 </span>
+                              </div>
+                              {page.title && (
+                                <p className="mb-2 truncate text-xs text-muted-foreground">
+                                  {page.title}
+                                </p>
                               )}
-                              <span className="font-mono text-sm truncate" title={page.url}>
-                                {page.url}
-                              </span>
-                            </div>
-                            {page.title && (
-                              <p className="text-xs text-muted-foreground mb-2 truncate">{page.title}</p>
-                            )}
-                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                              {page.impressions != null && (
-                                <span className="font-medium">{page.impressions.toLocaleString()} impressions</span>
-                              )}
-                              {page.clicks != null && (
-                                <span>{page.clicks.toLocaleString()} clicks</span>
-                              )}
-                              {page.position != null && (
-                                <span>Pos #{page.position.toFixed(1)}</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Redirect Target URL */}
-              <div>
-                <Label htmlFor="redirect-target" className="text-sm font-semibold mb-2 block">
-                  Redirect Target URL
-                </Label>
-                <Input
-                  id="redirect-target"
-                  value={winnerUrl}
-                  onChange={(e) => setWinnerUrl(e.target.value)}
-                  placeholder="/winning-page-url/"
-                  className="font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  All selected losing pages will redirect to this URL
-                </p>
-              </div>
-
-              {/* Summary */}
-              <div className="rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4">
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-                  <div className="text-sm">
-                    <p className="font-medium text-blue-900 dark:text-blue-100">
-                      Creating {selectedLosers.size} redirect{selectedLosers.size !== 1 ? 's' : ''}
-                    </p>
-                    <p className="text-blue-700 dark:text-blue-300 mt-1">
-                      {selectedLosers.size > 0 ? (
-                        <>All selected pages will be set to 301 redirect to the winner. This will be pushed to WordPress.</>
-                      ) : (
-                        <>Select at least one losing page to redirect.</>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-2">
-                <Button
-                  onClick={handleCreateRedirects}
-                  disabled={selectedLosers.size === 0 || !winnerUrl || isCreatingRedirects}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {isCreatingRedirects ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>Create {selectedLosers.size} Redirect{selectedLosers.size !== 1 ? 's' : ''}</>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setRedirectModalOpen(false)}
-                  disabled={isCreatingRedirects}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Differentiation Modal */}
-      <Sheet open={differentiationModal.open} onOpenChange={(open) => !differentiationModal.loading && setDifferentiationModal(prev => ({ ...prev, open }))}>
-        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>AI-Powered Page Differentiation</SheetTitle>
-            <SheetDescription>
-              Review AI recommendations to make each page unique. Edit suggestions as needed, then apply changes.
-            </SheetDescription>
-          </SheetHeader>
-
-          {differentiationModal.loading && !differentiationModal.recommendations ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-              <p className="text-sm text-muted-foreground">Analyzing pages...</p>
-            </div>
-          ) : differentiationModal.recommendations ? (
-            <div className="space-y-6 mt-6">
-              <div className="rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4">
-                <div className="flex items-start gap-2">
-                  <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                  <div className="text-sm">
-                    <p className="font-medium text-blue-900 dark:text-blue-100">
-                      Competing for: <span className="font-bold">{differentiationModal.conflict?.keyword}</span>
-                    </p>
-                    <p className="text-blue-700 dark:text-blue-300 mt-1">
-                      Each page below gets a unique angle to target different search intents.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {differentiationModal.recommendations.map((rec, idx) => (
-                <div key={rec.url} className="space-y-4 rounded-lg border p-4">
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id={`page-${idx}`}
-                      checked={differentiationModal.selectedPages.has(rec.url)}
-                      onCheckedChange={() => togglePageSelection(rec.url)}
-                    />
-                    <div className="flex-1 space-y-4">
-                      <div>
-                        <Label htmlFor={`page-${idx}`} className="text-sm font-semibold cursor-pointer">
-                          {rec.url}
-                        </Label>
-                        <div className="mt-1 inline-flex items-center gap-2 text-xs">
-                          <span className="rounded bg-primary/10 text-primary px-2 py-0.5 font-medium">
-                            Target: {rec.primary_keyword}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Title */}
-                      <div className="space-y-2">
-                        <Label className="text-xs font-medium text-muted-foreground">Title</Label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <span className="text-xs text-muted-foreground">Current</span>
-                            <div className="rounded bg-muted p-2 text-sm text-muted-foreground">
-                              {rec.current_title || 'No title'}
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-xs text-green-600 font-medium">Suggested</span>
-                            <Input
-                              value={rec.new_title}
-                              onChange={(e) => updateRecommendation(rec.url, 'new_title', e.target.value)}
-                              className="border-green-200 bg-green-50 dark:bg-green-950"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Meta Description */}
-                      <div className="space-y-2">
-                        <Label className="text-xs font-medium text-muted-foreground">Meta Description</Label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <span className="text-xs text-muted-foreground">Current</span>
-                            <div className="rounded bg-muted p-2 text-sm text-muted-foreground min-h-[60px]">
-                              {rec.current_meta || 'No meta description'}
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-xs text-green-600 font-medium">Suggested</span>
-                            <textarea
-                              value={rec.new_meta_description}
-                              onChange={(e) => updateRecommendation(rec.url, 'new_meta_description', e.target.value)}
-                              rows={3}
-                              className="w-full rounded-md border border-green-200 bg-green-50 dark:bg-green-950 px-3 py-2 text-sm"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* H1 */}
-                      <div className="space-y-1">
-                        <Label className="text-xs font-medium text-muted-foreground">H1 Heading</Label>
-                        <div className="rounded bg-green-50 dark:bg-green-950 border border-green-200 p-2 text-sm text-green-900 dark:text-green-100">
-                          {rec.new_h1}
-                        </div>
-                      </div>
-
-                      {/* URL Slug — only shown when AI recommends a change */}
-                      {rec.new_slug && (
-                        <div className="space-y-2">
-                          <Label className="text-xs font-medium text-muted-foreground">URL Slug</Label>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <span className="text-xs text-muted-foreground">Current</span>
-                              <div className="rounded bg-muted p-2 text-sm text-muted-foreground font-mono">
-                                /{rec.url.replace(/\/$/, '').split('/').pop()}/
+                              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                {page.impressions != null && (
+                                  <span className="font-medium">
+                                    {page.impressions.toLocaleString()} impressions
+                                  </span>
+                                )}
+                                {page.clicks != null && (
+                                  <span>{page.clicks.toLocaleString()} clicks</span>
+                                )}
+                                {page.position != null && (
+                                  <span>Pos #{page.position.toFixed(1)}</span>
+                                )}
                               </div>
                             </div>
-                            <div className="space-y-1">
-                              <span className="text-xs text-amber-600 font-medium">Suggested (301 redirect created)</span>
-                              <Input
-                                value={rec.new_slug}
-                                onChange={(e) => updateRecommendation(rec.url, 'new_slug', e.target.value)}
-                                className="border-amber-200 bg-amber-50 dark:bg-amber-950 font-mono"
-                              />
-                            </div>
                           </div>
                         </div>
-                      )}
+                      );
+                    })}
+                  </div>
+                </div>
 
-                      {/* Internal Linking */}
-                      {rec.internal_link_suggestion && (
-                        <div className="space-y-1">
-                          <Label className="text-xs font-medium text-muted-foreground">Internal Linking</Label>
-                          <div className="rounded bg-blue-50 dark:bg-blue-950 border border-blue-200 p-2 text-sm text-blue-900 dark:text-blue-100">
-                            {rec.internal_link_suggestion}
-                          </div>
-                        </div>
-                      )}
+                {/* Redirect Target URL */}
+                <div>
+                  <Label htmlFor="redirect-target" className="mb-2 block text-sm font-semibold">
+                    Redirect Target URL
+                  </Label>
+                  <Input
+                    id="redirect-target"
+                    value={winnerUrl}
+                    onChange={(e) => setWinnerUrl(e.target.value)}
+                    placeholder="/winning-page-url/"
+                    className="font-mono text-sm"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    All selected losing pages will redirect to this URL
+                  </p>
+                </div>
 
-                      {/* Reasoning */}
-                      <div className="space-y-1">
-                        <Label className="text-xs font-medium text-muted-foreground">Why these changes?</Label>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {rec.reasoning}
-                        </p>
-                      </div>
+                {/* Summary */}
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
+                  <div className="flex items-start gap-2">
+                    <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                    <div className="text-sm">
+                      <p className="font-medium text-blue-900 dark:text-blue-100">
+                        Creating {selectedLosers.size} redirect
+                        {selectedLosers.size !== 1 ? 's' : ''}
+                      </p>
+                      <p className="mt-1 text-blue-700 dark:text-blue-300">
+                        {selectedLosers.size > 0 ? (
+                          <>
+                            All selected pages will be set to 301 redirect to the winner. This will
+                            be pushed to WordPress.
+                          </>
+                        ) : (
+                          <>Select at least one losing page to redirect.</>
+                        )}
+                      </p>
                     </div>
                   </div>
                 </div>
-              ))}
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => setDifferentiationModal(prev => ({ ...prev, open: false }))}
-                  disabled={differentiationModal.loading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleApplyDifferentiation}
-                  disabled={differentiationModal.loading || differentiationModal.selectedPages.size === 0}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  {differentiationModal.loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Applying...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Apply {differentiationModal.selectedPages.size > 0 ? `${differentiationModal.selectedPages.size} Change${differentiationModal.selectedPages.size > 1 ? 's' : ''}` : 'Changes'}
-                    </>
-                  )}
-                </Button>
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    onClick={handleCreateRedirects}
+                    disabled={selectedLosers.size === 0 || !winnerUrl || isCreatingRedirects}
+                    className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    {isCreatingRedirects ? (
+                      <>
+                        <SpinnerIcon className="mr-2 h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        Create {selectedLosers.size} Redirect{selectedLosers.size !== 1 ? 's' : ''}
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setRedirectModalOpen(false)}
+                    disabled={isCreatingRedirects}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
-    </div>
+            )}
+          </SheetContent>
+        </Sheet>
+
+        {/* Differentiation Modal */}
+        <Sheet
+          open={differentiationModal.open}
+          onOpenChange={(open) =>
+            !differentiationModal.loading && setDifferentiationModal((prev) => ({ ...prev, open }))
+          }
+        >
+          <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
+            <SheetHeader>
+              <SheetTitle>AI-Powered Page Differentiation</SheetTitle>
+              <SheetDescription>
+                Review AI recommendations to make each page unique. Edit suggestions as needed, then
+                apply changes.
+              </SheetDescription>
+            </SheetHeader>
+
+            {differentiationModal.loading && !differentiationModal.recommendations ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <SpinnerIcon className="mb-4 h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Analyzing pages...</p>
+              </div>
+            ) : differentiationModal.recommendations ? (
+              <div className="mt-6 space-y-6">
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
+                  <div className="flex items-start gap-2">
+                    <BoltIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+                    <div className="text-sm">
+                      <p className="font-medium text-blue-900 dark:text-blue-100">
+                        Competing for:{' '}
+                        <span className="font-bold">{differentiationModal.conflict?.keyword}</span>
+                      </p>
+                      <p className="mt-1 text-blue-700 dark:text-blue-300">
+                        Each page below gets a unique angle to target different search intents.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {differentiationModal.recommendations.map((rec, idx) => (
+                  <div key={rec.url} className="space-y-4 rounded-lg border p-4">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id={`page-${idx}`}
+                        checked={differentiationModal.selectedPages.has(rec.url)}
+                        onCheckedChange={() => togglePageSelection(rec.url)}
+                      />
+                      <div className="flex-1 space-y-4">
+                        <div>
+                          <Label
+                            htmlFor={`page-${idx}`}
+                            className="cursor-pointer text-sm font-semibold"
+                          >
+                            {rec.url}
+                          </Label>
+                          <div className="mt-1 inline-flex items-center gap-2 text-xs">
+                            <span className="rounded bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                              Target: {rec.primary_keyword}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Title */}
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-muted-foreground">Title</Label>
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <div className="space-y-1">
+                              <span className="text-xs text-muted-foreground">Current</span>
+                              <div className="rounded bg-muted p-2 text-sm text-muted-foreground">
+                                {rec.current_title || 'No title'}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-xs font-medium text-green-600">Suggested</span>
+                              <Input
+                                value={rec.new_title}
+                                onChange={(e) =>
+                                  updateRecommendation(rec.url, 'new_title', e.target.value)
+                                }
+                                className="border-green-200 bg-green-50 dark:bg-green-950"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Meta Description */}
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium text-muted-foreground">
+                            Meta Description
+                          </Label>
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <div className="space-y-1">
+                              <span className="text-xs text-muted-foreground">Current</span>
+                              <div className="min-h-[60px] rounded bg-muted p-2 text-sm text-muted-foreground">
+                                {rec.current_meta || 'No meta description'}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-xs font-medium text-green-600">Suggested</span>
+                              <textarea
+                                value={rec.new_meta_description}
+                                onChange={(e) =>
+                                  updateRecommendation(
+                                    rec.url,
+                                    'new_meta_description',
+                                    e.target.value
+                                  )
+                                }
+                                rows={3}
+                                className="w-full rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm dark:bg-green-950"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* H1 */}
+                        <div className="space-y-1">
+                          <Label className="text-xs font-medium text-muted-foreground">
+                            H1 Heading
+                          </Label>
+                          <div className="rounded border border-green-200 bg-green-50 p-2 text-sm text-green-900 dark:bg-green-950 dark:text-green-100">
+                            {rec.new_h1}
+                          </div>
+                        </div>
+
+                        {/* URL Slug — only shown when AI recommends a change */}
+                        {rec.new_slug && (
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium text-muted-foreground">
+                              URL Slug
+                            </Label>
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                              <div className="space-y-1">
+                                <span className="text-xs text-muted-foreground">Current</span>
+                                <div className="rounded bg-muted p-2 font-mono text-sm text-muted-foreground">
+                                  /{rec.url.replace(/\/$/, '').split('/').pop()}/
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <span className="text-xs font-medium text-amber-600">
+                                  Suggested (301 redirect created)
+                                </span>
+                                <Input
+                                  value={rec.new_slug}
+                                  onChange={(e) =>
+                                    updateRecommendation(rec.url, 'new_slug', e.target.value)
+                                  }
+                                  className="border-amber-200 bg-amber-50 font-mono dark:bg-amber-950"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Internal Linking */}
+                        {rec.internal_link_suggestion && (
+                          <div className="space-y-1">
+                            <Label className="text-xs font-medium text-muted-foreground">
+                              Internal Linking
+                            </Label>
+                            <div className="rounded border border-blue-200 bg-blue-50 p-2 text-sm text-blue-900 dark:bg-blue-950 dark:text-blue-100">
+                              {rec.internal_link_suggestion}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Reasoning */}
+                        <div className="space-y-1">
+                          <Label className="text-xs font-medium text-muted-foreground">
+                            Why these changes?
+                          </Label>
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            {rec.reasoning}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 border-t pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setDifferentiationModal((prev) => ({ ...prev, open: false }))}
+                    disabled={differentiationModal.loading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleApplyDifferentiation}
+                    disabled={
+                      differentiationModal.loading || differentiationModal.selectedPages.size === 0
+                    }
+                    className="bg-green-600 text-white hover:bg-green-700"
+                  >
+                    {differentiationModal.loading ? (
+                      <>
+                        <SpinnerIcon className="mr-2 h-4 w-4 animate-spin" />
+                        Applying...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircleIcon className="mr-2 h-4 w-4" />
+                        Apply{' '}
+                        {differentiationModal.selectedPages.size > 0
+                          ? `${differentiationModal.selectedPages.size} Change${differentiationModal.selectedPages.size > 1 ? 's' : ''}`
+                          : 'Changes'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </SheetContent>
+        </Sheet>
+      </div>
     </>
   );
 }
 
-function FilterToggle({
+function FunnelIconToggle({
   label,
   checked,
   onChange,
@@ -841,7 +894,7 @@ function FilterToggle({
           : 'border-border bg-background text-muted-foreground'
       }`}
     >
-      {checked ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+      {checked ? <EyeIcon className="h-3 w-3" /> : <EyeSlashIcon className="h-3 w-3" />}
       {label}
       {badge && (
         <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
@@ -855,9 +908,9 @@ function FilterToggle({
 function EmptyState({ icon, title, message }: { icon: string; title: string; message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <span className="text-4xl mb-4">{icon}</span>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-md">{message}</p>
+      <span className="mb-4 text-4xl">{icon}</span>
+      <h3 className="mb-2 text-lg font-semibold">{title}</h3>
+      <p className="max-w-md text-sm text-muted-foreground">{message}</p>
     </div>
   );
 }
@@ -880,23 +933,27 @@ function ConflictCard({
 
   const rawSeverity = conflict.severity || 'medium';
   // BUG 2 FIX: structural warnings must never show HIGH or CRITICAL — cap at MEDIUM
-  const severity: string = isStructuralWarning && (rawSeverity === 'critical' || rawSeverity === 'high')
-    ? 'medium'
-    : rawSeverity;
+  const severity: string =
+    isStructuralWarning && (rawSeverity === 'critical' || rawSeverity === 'high')
+      ? 'medium'
+      : rawSeverity;
 
-  const color = isStructuralWarning ? '#94A3B8' : (SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium);
-  const emoji = isStructuralWarning ? 'ℹ️' : (SEVERITY_EMOJI[severity] || '🟡');
+  const color = isStructuralWarning
+    ? '#94A3B8'
+    : SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium;
+  const emoji = isStructuralWarning ? 'ℹ️' : SEVERITY_EMOJI[severity] || '🟡';
   const headlineFn = SEVERITY_HEADLINES[severity] || SEVERITY_HEADLINES.medium;
   const [headline, subline] = headlineFn(conflict.keyword, conflict.pages?.length || 0).split('\n');
   // BUG 2 FIX: always show the spec-required note text for structural warnings
-  const structuralNoteText = "No search traffic data yet. Monitor — if both pages start ranking, they may compete.";
+  const structuralNoteText =
+    'No search traffic data yet. Monitor — if both pages start ranking, they may compete.';
 
   return (
     <Card className="overflow-hidden">
       {/* Severity bar */}
       <div className="h-1" style={{ backgroundColor: color }} />
 
-      <div className="p-4 space-y-4">
+      <div className="space-y-3 p-3 sm:space-y-4 sm:p-4">
         {/* Header */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
@@ -908,7 +965,7 @@ function ConflictCard({
                 {isStructuralWarning ? 'warning' : severity}
               </span>
               {conflict.conflict_type && (
-                <span className="text-xs text-muted-foreground bg-muted rounded px-2 py-0.5">
+                <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                   {conflict.conflict_type}
                 </span>
               )}
@@ -916,9 +973,7 @@ function ConflictCard({
             <p className="text-sm font-semibold">
               {emoji} {headline}
             </p>
-            {subline && (
-              <p className="text-xs text-muted-foreground">{subline}</p>
-            )}
+            {subline && <p className="text-xs text-muted-foreground">{subline}</p>}
           </div>
         </div>
 
@@ -927,20 +982,20 @@ function ConflictCard({
           {conflict.pages?.map((page, i) => (
             <div
               key={i}
-              className={`rounded-lg border p-3 text-sm ${
+              className={`rounded-lg border p-2 text-sm sm:p-3 ${
                 page.url === conflict.winner_url
                   ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
                   : 'border-border bg-muted/30'
               }`}
             >
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {page.url === conflict.winner_url && (
-                    <span className="shrink-0 rounded bg-green-600 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase">
+                    <span className="shrink-0 rounded bg-green-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
                       Winner
                     </span>
                   )}
-                  <span className="font-mono text-xs truncate" title={page.url}>
+                  <span className="truncate font-mono text-xs" title={page.url}>
                     {page.url}
                   </span>
                 </div>
@@ -950,27 +1005,21 @@ function ConflictCard({
                   rel="noopener noreferrer"
                   className="shrink-0 text-muted-foreground hover:text-foreground"
                 >
-                  <ExternalLink className="h-3 w-3" />
+                  <ArrowTopRightOnSquareIcon className="h-3 w-3" />
                 </a>
               </div>
               {page.title && (
-                <p className="text-xs text-muted-foreground mb-1 truncate">{page.title}</p>
+                <p className="mb-1 truncate text-xs text-muted-foreground">{page.title}</p>
               )}
-              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground sm:gap-3">
                 {page.impressions != null && (
                   <span>{page.impressions.toLocaleString()} impressions</span>
                 )}
-                {page.clicks != null && (
-                  <span>{page.clicks.toLocaleString()} clicks</span>
-                )}
-                {page.position != null && (
-                  <span>Position #{page.position.toFixed(1)}</span>
-                )}
-                {page.is_noindex && (
-                  <span className="text-amber-600 font-medium">noindex</span>
-                )}
+                {page.clicks != null && <span>{page.clicks.toLocaleString()} clicks</span>}
+                {page.position != null && <span>Position #{page.position.toFixed(1)}</span>}
+                {page.is_noindex && <span className="font-medium text-amber-600">noindex</span>}
                 {page.has_redirect && (
-                  <span className="text-blue-600 font-medium">
+                  <span className="font-medium text-blue-600">
                     {page.redirect_type || '301'} → {page.redirect_target || 'redirected'}
                   </span>
                 )}
@@ -981,13 +1030,15 @@ function ConflictCard({
 
         {/* Recommendation */}
         {conflict.recommendation && (
-          <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
-            <Zap className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+          <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-2 sm:p-3">
+            <BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <div className="text-sm">
               <span className="font-medium">Recommendation: </span>
               <span className="text-muted-foreground">{conflict.recommendation}</span>
               {conflict.recommendation_reasoning && (
-                <p className="text-xs text-muted-foreground mt-1">{conflict.recommendation_reasoning}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {conflict.recommendation_reasoning}
+                </p>
               )}
             </div>
           </div>
@@ -995,8 +1046,8 @@ function ConflictCard({
 
         {/* BUG 2 FIX: structural warning note — always show, with hardcoded spec text */}
         {isStructuralWarning && (
-          <div className="flex items-start gap-2 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-3">
-            <AlertTriangle className="h-4 w-4 text-slate-500 mt-0.5 shrink-0" />
+          <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-100 p-2 dark:border-slate-700 dark:bg-slate-800/50 sm:p-3">
+            <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
             <p className="text-sm text-slate-600 dark:text-slate-300">
               {(conflict as any).note || structuralNoteText}
             </p>
@@ -1010,14 +1061,16 @@ function ConflictCard({
               <>
                 <Button
                   size="sm"
-                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  className="bg-blue-600 text-xs text-white hover:bg-blue-700 sm:text-sm"
                   onClick={() => onRedirect(conflict)}
                 >
-                  Redirect Loser → Winner
+                  <span className="hidden sm:inline">Redirect Loser → Winner</span>
+                  <span className="sm:hidden">Redirect</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
+                  className="text-xs sm:text-sm"
                   onClick={() => onDifferentiate(conflict)}
                 >
                   Differentiate
@@ -1027,10 +1080,10 @@ function ConflictCard({
             <Button
               size="sm"
               variant="ghost"
-              className="text-muted-foreground"
+              className="text-xs text-muted-foreground sm:text-sm"
               onClick={() => onDismiss(conflict)}
             >
-              {isStructuralWarning ? 'Acknowledge' : 'Dismiss'}
+              Dismiss
             </Button>
           </div>
         )}

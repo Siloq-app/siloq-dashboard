@@ -77,11 +77,7 @@ function TreeNode({
               : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
         )}
       >
-        {isKing ? (
-          <Crown size={20} className="text-white" />
-        ) : (
-          <FileText size={18} />
-        )}
+        {isKing ? <Crown size={20} className="text-white" /> : <FileText size={18} />}
       </div>
 
       {/* Content */}
@@ -195,9 +191,7 @@ export function SiloTreeView({ silo, isOpen, onClose }: SiloTreeViewProps) {
   if (!isOpen) return null;
 
   const linkedCount = silo.supportingPages.filter((p) => p.linked).length;
-  const publishedCount = silo.supportingPages.filter(
-    (p) => p.status === 'published'
-  ).length;
+  const publishedCount = silo.supportingPages.filter((p) => p.status === 'published').length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
@@ -215,9 +209,7 @@ export function SiloTreeView({ silo, isOpen, onClose }: SiloTreeViewProps) {
               <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                 <span>{silo.supportingPages.length} Supporting Content</span>
                 <span className="text-slate-300">|</span>
-                <span className="text-emerald-600 dark:text-emerald-400">
-                  {linkedCount} linked
-                </span>
+                <span className="text-emerald-600 dark:text-emerald-400">{linkedCount} linked</span>
                 <span className="text-slate-300">|</span>
                 <span>{publishedCount} published</span>
               </div>
@@ -325,21 +317,15 @@ export function SiloTreeView({ silo, isOpen, onClose }: SiloTreeViewProps) {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-amber-500" />
-              <span className="text-slate-600 dark:text-slate-400">
-                Money Page
-              </span>
+              <span className="text-slate-600 dark:text-slate-400">Money Page</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="text-slate-600 dark:text-slate-400">
-                Linked
-              </span>
+              <span className="text-slate-600 dark:text-slate-400">Linked</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-slate-400" />
-              <span className="text-slate-600 dark:text-slate-400">
-                Unlinked
-              </span>
+              <span className="text-slate-600 dark:text-slate-400">Unlinked</span>
             </div>
           </div>
 

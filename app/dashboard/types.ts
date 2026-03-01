@@ -81,7 +81,13 @@ export interface SupportingPage {
   entities: string[];
 }
 
-export type PageClassificationType = 'money' | 'supporting' | 'utility' | 'conversion' | 'archive' | 'product';
+export type PageClassificationType =
+  | 'money'
+  | 'supporting'
+  | 'utility'
+  | 'conversion'
+  | 'archive'
+  | 'product';
 
 export interface Silo {
   id: number;

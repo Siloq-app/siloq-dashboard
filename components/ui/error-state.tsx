@@ -13,12 +13,14 @@ export function ErrorState({
   onRetry,
 }: ErrorStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
         <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
       </div>
-      <div className="text-center space-y-1">
-        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Unable to load data</p>
+      <div className="space-y-1 text-center">
+        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+          Unable to load data
+        </p>
         <p className="text-sm text-slate-500 dark:text-slate-400">{message}</p>
       </div>
       {onRetry && (

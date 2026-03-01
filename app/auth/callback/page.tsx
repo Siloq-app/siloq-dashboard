@@ -10,9 +10,7 @@ import { Loader2, Check, AlertCircle } from 'lucide-react';
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
-    'loading'
-  );
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Processing authentication...');
 
   useEffect(() => {
@@ -41,7 +39,7 @@ function AuthCallbackContent() {
         } else {
           const code = searchParams.get('code');
           if (code) {
-            const res = await fetch('/api/v1/auth/google/callback/', {
+            const res = await fetch('/api/auth/google/callback/', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ code }),
@@ -51,10 +49,8 @@ function AuthCallbackContent() {
 
             if (res.ok && data.token) {
               localStorage.setItem('token', data.token);
-              if (data.user?.email)
-                localStorage.setItem('userEmail', data.user.email);
-              if (data.user?.name)
-                localStorage.setItem('userName', data.user.name);
+              if (data.user?.email) localStorage.setItem('userEmail', data.user.email);
+              if (data.user?.name) localStorage.setItem('userName', data.user.name);
 
               setStatus('success');
               setMessage('Authentication successful! Redirecting...');
@@ -77,7 +73,7 @@ function AuthCallbackContent() {
   }, [router, searchParams]);
 
   return (
-    <div className="flex min-h-svh w-full items-center justify-center bg-[#020618] p-6 md:p-10">
+    <div className="flex min-h-svh w-full items-center justify-center bg-sidebar p-6 md:p-10">
       <div className="w-full max-w-sm">
         <Card>
           <CardContent className="pt-6">
@@ -110,7 +106,7 @@ export default function AuthCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-svh w-full items-center justify-center bg-[#020618] p-6 md:p-10">
+        <div className="flex min-h-svh w-full items-center justify-center bg-sidebar p-6 md:p-10">
           <div className="w-full max-w-sm">
             <Card>
               <CardContent className="pt-6">

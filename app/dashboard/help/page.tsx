@@ -31,7 +31,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { helpArticles, searchArticles } from '@/lib/help-content';
+import { helpArticles, searchArticles } from '@/lib/content';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Rocket,
@@ -69,16 +69,14 @@ function HelpCenterContent() {
         </Breadcrumb>
       </header>
 
-      <div className="flex-1 p-6 max-w-5xl mx-auto w-full">
+      <div className="mx-auto w-full max-w-5xl flex-1 p-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Help Center</h1>
-          <p className="text-muted-foreground">
-            Everything you need to get the most out of Siloq.
-          </p>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight">Help Center</h1>
+          <p className="text-muted-foreground">Everything you need to get the most out of Siloq.</p>
         </div>
 
         <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search help articles..."
             value={query}
@@ -88,7 +86,7 @@ function HelpCenterContent() {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <p className="text-muted-foreground">No articles match your search.</p>
           </div>
         ) : (
@@ -97,9 +95,9 @@ function HelpCenterContent() {
               const Icon = iconMap[article.icon] || FileText;
               return (
                 <Link key={article.slug} href={`/dashboard/help/${article.slug}`}>
-                  <Card className="h-full transition-colors hover:bg-accent/50 cursor-pointer group">
+                  <Card className="group h-full cursor-pointer transition-colors hover:bg-accent/50">
                     <CardHeader>
-                      <div className="flex items-center gap-3 mb-1">
+                      <div className="mb-1 flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                           <Icon className="h-5 w-5" />
                         </div>
@@ -108,7 +106,7 @@ function HelpCenterContent() {
                       <CardDescription className="line-clamp-2">
                         {article.description}
                       </CardDescription>
-                      <div className="flex items-center gap-1 text-sm text-primary mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="mt-2 flex items-center gap-1 text-sm text-primary opacity-0 transition-opacity group-hover:opacity-100">
                         Read article <ArrowRight className="h-3 w-3" />
                       </div>
                     </CardHeader>

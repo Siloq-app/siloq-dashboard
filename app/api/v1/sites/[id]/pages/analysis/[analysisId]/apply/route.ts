@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SITES_ENDPOINTS } from '@/lib/backend-api';
+import { SITES_ENDPOINTS } from '@/lib/backend';
 
 function getAuthHeader(request: NextRequest): string | null {
   return request.headers.get('authorization');
@@ -18,7 +18,11 @@ export async function POST(
     const url = `${SITES_ENDPOINTS.pagesAnalysis(id)}${analysisId}/apply/`;
     const res = await fetch(url, {
       method: 'POST',
-      headers: { Authorization: auth, Accept: 'application/json', 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: auth,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
     });
     const data = await res.json();
     if (!res.ok) return NextResponse.json(data, { status: res.status });

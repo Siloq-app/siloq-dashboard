@@ -9,7 +9,7 @@ interface Props {
 
 export default function HealthScore({ score, change }: Props) {
   return (
-    <div className="bg-card text-card-foreground flex h-full flex-col justify-center rounded-xl border p-4 shadow">
+    <div className="flex h-full flex-col justify-center rounded-xl border bg-card p-4 text-card-foreground shadow">
       <div className="mb-3 text-center">
         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
           Health Score
@@ -17,14 +17,7 @@ export default function HealthScore({ score, change }: Props) {
       </div>
       <div className="relative mx-auto mb-5 h-16 w-16">
         <svg viewBox="0 0 100 100" className="-rotate-90">
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke="rgba(148, 163, 184, 0.1)"
-            strokeWidth="8"
-          />
+          <circle cx="50" cy="50" r="45" fill="none" stroke="#94A3B81A" strokeWidth="8" />
           <circle
             cx="50"
             cy="50"
@@ -36,15 +29,9 @@ export default function HealthScore({ score, change }: Props) {
             strokeDasharray={`${score * 2.83} 283`}
           />
           <defs>
-            <linearGradient
-              id="scoreGradient"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="0%"
-            >
+            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#8b5cf6" />
+              <stop offset="100%" stopColor="#006ff9" />
             </linearGradient>
           </defs>
         </svg>

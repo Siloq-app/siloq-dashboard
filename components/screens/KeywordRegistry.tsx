@@ -35,7 +35,7 @@ export default function KeywordRegistry() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+        <Loader2 className="mb-4 h-8 w-8 animate-spin text-muted-foreground" />
         <p className="text-sm text-muted-foreground">Analyzing your site structure...</p>
       </div>
     );
@@ -44,16 +44,20 @@ export default function KeywordRegistry() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <AlertTriangle className="h-8 w-8 text-amber-500 mb-4" />
+        <AlertTriangle className="mb-4 h-8 w-8 text-amber-500" />
         <p className="text-sm text-muted-foreground">{error}</p>
-        <Button variant="outline" className="mt-4" onClick={load}>Retry</Button>
+        <Button variant="outline" className="mt-4" onClick={load}>
+          Retry
+        </Button>
       </div>
     );
   }
 
-  const filtered = keywords.filter(k =>
-    !search || k.keyword.toLowerCase().includes(search.toLowerCase()) ||
-    k.page_url.toLowerCase().includes(search.toLowerCase())
+  const filtered = keywords.filter(
+    (k) =>
+      !search ||
+      k.keyword.toLowerCase().includes(search.toLowerCase()) ||
+      k.page_url.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -61,22 +65,22 @@ export default function KeywordRegistry() {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Keyword Registry</h2>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search keywords..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded-lg border bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="rounded-lg border bg-background py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
       </div>
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="text-4xl mb-4">📋</span>
-          <h3 className="text-lg font-semibold mb-2">No keywords registered yet</h3>
-          <p className="text-sm text-muted-foreground max-w-md">
+          <span className="mb-4 text-4xl">📋</span>
+          <h3 className="mb-2 text-lg font-semibold">No keywords registered yet</h3>
+          <p className="max-w-md text-sm text-muted-foreground">
             Keywords will appear here once Siloq analyzes your site content.
           </p>
         </div>
@@ -87,25 +91,33 @@ export default function KeywordRegistry() {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">Keyword</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Page URL</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Page Type</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    Page URL
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                    Page Type
+                  </th>
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">Silo</th>
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Impressions</th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Impressions
+                  </th>
                   <th className="px-4 py-3 text-right font-medium text-muted-foreground">Clicks</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Position</th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Position
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((kw) => (
-                  <tr key={kw.id} className="border-b last:border-0 hover:bg-muted/30 transition">
+                  <tr key={kw.id} className="border-b transition last:border-0 hover:bg-muted/30">
                     <td className="px-4 py-3 font-medium">{kw.keyword}</td>
                     <td className="px-4 py-3">
                       <a
                         href={kw.page_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 font-mono text-xs text-primary hover:underline truncate max-w-[300px]"
+                        className="inline-flex max-w-[300px] items-center gap-1 truncate font-mono text-xs text-primary hover:underline"
                         title={kw.page_url}
                       >
                         {kw.page_url.replace(/^https?:\/\//, '')}
@@ -115,13 +127,21 @@ export default function KeywordRegistry() {
                     <td className="px-4 py-3">
                       <span className="rounded bg-muted px-2 py-0.5 text-xs">{kw.page_type}</span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{kw.silo_name || '—'}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {kw.silo_name || '—'}
+                    </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={kw.status} />
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{kw.impressions?.toLocaleString() ?? '—'}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{kw.clicks?.toLocaleString() ?? '—'}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{kw.position != null ? `#${kw.position.toFixed(1)}` : '—'}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {kw.impressions?.toLocaleString() ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {kw.clicks?.toLocaleString() ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {kw.position != null ? `#${kw.position.toFixed(1)}` : '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -10,11 +10,11 @@ export type SubscriptionTier = 'free_trial' | 'pro' | 'builder_plus' | 'architec
 export type AIBillingMode = 'trial' | 'byok' | 'siloq_managed';
 
 // Change Types for Approval Workflow
-export type ChangeType = 
-  | 'link_add' 
-  | 'entity_assign' 
-  | 'new_content' 
-  | 'anchor_optimize' 
+export type ChangeType =
+  | 'link_add'
+  | 'entity_assign'
+  | 'new_content'
+  | 'anchor_optimize'
   | 'schema_update'
   | 'redirect_301'
   | 'page_delete'
@@ -135,21 +135,36 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
 };
 
 // Change Type Configurations
-export const CHANGE_TYPE_CONFIG: Record<ChangeType, { 
-  classification: ChangeClassification; 
-  triggersAICost: boolean;
-  label: string;
-}> = {
+export const CHANGE_TYPE_CONFIG: Record<
+  ChangeType,
+  {
+    classification: ChangeClassification;
+    triggersAICost: boolean;
+    label: string;
+  }
+> = {
   link_add: { classification: 'safe', triggersAICost: false, label: 'Add Internal Link' },
   entity_assign: { classification: 'safe', triggersAICost: false, label: 'Assign Entity' },
   new_content: { classification: 'safe', triggersAICost: true, label: 'Generate New Content' },
   anchor_optimize: { classification: 'safe', triggersAICost: false, label: 'Optimize Anchor Text' },
   schema_update: { classification: 'safe', triggersAICost: false, label: 'Update Schema Markup' },
-  redirect_301: { classification: 'destructive', triggersAICost: false, label: 'Create 301 Redirect' },
+  redirect_301: {
+    classification: 'destructive',
+    triggersAICost: false,
+    label: 'Create 301 Redirect',
+  },
   page_delete: { classification: 'destructive', triggersAICost: false, label: 'Delete Page' },
   content_merge: { classification: 'destructive', triggersAICost: true, label: 'Merge Content' },
-  keyword_reassign: { classification: 'destructive', triggersAICost: false, label: 'Reassign Keywords' },
-  silo_restructure: { classification: 'destructive', triggersAICost: false, label: 'Restructure Silo' },
+  keyword_reassign: {
+    classification: 'destructive',
+    triggersAICost: false,
+    label: 'Reassign Keywords',
+  },
+  silo_restructure: {
+    classification: 'destructive',
+    triggersAICost: false,
+    label: 'Restructure Silo',
+  },
 };
 
 // Billing Constants
@@ -157,13 +172,13 @@ export const BILLING_CONSTANTS = {
   TRIAL_DURATION_DAYS: 10,
   TRIAL_PAGES_LIMIT: 10,
   SILOQ_MANAGED_FEE_PERCENT: 0.05,
-  PREAUTH_THRESHOLD_USD: 10.00,
-  AUTO_EXECUTE_COST_THRESHOLD_USD: 1.00,
+  PREAUTH_THRESHOLD_USD: 10.0,
+  AUTO_EXECUTE_COST_THRESHOLD_USD: 1.0,
   ROLLBACK_WINDOW_HOURS: 48,
 };
 
 // Error Codes for Billing Failures
-export type BillingErrorCode = 
+export type BillingErrorCode =
   | 'AI_TRIAL_LIMIT_REACHED'
   | 'AI_TRIAL_EXPIRED'
   | 'AI_API_KEY_MISSING'

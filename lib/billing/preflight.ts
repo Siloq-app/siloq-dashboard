@@ -38,17 +38,19 @@ export function estimateAICost(
 ): AICostEstimate {
   // Rough estimate: 1 token ≈ 4 characters for English
   const inputTokens = Math.ceil(prompt.length / 4);
-  
-  const providerRates = (TOKEN_COSTS[provider] as Record<string, { input: number; output: number }>)[model] || TOKEN_COSTS.openai['gpt-4-turbo'];
-  
-  const providerCostUsd = 
-    (inputTokens * providerRates.input) + 
-    (expectedOutputTokens * providerRates.output);
-  
-  const siloqFeeUsd = billingMode === 'siloq_managed' 
-    ? providerCostUsd * BILLING_CONSTANTS.SILOQ_MANAGED_FEE_PERCENT 
-    : 0;
-  
+
+  const providerRates =
+    (TOKEN_COSTS[provider] as Record<string, { input: number; output: number }>)[model] ||
+    TOKEN_COSTS.openai['gpt-4-turbo'];
+
+  const providerCostUsd =
+    inputTokens * providerRates.input + expectedOutputTokens * providerRates.output;
+
+  const siloqFeeUsd =
+    billingMode === 'siloq_managed'
+      ? providerCostUsd * BILLING_CONSTANTS.SILOQ_MANAGED_FEE_PERCENT
+      : 0;
+
   return {
     inputTokens,
     outputTokens: expectedOutputTokens,
@@ -210,9 +212,8 @@ export function formatCostMessage(
   trialPagesLimit?: number
 ): string {
   if (cost.billingMode === 'trial') {
-    const remaining = trialPagesLimit && trialPagesUsed !== undefined 
-      ? trialPagesLimit - trialPagesUsed 
-      : '?';
+    const remaining =
+      trialPagesLimit && trialPagesUsed !== undefined ? trialPagesLimit - trialPagesUsed : '?';
     return `Est. AI cost: $${cost.totalCostUsd.toFixed(2)} (covered by trial - ${trialPagesUsed}/${trialPagesLimit} pages)`;
   }
 

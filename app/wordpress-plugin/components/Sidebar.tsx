@@ -9,7 +9,7 @@ import {
   ScanSearch,
   ChevronLeft,
   ChevronRight,
-  Plug
+  Plug,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,9 +28,11 @@ export function Sidebar({ currentView, onChangeView, isCollapsed, toggleCollapse
   ];
 
   return (
-    <div className={`h-full bg-[#1e2327] text-[#c3c4c7] flex flex-col transition-all duration-300 ${isCollapsed ? 'w-12' : 'w-40 md:w-48'}`}>
+    <div
+      className={`flex h-full flex-col bg-[#1e2327] text-[#c3c4c7] transition-all duration-300 ${isCollapsed ? 'w-12' : 'w-40 md:w-48'}`}
+    >
       {/* Logo Area */}
-      <div className="h-8 bg-[#1e2327] flex items-center px-4 border-b border-[#2c3338]">
+      <div className="flex h-8 items-center border-b border-[#2c3338] bg-[#1e2327] px-4">
         {!isCollapsed && (
           <div className="flex items-center gap-2">
             <Plug size={18} className="text-[#2271b1]" />
@@ -42,7 +44,7 @@ export function Sidebar({ currentView, onChangeView, isCollapsed, toggleCollapse
       {/* Collapse Toggle */}
       <button
         onClick={toggleCollapse}
-        className="absolute right-0 top-8 p-1 bg-[#2c3338] text-[#c3c4c7] rounded-l hover:bg-[#3c434a] transition-colors"
+        className="absolute right-0 top-8 rounded-l bg-[#2c3338] p-1 text-[#c3c4c7] transition-colors hover:bg-[#3c434a]"
         aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -58,7 +60,7 @@ export function Sidebar({ currentView, onChangeView, isCollapsed, toggleCollapse
               <li key={item.id}>
                 <button
                   onClick={() => onChangeView(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors ${
+                  className={`flex w-full items-center gap-3 px-4 py-2 text-sm transition-colors ${
                     isActive
                       ? 'bg-[#2271b1] text-white'
                       : 'text-[#c3c4c7] hover:bg-[#2c3338] hover:text-white'
@@ -76,7 +78,7 @@ export function Sidebar({ currentView, onChangeView, isCollapsed, toggleCollapse
 
       {/* Footer */}
       {!isCollapsed && (
-        <div className="p-4 border-t border-[#2c3338] text-xs text-[#8c8f94]">
+        <div className="border-t border-[#2c3338] p-4 text-xs text-[#8c8f94]">
           <p>Version 1.2.0</p>
         </div>
       )}

@@ -10,6 +10,8 @@ import {
   Users,
 } from 'lucide-react';
 
+import { fetchWithAuth } from '@/lib/auth';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -38,19 +40,24 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
-  const isPaidTier = user.subscriptionTier && !['free_trial', 'free', ''].includes(user.subscriptionTier);
+  const isPaidTier =
+    user.subscriptionTier && !['free_trial', 'free', ''].includes(user.subscriptionTier);
 
   const initials = user.name
-    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    ? user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
     : 'U';
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        await fetch('/api/v1/auth/logout', {
+        await fetchWithAuth('/api/auth/logout', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
         });
       } catch (err) {
         console.error('Server logout error:', err);
@@ -101,26 +108,46 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard/settings/subscription'; }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  window.location.href = '/dashboard/settings/subscription';
+                }}
+              >
                 <Sparkles />
                 {isPaidTier ? 'Manage Subscription' : 'Upgrade to Pro'}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard?tab=settings'; }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  window.location.href = '/dashboard?tab=settings';
+                }}
+              >
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard?tab=settings&section=team'; }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  window.location.href = '/dashboard?tab=settings&section=team';
+                }}
+              >
                 <Users />
                 Team
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { window.location.href = '/dashboard/settings/subscription'; }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  window.location.href = '/dashboard/settings/subscription';
+                }}
+              >
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { alert('Notifications coming soon'); }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  alert('Notifications coming soon');
+                }}
+              >
                 <Bell />
                 Notifications
               </DropdownMenuItem>

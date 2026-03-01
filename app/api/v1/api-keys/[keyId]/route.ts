@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { API_KEYS_ENDPOINTS } from '@/lib/backend-api';
+import { API_KEYS_ENDPOINTS } from '@/lib/backend';
 
 function getAuthHeader(request: NextRequest): string | null {
   return request.headers.get('authorization');
@@ -15,10 +15,7 @@ export async function DELETE(
   }
   const { keyId } = await params;
   if (!keyId) {
-    return NextResponse.json(
-      { message: 'Key ID is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: 'Key ID is required' }, { status: 400 });
   }
   try {
     const res = await fetch(API_KEYS_ENDPOINTS.delete(keyId), {
@@ -29,14 +26,9 @@ export async function DELETE(
     if (!res.ok) {
       return NextResponse.json(data, { status: res.status });
     }
-    return NextResponse.json(
-      data.message ? data : { message: 'API key revoked successfully' }
-    );
+    return NextResponse.json(data.message ? data : { message: 'API key revoked successfully' });
   } catch (e) {
     console.error('API key revoke proxy error:', e);
-    return NextResponse.json(
-      { message: 'Unable to reach backend' },
-      { status: 502 }
-    );
+    return NextResponse.json({ message: 'Unable to reach backend' }, { status: 502 });
   }
 }

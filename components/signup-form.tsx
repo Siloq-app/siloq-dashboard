@@ -2,28 +2,17 @@
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export function SignupForm({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+export function SignupForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Create an account</CardTitle>
-          <CardDescription>
-            Enter your details below to create your account
-          </CardDescription>
+          <CardDescription>Enter your details below to create your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form>
@@ -34,12 +23,7 @@ export function SignupForm({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
+                <Input id="email" type="email" placeholder="m@example.com" required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
@@ -49,7 +33,10 @@ export function SignupForm({
                 <Label htmlFor="confirm-password">Confirm Password</Label>
                 <Input id="confirm-password" type="password" required />
               </div>
-              <Button type="submit" className="w-full">
+              <Button
+                type="submit"
+                className="duration-350 w-full transition-[color,background-color,border-color,box-shadow,transform] hover:bg-[#005DCF] dark:bg-[#006FF9] dark:hover:bg-[#005DCF]"
+              >
                 Sign up
               </Button>
               <Button variant="outline" className="w-full">

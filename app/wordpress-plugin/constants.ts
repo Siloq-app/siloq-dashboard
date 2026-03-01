@@ -9,7 +9,7 @@ export const MOCK_PAGES: MockPage[] = [
     author: 'admin',
     excerpt: 'Test page for WordPress plugin demo.',
     synced: true,
-    lastSyncedAt: '2024-02-14 16:00'
+    lastSyncedAt: '2024-02-14 16:00',
   },
   {
     id: 11,
@@ -19,7 +19,7 @@ export const MOCK_PAGES: MockPage[] = [
     author: 'admin',
     excerpt: 'Another Hello World post.',
     synced: true,
-    lastSyncedAt: '2024-02-14 15:45'
+    lastSyncedAt: '2024-02-14 15:45',
   },
   {
     id: 8,
@@ -29,7 +29,7 @@ export const MOCK_PAGES: MockPage[] = [
     author: 'admin',
     excerpt: 'Welcome to WordPress. This is your first post.',
     synced: true,
-    lastSyncedAt: '2024-02-14 15:30'
+    lastSyncedAt: '2024-02-14 15:30',
   },
   {
     id: 3,
@@ -39,7 +39,7 @@ export const MOCK_PAGES: MockPage[] = [
     author: 'admin',
     excerpt: 'Privacy policy page.',
     synced: true,
-    lastSyncedAt: '2024-02-14 15:15'
+    lastSyncedAt: '2024-02-14 15:15',
   },
   {
     id: 2,
@@ -49,7 +49,7 @@ export const MOCK_PAGES: MockPage[] = [
     author: 'admin',
     excerpt: 'This is a sample page.',
     synced: true,
-    lastSyncedAt: '2024-02-14 15:00'
+    lastSyncedAt: '2024-02-14 15:00',
   },
   {
     id: 1,
@@ -59,7 +59,7 @@ export const MOCK_PAGES: MockPage[] = [
     author: 'admin',
     excerpt: 'Welcome to WordPress. This is your first post.',
     synced: true,
-    lastSyncedAt: '2024-02-14 14:45'
+    lastSyncedAt: '2024-02-14 14:45',
   },
   {
     id: 13,
@@ -68,8 +68,8 @@ export const MOCK_PAGES: MockPage[] = [
     date: '2024-02-14',
     author: 'admin',
     excerpt: 'Create new content.',
-    synced: false
-  }
+    synced: false,
+  },
 ];
 
 export const WP_COLORS = {
@@ -79,5 +79,5 @@ export const WP_COLORS = {
   warning: '#ffb900',
   error: '#dc3232',
   bg: '#f0f0f1',
-  text: '#3c434a'
+  text: '#3c434a',
 };

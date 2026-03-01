@@ -20,10 +20,7 @@ export async function POST(request: NextRequest) {
       event = verifyWebhookSignature(payload, signature);
     } catch (err) {
       console.error('Webhook signature verification failed:', err);
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
     // Handle the event
@@ -63,9 +60,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Error handling webhook:', error);
-    return NextResponse.json(
-      { error: 'Failed to process webhook' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to process webhook' }, { status: 500 });
   }
 }

@@ -25,7 +25,11 @@ export const FEATURES: FeatureConfig[] = [
   { id: 'cannibalization_detection', name: 'Cannibalization Detection', minTier: 'free_trial' },
   { id: 'architecture_view', name: 'Architecture Visualization', minTier: 'free_trial' },
   { id: 'remediation_plan', name: 'Remediation Planning', minTier: 'free_trial' },
-  { id: 'content_generation_limited', name: 'Content Generation (10 pages)', minTier: 'free_trial' },
+  {
+    id: 'content_generation_limited',
+    name: 'Content Generation (10 pages)',
+    minTier: 'free_trial',
+  },
 
   // Pro features
   { id: 'multi_silo', name: 'Multiple Silos (2 max)', minTier: 'pro' },
@@ -42,7 +46,11 @@ export const FEATURES: FeatureConfig[] = [
 
   // Architect features
   { id: 'multi_site', name: 'Multi-site Management (5 sites)', minTier: 'architect' },
-  { id: 'cross_site_detection', name: 'Cross-site Cannibalization Detection', minTier: 'architect' },
+  {
+    id: 'cross_site_detection',
+    name: 'Cross-site Cannibalization Detection',
+    minTier: 'architect',
+  },
   { id: 'multi_site_architecture', name: 'Multi-site Architecture View', minTier: 'architect' },
   { id: 'cross_site_plan', name: 'Cross-site Prioritized Planning', minTier: 'architect' },
 
@@ -64,10 +72,7 @@ const TIER_HIERARCHY: SubscriptionTier[] = [
 /**
  * Check if a feature is available for a given tier
  */
-export function isFeatureAvailable(
-  featureId: string,
-  tier: SubscriptionTier
-): boolean {
+export function isFeatureAvailable(featureId: string, tier: SubscriptionTier): boolean {
   const feature = FEATURES.find((f) => f.id === featureId);
   if (!feature) return false;
 
@@ -94,10 +99,7 @@ export function getTierConfig(tier: SubscriptionTier): TierConfig {
 /**
  * Check if tier allows specific automation mode
  */
-export function canUseAutomationMode(
-  tier: SubscriptionTier,
-  mode: AutomationMode
-): boolean {
+export function canUseAutomationMode(tier: SubscriptionTier, mode: AutomationMode): boolean {
   const config = TIER_CONFIGS[tier];
   return config.automationOptions.includes(mode);
 }
@@ -214,8 +216,9 @@ export function formatTierCapabilities(tier: SubscriptionTier): {
     sites: config.sites === 1 ? '1 site' : `${config.sites} sites`,
     silos: config.siloLimit === 'unlimited' ? 'Unlimited silos' : `${config.siloLimit} silos`,
     automation: config.automationOptions.join(', ').replace(/_/g, ' '),
-    aiBilling: config.aiBillingMode.includes('byok') && config.aiBillingMode.includes('siloq_managed')
-      ? 'BYOK or Siloq-Managed'
-      : config.aiBillingMode[0],
+    aiBilling:
+      config.aiBillingMode.includes('byok') && config.aiBillingMode.includes('siloq_managed')
+        ? 'BYOK or Siloq-Managed'
+        : config.aiBillingMode[0],
   };
 }
