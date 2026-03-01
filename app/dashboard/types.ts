@@ -13,6 +13,8 @@ export type TabType =
   | 'keyword-registry'
   | 'silo-health'
   | 'content-upload';
+  | 'schema'
+  | 'freshness';
 export type AutomationMode = 'manual' | 'semi' | 'full';
 
 export interface ConflictPage {

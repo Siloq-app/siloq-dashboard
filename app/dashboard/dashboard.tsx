@@ -4,6 +4,8 @@ import React, { useState, Suspense, useEffect, lazy } from 'react';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { fetchWithAuth } from '@/lib/auth-headers';
 import { TabType, AutomationMode } from './types';
+import SchemaArchitect from './schema-architect';
+import FreshnessTab from './freshness-tab';
 import { ScreenSkeleton, DashboardSkeleton, TableSkeleton } from '@/components/ui/dashboard-skeleton';
 
 // Lazy-loaded screen components for code splitting
@@ -180,6 +182,10 @@ export default function Dashboard({
             }}
           />
         );
+      case 'schema':
+        return <SchemaArchitect siteId={siteId} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} wpApiBase={siteUrl} wpApiKey={siteApiKey} />;
+      case 'freshness':
+        return <FreshnessTab siteId={siteId} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} />;
       case 'content':
         return <ContentHub />;
       case 'content-upload':
