@@ -16,6 +16,8 @@ import {
   ChevronUp,
   X,
   Check,
+  Eye,
+  Copy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { fetchWithAuth } from '@/lib/auth';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
@@ -263,19 +266,25 @@ function LayerTabContent({
 interface RecommendationPanelProps {
   analysis: PageAnalysis;
   siteId: number | string;
+  page: Page;
   selectedRecs: Set<string>;
   onToggleRec: (id: string) => void;
   onDismiss: () => void;
   onApplySuccess: (analysis: PageAnalysis) => void;
+  onManualAction: (page: Page) => void;
+  getWordPressEditUrl: (url: string) => string;
 }
 
 function RecommendationPanel({
   analysis,
   siteId,
+  page,
   selectedRecs,
   onToggleRec,
   onDismiss,
   onApplySuccess,
+  onManualAction,
+  getWordPressEditUrl,
 }: RecommendationPanelProps) {
   const { toast } = useToast();
   const [isApplying, setIsApplying] = useState(false);
@@ -411,8 +420,23 @@ function RecommendationPanel({
                     )}
                     {manualCount > 0 && (
                       <div className="text-xs font-medium text-amber-600">
-                        ⚠️ {manualCount} recommendation{manualCount !== 1 ? 's' : ''} require manual
-                        action — see panel
+                        ⚠️ {manualCount} recommendation{manualCount !== 1 ? 's' : ''} require manual action — 
+                        <button
+                          onClick={() => onManualAction(page)}
+                          className="ml-1 underline hover:text-amber-700"
+                        >
+                          view details
+                        </button>
+                        {' '}or{' '}
+                        <a
+                          href={getWordPressEditUrl(page.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-1 underline hover:text-amber-700 flex items-center gap-1 inline-flex"
+                        >
+                          edit in WordPress
+                          <ExternalLink size={10} />
+                        </a>
                       </div>
                     )}
                     {trueFailCount > 0 &&
@@ -515,9 +539,54 @@ export default function PagesScreen({
   const [pageAnalyses, setPageAnalyses] = useState<Record<string, PageAnalysis>>({});
   const [expandedAnalysis, setExpandedAnalysis] = useState<string | null>(null);
   const [selectedRecommendations, setSelectedRecommendations] = useState<Set<string>>(new Set());
+  
+  // Manual action modal state
+  const [showManualActionModal, setShowManualActionModal] = useState(false);
+  const [currentPageForManualAction, setCurrentPageForManualAction] = useState<Page | null>(null);
 
   const itemsPerPage = 20;
   const loadedAnalysesRef = useRef(false);
+
+  // ── Utility Functions ────────────────────────────────────────────────────────────
+  
+  // Generate WordPress edit URL from page URL
+  const getWordPressEditUrl = (pageUrl: string): string => {
+    try {
+      const url = new URL(pageUrl);
+      // Extract path and convert to WordPress admin URL format
+      const path = url.pathname.replace(/\/$/, ''); // Remove trailing slash
+      // For WordPress, the edit URL typically follows this pattern:
+      // https://domain.com/wp-admin/post.php?post=123&action=edit
+      // Since we don't have the post ID, we'll search for the page in WordPress admin
+      return `${url.origin}/wp-admin/edit.php?s=${encodeURIComponent(path)}&post_type=page`;
+    } catch {
+      // Fallback: search the page URL in WordPress admin
+      return `${pageUrl.split('/')[0]}//${pageUrl.split('/')[2]}/wp-admin/edit.php?s=${encodeURIComponent(pageUrl)}&post_type=page`;
+    }
+  };
+
+  // Handle manual action recommendations
+  const handleManualAction = (page: Page) => {
+    setCurrentPageForManualAction(page);
+    setShowManualActionModal(true);
+  };
+
+  // Copy HTML to clipboard
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: '✅ Copied to clipboard',
+        description: 'HTML code copied successfully',
+      });
+    } catch {
+      toast({
+        title: '❌ Failed to copy',
+        description: 'Please copy manually',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // ── Load pages ──
   const loadPages = useCallback(
@@ -1050,10 +1119,13 @@ export default function PagesScreen({
                       <RecommendationPanel
                         analysis={analysis}
                         siteId={siteId}
+                        page={page}
                         selectedRecs={selectedRecommendations}
                         onToggleRec={handleToggleRec}
                         onDismiss={handleDismissPanel}
                         onApplySuccess={(updated) => handleApplySuccess(page.url, updated)}
+                        onManualAction={handleManualAction}
+                        getWordPressEditUrl={getWordPressEditUrl}
                       />
                     )}
                   </div>
@@ -1088,6 +1160,118 @@ export default function PagesScreen({
           </Button>
         </div>
       )}
+
+      {/* Manual Action Modal */}
+      <Sheet open={showManualActionModal} onOpenChange={setShowManualActionModal}>
+        <SheetContent className="w-full max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <AlertCircle size={20} className="text-amber-600" />
+              Manual Action Required
+            </SheetTitle>
+          </SheetHeader>
+          
+          {currentPageForManualAction && (
+            <div className="mt-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Page Information</h3>
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <p className="font-medium">{currentPageForManualAction.title || 'Untitled'}</p>
+                  <a
+                    href={currentPageForManualAction.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                  >
+                    {currentPageForManualAction.url}
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Recommended Actions</h3>
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                  <p className="text-sm text-amber-800 mb-4">
+                    The following recommendations require manual implementation in WordPress:
+                  </p>
+                  
+                  {/* Get manual action recommendations */}
+                  {(() => {
+                    const analysis = pageAnalyses[currentPageForManualAction.url];
+                    if (!analysis) return <p>No analysis data available</p>;
+                    
+                    const allRecs = [
+                      ...analysis.geo_recommendations,
+                      ...analysis.seo_recommendations,
+                      ...analysis.cro_recommendations
+                    ];
+                    
+                    const manualRecs = allRecs.filter(rec => 
+                      selectedRecommendations.has(rec.id)
+                    );
+                    
+                    return manualRecs.length > 0 ? (
+                      <div className="space-y-3">
+                        {manualRecs.map((rec) => (
+                          <div key={rec.id} className="bg-white p-3 rounded border border-amber-200">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-slate-900">{rec.recommendation}</p>
+                                <p className="text-xs text-slate-600 mt-1">{rec.issue}</p>
+                                {rec.after && (
+                                  <div className="mt-2">
+                                    <div className="bg-slate-100 p-2 rounded text-xs font-mono text-slate-700 mb-2">
+                                      {rec.after.length > 200 
+                                        ? rec.after.substring(0, 200) + '...'
+                                        : rec.after
+                                      }
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => copyToClipboard(rec.after)}
+                                      className="text-xs"
+                                    >
+                                      <Copy size={12} className="mr-1" />
+                                      Copy HTML
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p>No manual action recommendations found</p>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => setShowManualActionModal(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={() => {
+                    window.open(getWordPressEditUrl(currentPageForManualAction.url), '_blank');
+                  }}
+                  className="flex-1"
+                >
+                  <ExternalLink size={16} className="mr-2" />
+                  Open WordPress Editor
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
