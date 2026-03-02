@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from 'next/navigation';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { useTheme } from '@/lib/hooks/theme-context';
 import { fetchWithAuth } from '@/lib/auth-headers';
@@ -457,6 +458,9 @@ function SuccessBanner({ title, onDismiss }: { title: string; onDismiss: () => v
 export default function ContentHub() {
   const { theme: t, mode } = useTheme();
   const { selectedSite } = useDashboardContext();
+
+  // Deep-link: pre-filter from page analysis CTA (?page_id=xxx)
+  const searchParams = useSearchParams();
 
   // Page selector
   const [pages, setPages] = useState<SitePage[]>([]);

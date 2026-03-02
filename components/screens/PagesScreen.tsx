@@ -31,6 +31,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NoSiteSelected } from '@/components/ui/no-site-selected';
 import { useToast } from '@/components/ui/use-toast';
+import SupportingContentSection from './SupportingContentSection';
 import { analysisService, entityProfileService, PageAnalysis, Recommendation } from '@/lib/services/api';
 import { FileText } from 'lucide-react';
 
@@ -268,6 +269,7 @@ function LayerTabContent({
 interface RecommendationPanelProps {
   analysis: PageAnalysis;
   siteId: number | string;
+  pageId: number;
   selectedRecs: Set<string>;
   onToggleRec: (id: string) => void;
   onDismiss: () => void;
@@ -277,6 +279,7 @@ interface RecommendationPanelProps {
 function RecommendationPanel({
   analysis,
   siteId,
+  pageId,
   selectedRecs,
   onToggleRec,
   onDismiss,
@@ -469,6 +472,9 @@ function RecommendationPanel({
       </div>
 
       {/* Status now shown inline in the actions bar above */}
+
+      {/* Supporting Content Section — Hub & Spoke gap detection */}
+      <SupportingContentSection siteId={siteId} pageId={pageId} />
     </div>
   );
 }
@@ -1029,6 +1035,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                       <RecommendationPanel
                         analysis={analysis}
                         siteId={siteId}
+                        pageId={page.id}
                         selectedRecs={selectedRecommendations}
                         onToggleRec={handleToggleRec}
                         onDismiss={handleDismissPanel}
