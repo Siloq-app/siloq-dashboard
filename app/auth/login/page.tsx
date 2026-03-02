@@ -176,7 +176,7 @@ export default function LoginPage() {
                       placeholder="test123 (for mock auth)"
                       required
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-red-500">
                       Test with: test@example.com / password
                     </p>
                   </div>
