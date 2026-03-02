@@ -54,6 +54,41 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        // Check if backend is unavailable
+        if (res.status === 503 && data.error === 'Backend unavailable') {
+          // Try mock authentication as fallback
+          console.log('Backend unavailable, trying mock authentication...');
+          const mockRes = await fetch('/api/auth/mock-login/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const mockData = await mockRes.json();
+          
+          if (!mockRes.ok) {
+            throw new Error(mockData.message || 'Mock authentication failed');
+          }
+
+          localStorage.setItem('token', mockData.token);
+          if (mockData.user) {
+            const name = mockData.user.name || mockData.user.email || '';
+            if (name) localStorage.setItem('userName', name);
+            if (mockData.user.email) localStorage.setItem('userEmail', mockData.user.email);
+          }
+
+          // Show success message for mock login
+          setError('✅ Logged in with mock authentication (backend unavailable)');
+          setTimeout(() => {
+            const inviteToken =
+              typeof window !== 'undefined'
+                ? new URLSearchParams(window.location.search).get('invite')
+                : null;
+            router.push(inviteToken ? `/invite?token=${inviteToken}` : '/dashboard');
+          }, 1500);
+          return;
+        }
+
         throw new Error(data.message || 'Login failed');
       }
 
@@ -75,6 +110,7 @@ export default function LoginPage() {
           : null;
       router.push(inviteToken ? `/invite?token=${inviteToken}` : '/dashboard');
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -131,23 +167,18 @@ export default function LoginPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <div className="flex items-center">
-                      <Label htmlFor="password">Password</Label>
-                      <Link
-                        href="/auth/forgot-password"
-                        className="ml-auto inline-block text-sm underline"
-                      >
-                        Forgot your password?
-                      </Link>
-                    </div>
+                    <Label htmlFor="password">Password</Label>
                     <Input
                       id="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="test123"
+                      placeholder="test123 (for mock auth)"
                       required
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Test with: test@example.com / password
+                    </p>
                   </div>
                   <Button
                     type="submit"

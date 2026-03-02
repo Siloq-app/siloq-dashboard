@@ -10,15 +10,18 @@ import type {
  * Map API cannibalization issues to dashboard format
  */
 export function mapCannibalizationIssues(
-  response: CannibalizationIssueResponse
+  response: CannibalizationIssueResponse | any[]
 ): CannibalizationIssue[] {
-  return response.issues.map((issue) => {
+  // Handle both full response object and array of issues
+  const issues = Array.isArray(response) ? response : response.issues || [];
+  
+  return issues.map((issue) => {
     // Calculate split clicks from competing pages
-    const totalClicks = issue.competing_pages.reduce((sum, page) => sum + (page.clicks || 0), 0);
+    const totalClicks = issue.competing_pages.reduce((sum: number, page: any) => sum + (page.clicks || 0), 0);
     const splitClicks =
       totalClicks > 0
         ? issue.competing_pages
-            .map((page) => {
+            .map((page: any) => {
               const percentage = ((page.clicks || 0) / totalClicks) * 100;
               return `${Math.round(percentage)}%`;
             })
@@ -28,7 +31,7 @@ export function mapCannibalizationIssues(
     return {
       id: issue.id,
       keyword: issue.keyword,
-      pages: issue.competing_pages.map((p) => p.url),
+      pages: issue.competing_pages.map((p: any) => p.url),
       severity: (issue.severity || 'low').toLowerCase() as any,
       impressions: issue.total_impressions,
       splitClicks,
@@ -71,8 +74,11 @@ export function mapSilos(response: SiloResponse[]): Silo[] {
  * proposed changes appear in the Approval Queue.
  */
 export function mapRecommendationsToPendingChanges(
-  response: RecommendationResponse
+  response: RecommendationResponse | any[]
 ): PendingChange[] {
+  // Handle both full response object and array of recommendations
+  const recommendations = Array.isArray(response) ? response : response.recommendations || [];
+  
   const NON_ACTIONABLE_PATTERNS = [
     /no action needed/i,
     /no changes? (required|needed|necessary)/i,
@@ -82,7 +88,7 @@ export function mapRecommendationsToPendingChanges(
     /no conflict/i,
   ];
 
-  return response.recommendations
+  return recommendations
     .filter((rec) => {
       // Skip purely informational items
       if (rec.status === 'applied' || rec.status === 'rejected') return false;

@@ -68,7 +68,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:8001';
+    'http://localhost:8000';
   const response = await fetch(`${backendUrl}/api/v1/auth/login/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -96,7 +96,7 @@ export async function register(
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:8001';
+    'http://localhost:8000';
   const response = await fetch(`${backendUrl}/api/v1/auth/register/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -121,7 +121,7 @@ export async function logout(): Promise<void> {
     const backendUrl =
       process.env.NEXT_PUBLIC_BACKEND_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:8001';
+      'http://localhost:8000';
     await fetch(`${backendUrl}/api/v1/auth/logout/`, {
       method: 'POST',
       headers: {

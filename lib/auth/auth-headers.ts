@@ -38,11 +38,11 @@ const BACKEND_URL = (
   typeof window !== 'undefined'
     ? process.env.NEXT_PUBLIC_API_URL ||
       process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-      'http://localhost:8001'
+      'http://localhost:8000'
     : process.env.BACKEND_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
       process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-      'http://localhost:8001'
+      'http://localhost:8000'
 ).replace(/\/+$/, '');
 
 export async function fetchWithAuth(
@@ -103,7 +103,7 @@ export async function fetchWithAuth(
           error: 'Network error',
           message: 'Backend server is not running or not accessible',
           error_code: 'CONNECTION_REFUSED',
-          details: `The backend server at ${BACKEND_URL} could not be reached. Please ensure the backend server is running on port 8001.`,
+          details: `The backend server at ${BACKEND_URL} could not be reached. Please ensure the backend server is running on port 8000.`,
         }),
         {
           status: 503,

@@ -2,17 +2,17 @@
 
 echo "🔍 Checking backend server status..."
 
-# Check if backend is running on port 8001
-if lsof -i :8001 > /dev/null 2>&1; then
-    echo "✅ Backend server is running on port 8001"
+# Check if backend is running on port 8000
+if lsof -i :8000 > /dev/null 2>&1; then
+    echo "✅ Backend server is running on port 8000"
     exit 0
 else
-    echo "❌ Backend server is NOT running on port 8001"
+    echo "❌ Backend server is NOT running on port 8000"
     echo ""
     echo "🚀 To fix 'Failed to fetch' errors, you need to start the backend server:"
     echo ""
     echo "   cd /path/to/backend/directory"
-    echo "   python manage.py runserver 8001"
+    echo "   python manage.py runserver 8000"
     echo ""
     echo "   Or if using Docker:"
     echo "   docker-compose up"
