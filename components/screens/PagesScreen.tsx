@@ -32,6 +32,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { NoSiteSelected } from '@/components/ui/no-site-selected';
 import { useToast } from '@/components/ui/use-toast';
 import SupportingContentSection from './SupportingContentSection';
+import CannibalizationIntelligence from './CannibalizationIntelligence';
 import { analysisService, entityProfileService, PageAnalysis, Recommendation } from '@/lib/services/api';
 import { FileText } from 'lucide-react';
 
@@ -472,6 +473,9 @@ function RecommendationPanel({
       </div>
 
       {/* Status now shown inline in the actions bar above */}
+
+      {/* Cannibalization Intelligence — IG + GG scores */}
+      <CannibalizationIntelligence analysis={analysis} onReanalyze={() => {}} />
 
       {/* Supporting Content Section — Hub & Spoke gap detection */}
       <SupportingContentSection siteId={siteId} pageId={pageId} />
