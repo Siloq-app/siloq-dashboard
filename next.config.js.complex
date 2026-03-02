@@ -1,0 +1,84 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // output: 'standalone', // Temporarily disabled for development
+  reactStrictMode: true,
+  trailingSlash: false,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  images: {
+    formats: ['image/avif', 'image/webp'],
+  },
+  webpack: (config, { dev, isServer }) => {
+    // Fix for webpack cache issues
+    if (dev) {
+      config.cache = {
+        type: 'filesystem',
+        buildDependencies: {
+          config: [__filename],
+        },
+        maxMemoryGenerations: 1,
+        compression: false,
+      };
+    }
+    
+    // Handle file system issues
+    config.watchOptions = {
+      poll: 1000,
+      aggregateTimeout: 300,
+    };
+    
+    // Fix chunk loading issues
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      };
+    }
+    
+    // Ensure proper chunk splitting and prevent orphaned chunks
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        chunks: 'all',
+        minSize: 20000,
+        maxSize: 244000,
+        cacheGroups: {
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: -10,
+            reuseExistingChunk: true,
+            chunks: 'all',
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            priority: -30,
+            reuseExistingChunk: true,
+          },
+        },
+      },
+      runtimeChunk: {
+        name: 'runtime',
+      },
+    };
+    
+    // Prevent module resolution issues
+    config.externals = config.externals || [];
+    if (isServer) {
+      config.externals.push({
+        'sharp': 'commonjs sharp',
+      });
+    }
+    
+    return config;
+  },
+};
+
+module.exports = nextConfig;

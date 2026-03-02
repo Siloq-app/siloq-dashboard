@@ -1,0 +1,194 @@
+/**
+ * Subscription Settings Page
+ * Manage billing, subscription tier, and AI billing mode
+ */
+
+'use client';
+
+import { useState, useEffect, Suspense } from 'react';
+import { CreditCard, Loader2 } from 'lucide-react';
+import { SubscriptionManager } from '@/components/billing/SubscriptionManager';
+import { SubscriptionTier, AIBillingMode, TIER_CONFIGS } from '@/lib/billing/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { AppSidebar } from '@/components/app-sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { DashboardProvider } from '@/lib/hooks/dashboard-context';
+import Header from '@/app/dashboard/header';
+import { fetchWithAuth } from '@/lib/auth';
+
+export default function SubscriptionPage() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+
+  const [currentTier, setCurrentTier] = useState<SubscriptionTier>('free_trial');
+  const [billingMode, setBillingMode] = useState<AIBillingMode>('trial');
+  const [trialPagesUsed, setTrialPagesUsed] = useState(0);
+  const [trialPagesLimit, setTrialPagesLimit] = useState(10);
+  const [sitesCount, setSitesCount] = useState(1);
+  const [silosCount, setSilosCount] = useState(1);
+
+  // Fetch subscription data from backend
+  useEffect(() => {
+    async function fetchSubscription() {
+      try {
+        const res = await fetchWithAuth('/api/v1/billing/subscription/current/');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tier) setCurrentTier(data.tier);
+          if (data.billing_mode || data.billingMode)
+            setBillingMode(data.billing_mode || data.billingMode);
+          const tpu = data.trial_pages_used ?? data.trialPagesUsed;
+          const tpl = data.trial_pages_limit ?? data.trialPagesLimit;
+          if (tpu !== undefined) setTrialPagesUsed(tpu);
+          if (tpl !== undefined) setTrialPagesLimit(tpl);
+          if (data.sites_count !== undefined) setSitesCount(data.sites_count);
+          else if (data.sitesCount !== undefined) setSitesCount(data.sitesCount);
+        }
+      } catch (err) {
+        console.error('Failed to fetch subscription:', err);
+      } finally {
+        setIsFetching(false);
+      }
+    }
+    fetchSubscription();
+  }, []);
+
+  const handleUpgrade = async (tier: SubscriptionTier) => {
+    setIsLoading(true);
+    try {
+      // Create Stripe Checkout session via our API
+      const origin = window.location.origin;
+      const response = await fetchWithAuth('/api/v1/billing/checkout/create_session/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier,
+          success_url: `${origin}/dashboard/settings/subscription?upgraded=true`,
+          cancel_url: `${origin}/dashboard/settings/subscription?canceled=true`,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+          return;
+        }
+      }
+
+      // Fallback not needed with fetchWithAuth
+    } catch (error) {
+      console.error('Upgrade failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChangeBillingMode = async (mode: AIBillingMode) => {
+    setIsLoading(true);
+    try {
+      const response = await fetchWithAuth('/api/v1/billing/subscription/', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aiBillingMode: mode }),
+      });
+
+      if (response.ok) {
+        setBillingMode(mode);
+      }
+    } catch (error) {
+      console.error('Failed to update billing mode:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <DashboardProvider>
+      <SidebarProvider>
+        <Suspense fallback={null}>
+          <AppSidebar />
+        </Suspense>
+        <SidebarInset>
+          <Header automationMode="manual" onAutomationChange={() => {}} activeTab="settings" />
+          <div className="flex flex-1 flex-col gap-4 p-4">
+            <div className="flex-1 p-4">
+              <div className="space-y-6">
+                <div>
+                  <h1 className="flex items-center gap-3 text-xl font-semibold text-slate-900 dark:text-slate-100">
+                    <CreditCard className="h-5 w-5" />
+                    Subscription & Billing
+                  </h1>
+                  <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                    Manage your subscription tier, AI billing preferences, and view usage.
+                  </p>
+                </div>
+
+                {(isLoading || isFetching) && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span>{isFetching ? 'Loading...' : 'Processing...'}</span>
+                    </div>
+                  </div>
+                )}
+
+                <SubscriptionManager
+                  currentTier={currentTier}
+                  billingMode={billingMode}
+                  trialPagesUsed={trialPagesUsed}
+                  trialPagesLimit={trialPagesLimit}
+                  sitesCount={sitesCount}
+                  silosCount={silosCount}
+                  onUpgrade={handleUpgrade}
+                  onChangeBillingMode={handleChangeBillingMode}
+                />
+
+                <Separator />
+
+                <Separator />
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Billing Portal
+                    </CardTitle>
+                    <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
+                      Manage your payment methods, view invoices, and update billing information.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetchWithAuth(
+                            '/api/v1/billing/portal/create_session/',
+                            {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ returnUrl: window.location.href }),
+                            }
+                          );
+                          if (res.ok) {
+                            const data = await res.json();
+                            if (data.url) window.location.href = data.url;
+                          }
+                        } catch (err) {
+                          console.error('Portal error:', err);
+                        }
+                      }}
+                      className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+                    >
+                      Open Billing Portal
+                    </button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </DashboardProvider>
+  );
+}

@@ -1,0 +1,581 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@100..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=TWK+Everett:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 223 33% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 223 33% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 223 33% 13%;
+    --primary: 212 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 223 33% 13%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 223 33% 13%;
+    --accent: 212 100% 50%;
+    --accent-foreground: 223 33% 13%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 211 73% 94%;
+    --input: 211 73% 94%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --sidebar-background: 245 16% 9%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 212 100% 50%;
+    --sidebar-primary-foreground: 245 16% 9%;
+    --sidebar-accent: 212 100% 50%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 211 73% 94%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --font-sans: 'Manrope', 'Manrope Fallback', sans-serif;
+
+    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+
+    --font-mono:
+      'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+      'Courier New', monospace;
+
+    --font-brand: 'TWK Everett', 'TWK Everett Fallback', sans-serif;
+  }
+  .dark {
+    --background: #15141b;
+    --foreground: #f0f0f0;
+    --card: 220 15% 15%;
+    --card-foreground: #f0f0f0;
+    --popover: 220 15% 15%;
+    --popover-foreground: #f0f0f0;
+    --primary: 212 100% 50%;
+    --primary-foreground: 216 11% 9%;
+    --secondary: 220 15% 15%;
+    --secondary-foreground: #9a9a9a;
+    --muted: 220 15% 15%;
+    --muted-foreground: #9a9a9a;
+    --accent: 212 100% 50%;
+    --accent-foreground: 220 13% 91%;
+    --destructive: 0 72% 61%;
+    --destructive-foreground: 220 13% 91%;
+    --border: 214 30% 14%;
+    --input: 220 15% 15%;
+    --ring: 51 100% 50%;
+    --chart-1: 51 100% 50%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 38 100% 50%;
+    --chart-4: 0 72% 61%;
+    --chart-5: 220 65% 54%;
+    --sidebar-background: #15141b;
+    --sidebar-foreground: 220 13% 91%;
+    --sidebar-primary: 212 100% 50%;
+    --sidebar-primary-foreground: 216 11% 9%;
+    --sidebar-accent: 212 100% 50%;
+    --sidebar-accent-foreground: 220 13% 91%;
+    --sidebar-border: 214 30% 14%;
+    --sidebar-ring: 51 100% 50%;
+    --radius: 0.625rem;
+    --font-sans: 'Manrope', 'Manrope Fallback', sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+      monospace;
+    --font-brand: 'TWK Everett', 'TWK Everett Fallback', sans-serif;
+  }
+  .theme {
+    --font-sans: 'Manrope', 'Manrope Fallback', sans-serif;
+    --font-mono:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+      monospace;
+    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-brand: 'TWK Everett', 'TWK Everett Fallback', sans-serif;
+    --radius: 0.625rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    letter-spacing: 0.01em;
+    line-height: 1.6;
+  }
+}
+
+@layer utilities {
+  /* Primary UI Font - Manrope */
+  .font-ui {
+    font-family: var(--font-sans);
+    letter-spacing: 0.01em;
+    line-height: 1.6;
+  }
+
+  /* Data & Metrics Font - Roboto Mono */
+  .font-data {
+    font-family: var(--font-mono);
+  }
+
+  /* Brand & Heading Font - DM Sans */
+  .font-brand {
+    font-family: var(--font-brand);
+  }
+
+  /* Specific use cases */
+  .font-keyword {
+    @apply font-data text-sm;
+  }
+
+  .font-url {
+    @apply font-data text-xs;
+  }
+
+  .font-metric {
+    @apply font-data tabular-nums;
+  }
+
+  .font-heading {
+    @apply font-brand;
+  }
+
+  .font-label {
+    @apply font-ui text-sm;
+  }
+}
+
+@layer components {
+  .card {
+    border-radius: 0.75rem;
+    border: 1px solid hsl(var(--border));
+    background-color: white;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .card-hover {
+    transition: all 0.3s;
+  }
+
+  .card-hover:hover {
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    background-color: hsl(var(--primary));
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+    font-weight: 500;
+    color: white;
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover {
+    background-color: hsl(var(--primary) / 0.9);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid hsl(var(--border));
+    background-color: white;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    background-color: hsl(var(--muted));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .btn-approve {
+    position: relative;
+    margin-bottom: 0.5rem;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.5rem;
+    background-color: hsl(var(--primary));
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+    transition: all;
+  }
+
+  .btn-deny {
+    border-radius: 0.5rem;
+    border: 1px solid hsl(var(--destructive) / 0.2);
+    background-color: white;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-weight: 500;
+    color: hsl(var(--destructive));
+    transition: all 0.2s;
+  }
+
+  .btn-deny:hover {
+    background-color: hsl(var(--destructive) / 0.05);
+  }
+
+  .severity-high {
+    @apply rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600;
+  }
+
+  .severity-medium {
+    @apply rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-600;
+  }
+
+  .severity-low {
+    @apply rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600;
+  }
+
+  .risk-safe {
+    @apply rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600;
+  }
+
+  .risk-destructive {
+    @apply rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600;
+  }
+
+  .entity-tag {
+    @apply mb-1 mr-1.5 inline-block rounded bg-muted px-2 py-0.5 text-[10px] text-gray-700 dark:text-gray-300;
+  }
+
+  .automation-manual {
+    @apply bg-gray-200 text-gray-600;
+  }
+
+  .automation-semi {
+    @apply bg-amber-50 text-amber-600;
+  }
+
+  .automation-full {
+    @apply bg-emerald-50 text-emerald-600;
+  }
+
+  /* Link hover styles */
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  a:hover {
+    color: #fdf5e5;
+  }
+
+  /* Custom hover:text-foreground styles */
+  .hover\:text-foreground:hover {
+    color: #161b2c;
+    font-weight: 700;
+    font-size: 14px;
+    transition: color 0.2s ease-in-out;
+  }
+}
+
+/* Custom scrollbar - light */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e8eef7;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00000033;
+}
+
+/* Custom scrollbar - dark */
+.dark ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #171b25;
+  border-radius: 3px;
+  box-shadow:
+    inset 1px 1px 2px #ffffff1a,
+    inset -1px -1px 2px #0000004d,
+    0 1px 2px #00000033;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #1a1e2a;
+  box-shadow:
+    inset 1px 1px 2px #ffffff26,
+    inset -1px -1px 2px #00000066,
+    0 1px 3px #0000004d;
+}
+
+.embossed-border {
+  border-width: 4px; /* Adjust thickness as needed */
+  border-style: inset; /* Creates the embossed look */
+  border-color: #666; /* The effect uses lighter and darker shades of this color */
+  padding: 20px;
+  background-color: #f0f0f0; /* Helps the 3D effect stand out */
+}
+
+/* Mobile-specific improvements */
+@layer utilities {
+  /* Better touch targets for mobile */
+  .touch-target {
+    @apply flex min-h-[44px] min-w-[44px] items-center justify-center;
+  }
+
+  /* Mobile-safe spacing */
+  .mobile-safe {
+    @apply px-4 py-2 sm:px-6 sm:py-3;
+  }
+
+  /* Mobile card improvements */
+  .mobile-card {
+    @apply rounded-lg border bg-card p-3 text-card-foreground shadow-sm sm:p-4;
+  }
+
+  /* Mobile button improvements */
+  .mobile-button {
+    @apply px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base;
+  }
+
+  /* Responsive text */
+  .responsive-text-xs {
+    @apply text-xs sm:text-sm;
+  }
+
+  .responsive-text-sm {
+    @apply text-sm sm:text-base;
+  }
+
+  .responsive-text-base {
+    @apply text-base sm:text-lg;
+  }
+
+  /* Responsive grid */
+  .responsive-grid {
+    @apply grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3;
+  }
+
+  /* Mobile scroll improvements */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Better mobile focus states */
+  .mobile-focus {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+}
+
+/* Sidebar background utility */
+.dark .bg-sidebar {
+  background-color: #15141b !important;
+}
+
+/* Main background utility */
+.dark .bg-background {
+  background-color: #15141b !important;
+}
+
+/* Breadcrumb text color in dark mode */
+.dark a.transition-all {
+  color: #808a9e !important;
+}
+
+/* Dropdown button styles in dark mode */
+.dark button.flex.h-9 {
+  background-color: #212026 !important;
+  border-color: #212026 !important;
+  color: #e8eaf0 !important;
+}
+
+.dark button.flex.h-9 svg {
+  color: #7b82a0 !important;
+}
+
+.dark button.flex.h-9 span.hidden {
+  color: #7b82a0 !important;
+}
+
+/* List item styles in dark mode */
+.dark li.inline-flex {
+  color: #808a9e !important;
+}
+
+.dark li.inline-flex span[role='link'] {
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  margin-right: 8px !important;
+  margin-left: 4px !important;
+}
+
+/* Chevron SVG in list items for dark mode */
+.dark li.hidden.lg\\:block svg {
+  color: #fff !important;
+}
+
+/* Theme toggle thumb in dark mode */
+.dark .absolute.h-4.w-4 {
+  background-color: #eee !important;
+}
+
+.dark .absolute.h-4.w-4 svg {
+  stroke: #b19a5b !important;
+}
+
+/* Auth pages card background in dark mode */
+.dark .bg-card {
+  background-color: #212026 !important;
+}
+
+/* Auth pages input background in dark mode */
+.dark input {
+  background-color: #15141b !important;
+}
+
+/* Remove border from inputs in dark mode */
+.dark .flex.h-10.w-full.rounded-lg.border {
+  border: none !important;
+}
+
+/* Auth pages typography styling */
+.dark label {
+  font-family: Manrope, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-align: left;
+  color: #fff;
+  margin-bottom: 0;
+}
+
+/* Dark mode background color */
+.dark .bg-background {
+  background-color: #212026 !important;
+}
+
+/* Dark mode after border color */
+.dark .after\:border-border::after {
+  border-color: hsl(248.57deg 13.31% 18.39%) !important;
+}
+
+/* Dark mode text white for heading elements */
+.dark .font-semibold.tracking-tight.text-xl {
+  color: white !important;
+}
+
+/* Dark mode text white for muted small text */
+.dark .text-muted-foreground.text-sm {
+  color: white !important;
+}
+
+/* Dark mode typography for text-center small text */
+.dark .text-center.text-sm {
+  font-family: Manrope, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-align: center;
+  color: white;
+  margin-bottom: 0;
+}
+
+/* Dark mode forgot password link styling */
+.dark .ml-auto.inline-block.text-sm.underline {
+  font-family: Manrope, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-align: center;
+  color: white;
+  margin-bottom: 0;
+  transition: 0.25s ease-in-out;
+}
+
+/* Auth login page text-center small text */
+.auth .dark .text-center.text-sm {
+  font-family: Manrope, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-align: center;
+  color: white;
+  margin-bottom: 0;
+}
+
+/* Dark mode link hover effect */
+.dark .text-center.text-sm a:hover,
+.dark .ml-auto.inline-block.text-sm.underline:hover {
+  color: #005ed4 !important;
+}
+
+/* Text-center text-sm links color */
+.text-center .text-sm a {
+  color: #006ff9 !important;
+}
+
+/* Dark mode text white for specific elements */
+.dark .relative.z-10.bg-background.px-2.text-muted-foreground {
+  color: #ffffff !important;
+  background-color: #212026 !important;
+}
+
+/* Auth pages rounded-full buttons */
+.flex.min-h-svh.flex-col.items-center.justify-center.gap-6.bg-sidebar button,
+.flex.min-h-svh.flex-col.items-center.justify-center.gap-6.bg-sidebar .btn {
+  border-radius: 9999px !important;
+}
+
+/* Specific button rounded-full styling */
+.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-lg.text-sm.font-medium.transition-\[color,
+background-color,
+border-color,
+box-shadow,
+transform\].duration-300.ease-in-out.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.bg-\[\#005acc\].text-white.shadow-sm.hover\:bg-\[\#006ff9\].hover\:shadow-md.hover\:-translate-y-0\.5.focus-visible\:ring-\[\#006ff9\].h-10.px-4.py-2.w-full {
+  border-radius: 9999px !important;
+}
