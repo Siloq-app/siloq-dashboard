@@ -89,7 +89,7 @@ export default function SupportingContentSection({
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      setData(json);
+      setData({ ...json, recommended_articles: json.recommended_articles ?? [], gaps_detected: json.gaps_detected ?? 0 });
     } catch (e) {
       console.error('[SupportingContentSection] fetch error:', e);
       setError(true);
@@ -217,7 +217,7 @@ export default function SupportingContentSection({
 
       {/* Article cards */}
       <div className="space-y-2 mb-4">
-        {data.recommended_articles.map(article => {
+        {(data.recommended_articles ?? []).map(article => {
           const effectiveStatus = optimisticStatus[article.id] || article.status;
           const isGenerating = generatingId === article.id;
 
