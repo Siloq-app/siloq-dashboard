@@ -12,6 +12,8 @@ export interface Site {
   last_synced_at: string | null;
   created_at: string;
   gsc_connected?: boolean;
+  onboarding_complete?: boolean;
+  business_type?: string;
 }
 
 export interface SiteOverview {
