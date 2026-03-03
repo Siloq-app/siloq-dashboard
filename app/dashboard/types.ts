@@ -12,7 +12,7 @@ export type TabType =
   | 'conflicts'
   | 'keyword-registry'
   | 'silo-health'
-  | 'content-upload';
+  | 'content-upload'
   | 'schema'
   | 'freshness';
 export type AutomationMode = 'manual' | 'semi' | 'full';

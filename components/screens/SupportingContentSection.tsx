@@ -78,7 +78,7 @@ export default function SupportingContentSection({
   const [error, setError] = useState(false);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   // Track optimistic status updates
-  const [optimisticStatus, setOptimisticStatus] = useState<Record<string, 'draft' | 'published'>>({});
+  const [optimisticStatus, setOptimisticStatus] = useState<Record<string, 'missing' | 'draft' | 'published'>>({});
 
   const load = useCallback(async () => {
     setLoading(true);

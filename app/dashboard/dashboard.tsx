@@ -183,9 +183,9 @@ export default function Dashboard({
           />
         );
       case 'schema':
-        return <SchemaArchitect siteId={siteId} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} wpApiBase={siteUrl} wpApiKey={siteApiKey} />;
+        return <SchemaArchitect siteId={selectedSite?.id || 0} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} wpApiBase={selectedSite?.url || ''} wpApiKey={''} />;
       case 'freshness':
-        return <FreshnessTab siteId={siteId} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} />;
+        return <FreshnessTab siteId={selectedSite?.id || 0} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} />;
       case 'content':
         return <ContentHub />;
       case 'content-upload':
