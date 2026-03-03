@@ -22,6 +22,7 @@ const Settings = lazy(() => import('@/components/screens/Settings'));
 const PagesScreen = lazy(() => import('@/components/screens/PagesScreen'));
 const InternalLinks = lazy(() => import('@/components/screens/InternalLinks'));
 const SearchConsole = lazy(() => import('@/components/screens/SearchConsole'));
+const ContentPlanTab = lazy(() => import('@/components/screens/ContentPlanTab'));
 const GettingStartedCard = lazy(() => import('@/components/onboarding/GettingStartedCard'));
 const OnboardingWizard = lazy(() => import('@/components/onboarding/OnboardingWizard'));
 const GenerateModal = lazy(() => import('@/components/modals/GenerateModal'));
@@ -215,6 +216,8 @@ export default function Dashboard({
             }}
           />
         );
+      case 'content-plan':
+        return <ContentPlanTab siteId={selectedSite?.id} />;
       case 'search-console':
         return <SearchConsole selectedSite={selectedSite} />;
       case 'settings':

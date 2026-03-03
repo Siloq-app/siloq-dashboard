@@ -13,6 +13,7 @@ export type TabType =
   | 'keyword-registry'
   | 'silo-health'
   | 'content-upload'
+  | 'content-plan'
   | 'schema'
   | 'freshness';
 export type AutomationMode = 'manual' | 'semi' | 'full';
