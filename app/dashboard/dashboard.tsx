@@ -22,6 +22,7 @@ const PagesScreen = lazy(() => import('@/components/screens/PagesScreen'));
 const InternalLinks = lazy(() => import('@/components/screens/InternalLinks'));
 const SearchConsole = lazy(() => import('@/components/screens/SearchConsole'));
 const GettingStartedCard = lazy(() => import('@/components/onboarding/GettingStartedCard'));
+const OnboardingWizard = lazy(() => import('@/components/onboarding/OnboardingWizard'));
 const GenerateModal = lazy(() => import('@/components/modals/GenerateModal'));
 const ApprovalModal = lazy(() => import('@/components/modals/ApprovalModal'));
 const CannibalizationModal = lazy(() => import('@/components/modals/CannibalizationModal'));
@@ -113,6 +114,19 @@ export default function Dashboard({
     if (isLoading && !selectedSite) {
       return <DashboardSkeleton />;
     }
+    // Show onboarding wizard if site exists but onboarding not complete
+    if (selectedSite && selectedSite.onboarding_complete === false) {
+      return (
+        <Suspense fallback={<DashboardSkeleton />}>
+          <OnboardingWizard
+            siteId={String(selectedSite.id)}
+            siteName={selectedSite.name}
+            onComplete={() => window.location.reload()}
+          />
+        </Suspense>
+      );
+    }
+
 
     // Show empty state if no site selected — except Sites tab where users add their first site
     if (!selectedSite && activeTab !== 'sites') {
