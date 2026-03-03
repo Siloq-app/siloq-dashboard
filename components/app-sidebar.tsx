@@ -16,6 +16,7 @@ import {
   Shield,
   Activity,
   BookOpen,
+  Map,
 } from 'lucide-react';
 
 import { NavUser } from '@/components/nav-user';
@@ -63,6 +64,11 @@ const navMain = [
     icon: Activity,
   },
   {
+    title: 'Content Plan',
+    url: '/dashboard?tab=content-plan',
+    icon: Map,
+  },
+  {
     title: 'Approvals',
     url: '/dashboard?tab=approvals',
     icon: CheckSquare,
@@ -95,6 +101,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get('tab');
+  const [gapsCount, setGapsCount] = React.useState(0);
 
   const [userData, setUserData] = React.useState(data.user);
   React.useEffect(() => {
@@ -105,6 +112,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const token = localStorage.getItem('token');
     if (token) {
+      // Load gaps count for Content Plan badge
+      const selectedSiteRaw = localStorage.getItem('selectedSiteId');
+      if (selectedSiteRaw) {
+        fetch(`https://api.siloq.ai/api/v1/sites/${selectedSiteRaw}/content-gaps/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then(res => res.ok ? res.json() : null)
+          .then(d => {
+            if (Array.isArray(d)) setGapsCount(d.length);
+            else if (d?.results) setGapsCount(d.results.length);
+          })
+          .catch(() => {});
+      }
+
       fetch('https://api.siloq.ai/api/v1/auth/me/', {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -160,6 +181,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {navMain.map((item) => {
               const tabParam = item.url.split('?tab=')[1];
               const isActive = currentTab === tabParam;
+              const isContentPlan = tabParam === 'content-plan';
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive}>
@@ -169,6 +191,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     >
                       <item.icon className="size-4" />
                       {item.title}
+                      {isContentPlan && gapsCount > 0 && (
+                        <span className="ml-auto bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full">
+                          {gapsCount}
+                        </span>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -17,6 +17,7 @@ const SiloPlanner = lazy(() => import('@/components/screens/SiloPlanner'));
 const ApprovalQueue = lazy(() => import('@/components/screens/ApprovalQueue'));
 const SitesScreen = lazy(() => import('@/components/screens/SitesScreen'));
 const ContentHub = lazy(() => import('@/components/screens/ContentHub'));
+const ContentPlanTab = lazy(() => import('@/components/screens/ContentPlanTab'));
 const ContentUpload = lazy(() => import('@/components/screens/ContentUpload'));
 const Settings = lazy(() => import('@/components/screens/Settings'));
 const PagesScreen = lazy(() => import('@/components/screens/PagesScreen'));
@@ -198,6 +199,8 @@ export default function Dashboard({
         return <FreshnessTab siteId={selectedSite?.id ?? 0} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} />;
       case 'content':
         return <ContentHub />;
+      case 'content-plan':
+        return <ContentPlanTab />;
       case 'content-upload':
         return <ContentUpload />;
       case 'links':

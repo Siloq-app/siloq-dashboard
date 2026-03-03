@@ -4,6 +4,7 @@ export type TabType =
   | 'silos'
   | 'approvals'
   | 'content'
+  | 'content-plan'
   | 'links'
   | 'pages'
   | 'settings'
