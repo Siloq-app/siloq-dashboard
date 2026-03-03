@@ -347,7 +347,8 @@ function Step3ServiceAreas({
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
+    // Use Enter only (not comma) so users can type "Kansas City, MO" as a single entry
+    if (e.key === 'Enter') {
       e.preventDefault();
       addArea(inputValue);
     } else if (e.key === 'Backspace' && !inputValue && serviceAreas.length > 0) {
@@ -359,7 +360,7 @@ function Step3ServiceAreas({
     <div>
       <h2 className="text-xl font-bold text-slate-900 mb-1">Where do you serve customers?</h2>
       <p className="text-sm text-slate-500 mb-6">
-        Add cities, regions, or states. Siloq will use these to build location-specific landing pages and local SEO strategies.
+        Add cities with their state (e.g. "Kansas City, MO") and press Enter. Siloq will use these to build location-specific landing pages and local SEO strategies.
       </p>
 
       {/* Area pill input */}
@@ -384,7 +385,7 @@ function Step3ServiceAreas({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={serviceAreas.length === 0 ? 'e.g. Kansas City, MO or Greater Dallas Area…' : 'Add more…'}
+          placeholder={serviceAreas.length === 0 ? 'e.g. Kansas City, MO — press Enter to add' : 'Add another city, state — press Enter'}
           className="flex-1 min-w-[200px] border-none outline-none bg-transparent text-sm text-slate-800 placeholder:text-slate-400"
         />
       </div>
