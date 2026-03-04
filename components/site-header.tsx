@@ -5,7 +5,6 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Check, ChevronDown, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { fetchWithAuth } from '@/lib/auth';
 
 export type AutomationMode = 'manual' | 'semi' | 'full';

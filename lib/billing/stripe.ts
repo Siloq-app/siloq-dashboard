@@ -4,7 +4,7 @@
  */
 
 import Stripe from 'stripe';
-import { SubscriptionTier, TIER_CONFIGS, AIBillingMode, ProjectAISettings } from './types';
+import { SubscriptionTier } from './types';
 
 // Lazy initialization of Stripe - only create when needed
 let stripeInstance: Stripe | null = null;

@@ -438,10 +438,14 @@ export default function Settings({
     return key.substring(0, 10) + '•'.repeat(key.length - 10);
   };
 
-  const handleCopy = (key: string) => {
-    navigator.clipboard.writeText(key);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
+  const handleCopy = async (key: string) => {
+    try {
+      await navigator.clipboard.writeText(key);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    } catch (error) {
+      console.error('Copy failed:', error);
+    }
   };
 
   const validateProfile = () => {

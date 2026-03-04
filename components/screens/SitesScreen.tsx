@@ -378,11 +378,16 @@ export default function SitesScreen({ onSiteCreated }: SitesScreenProps = {}) {
     }
   };
 
-  const copyKey = (key: string) => {
-    navigator.clipboard.writeText(key);
-    setCopiedKey(true);
-    toast.success('API key copied to clipboard');
-    setTimeout(() => setCopiedKey(false), 2000);
+  const copyKey = async (key: string) => {
+    try {
+      await navigator.clipboard.writeText(key);
+      setCopiedKey(true);
+      toast.success('API key copied to clipboard');
+      setTimeout(() => setCopiedKey(false), 2000);
+    } catch (error) {
+      toast.error('Failed to copy API key');
+      console.error('Copy failed:', error);
+    }
   };
 
   if (selectedSite) {
@@ -577,7 +582,7 @@ export default function SitesScreen({ onSiteCreated }: SitesScreenProps = {}) {
                   <code className="break-all rounded bg-muted px-2 py-1 font-mono text-xs">
                     {newlyCreatedKey.key}
                   </code>
-                  <Button variant="outline" size="sm" onClick={() => copyKey(newlyCreatedKey.key)}>
+                  <Button variant="outline" size="sm" onClick={async () => await copyKey(newlyCreatedKey.key)}>
                     {copiedKey ? (
                       <Check className="h-4 w-4 text-green-500" />
                     ) : (

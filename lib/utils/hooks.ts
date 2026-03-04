@@ -32,7 +32,10 @@ export function useAsync<T>(
   });
 
   const executeRef = useRef(asyncFunction);
-  executeRef.current = asyncFunction;
+
+  useEffect(() => {
+    executeRef.current = asyncFunction;
+  });
 
   const execute = useCallback(async (...args: unknown[]): Promise<T> => {
     setState(prev => ({ ...prev, status: 'loading', error: null }));
@@ -82,9 +85,12 @@ export function useAsync<T>(
 
   useEffect(() => {
     if (dependencies.length > 0) {
-      execute();
+      const triggerExecute = async () => {
+        await execute();
+      };
+      triggerExecute();
     }
-  }, dependencies);
+  }, [dependencies.length, execute]);
 
   return {
     ...state,
@@ -166,10 +172,14 @@ export function useLocalStorage<T>(
 // Custom hook for previous value
 export function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T>();
+  const [previous, setPrevious] = useState<T | undefined>();
+  
   useEffect(() => {
+    setPrevious(ref.current);
     ref.current = value;
-  });
-  return ref.current;
+  }, [value]);
+  
+  return previous;
 }
 
 // Custom hook for mounted state
@@ -224,7 +234,9 @@ export function useMediaQuery(query: string): boolean {
     }
 
     const media = window.matchMedia(query);
-    setMatches(media.matches);
+    
+    const updateMatches = () => setMatches(media.matches);
+    updateMatches();
 
     const listener = (event: MediaQueryListEvent) => {
       setMatches(event.matches);

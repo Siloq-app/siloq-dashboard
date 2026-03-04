@@ -4,11 +4,9 @@
  */
 
 import {
-  SubscriptionTier,
   AIBillingMode,
   ProjectAISettings,
   BILLING_CONSTANTS,
-  BillingError,
   PreflightCheckResult,
   AICostEstimate,
 } from './types';
@@ -212,8 +210,6 @@ export function formatCostMessage(
   trialPagesLimit?: number
 ): string {
   if (cost.billingMode === 'trial') {
-    const remaining =
-      trialPagesLimit && trialPagesUsed !== undefined ? trialPagesLimit - trialPagesUsed : '?';
     return `Est. AI cost: $${cost.totalCostUsd.toFixed(2)} (covered by trial - ${trialPagesUsed}/${trialPagesLimit} pages)`;
   }
 

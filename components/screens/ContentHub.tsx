@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { useTheme } from '@/lib/hooks/theme-context';
 import { fetchWithAuth } from '@/lib/auth';

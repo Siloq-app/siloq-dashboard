@@ -15,7 +15,6 @@ import {
   mapCannibalizationIssues,
   mapSilos,
   mapRecommendationsToPendingChanges,
-  mapLinkOpportunities,
 } from '@/lib/services/mappers';
 import type {
   CannibalizationIssue,
@@ -23,7 +22,6 @@ import type {
   PendingChange,
   LinkOpportunity,
 } from '@/app/dashboard/types';
-import { ApplicationError, ErrorType } from '@/lib/utils/error-handling';
 
 // Constants
 const CACHE_TTL_MS = 45_000; // 45 seconds
@@ -324,9 +322,29 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   }, [selectedSite, pendingChanges.length, updateLoading, getCached, setCache]);
 
   const loadLinkOpportunities = useCallback(async () => {
-    // Link opportunities not implemented yet
-    console.log('Link opportunities not implemented');
-  }, []);
+    if (!selectedSite) return;
+    
+    updateLoading('linkOpportunities', true);
+    const cacheKey = `site:${selectedSite.id}:linkOpportunities`;
+    
+    try {
+      const cached = getCached<any[]>(cacheKey);
+      if (cached) {
+        setLinkOpportunities(cached);
+        return;
+      }
+
+      // TODO: Implement link opportunities service
+      // const data = await linkOpportunitiesService.fetch(selectedSite.id);
+      // setCache(cacheKey, data);
+      // setLinkOpportunities(data);
+      setLinkOpportunities([]);
+    } catch (err) {
+      console.error('Error loading link opportunities:', err);
+    } finally {
+      updateLoading('linkOpportunities', false);
+    }
+  }, [selectedSite, updateLoading, getCached]);
 
   // Refresh all data
   const refresh = useCallback(async () => {
@@ -359,13 +377,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     pendingChanges,
     linkOpportunities,
     error,
-    loading: {
-      main: loading.main,
-      cannibalization: loading.cannibalization,
-      silos: loading.silos,
-      recommendations: loading.recommendations,
-      linkOpportunities: loading.linkOpportunities,
-    },
+    loading,
     // Actions
     loadSites,
     selectSite,

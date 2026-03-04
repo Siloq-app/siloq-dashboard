@@ -17,9 +17,16 @@ const BreadcrumbList = React.forwardRef<HTMLOListElement, React.ComponentPropsWi
     <ol
       ref={ref}
       className={cn(
-        'flex flex-wrap items-center gap-2 break-words text-sm text-muted-foreground',
+        'flex flex-wrap items-center gap-2 break-words',
         className
       )}
+      style={{
+        fontSize: '14px',
+        fontFamily: 'Manrope, sans-serif',
+        color: '#ffffff !important',
+        fontWeight: 400,
+        lineHeight: '19px',
+      }}
       {...props}
     />
   )
@@ -31,7 +38,7 @@ const BreadcrumbItem = React.forwardRef<HTMLLIElement, React.ComponentPropsWitho
     <li
       ref={ref}
       className={cn('text-uppercase inline-flex items-center gap-2', className)}
-      style={{ color: '#808A9E' }}
+      style={{ color: '#fff' }}
       {...props}
     />
   )
@@ -43,25 +50,31 @@ const BreadcrumbLink = React.forwardRef<
   React.ComponentPropsWithoutRef<'a'> & {
     asChild?: boolean;
   }
->(({ asChild, className, ...props }, ref) => {
+>(({ asChild, className, onMouseEnter, onMouseLeave, ...props }, ref) => {
   const Comp = asChild ? Slot : 'a';
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.currentTarget.style.color = '#006FF9';
+    if (onMouseEnter) onMouseEnter(e);
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.currentTarget.style.color = '#fff';
+    if (onMouseLeave) onMouseLeave(e);
+  };
 
   return (
     <Comp
       ref={ref}
       className={cn('tw-duration-300 transition-all', className)}
       style={{
-        color: '#808A9E',
+        color: '#fff',
         transitionProperty: 'all',
         transitionTimingFunction: 'cubic-bezier(.4, 0, .2, 1)',
         transitionDuration: '.3s',
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = '#006FF9';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = '#808A9E';
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       {...props}
     />
   );
@@ -77,11 +90,13 @@ const BreadcrumbPage = React.forwardRef<HTMLSpanElement, React.ComponentPropsWit
       aria-current="page"
       className={cn('font-normal text-foreground', className)}
       style={{
-        color: '#161b2c',
+        color: '#fff !important',
         fontWeight: 700,
         fontSize: '14px',
         marginRight: '8px',
         marginLeft: '4px',
+        fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        transition: 'color .2s ease-in-out',
       }}
       {...props}
     />

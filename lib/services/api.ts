@@ -1,4 +1,5 @@
 import { fetchWithAuth } from '@/lib/auth';
+import { mockSites, getMockData } from '@/lib/utils/mock-data';
 
 export { fetchWithAuth };
 
@@ -119,25 +120,15 @@ class SitesService {
         console.log('[SitesService] Error data:', errorData);
         console.log('[SitesService] Error code:', errorData.error_code);
 
-        // For network errors (503), return fallback site instead of throwing
+        // For network errors (503), return mock data instead of throwing
         if (
           res.status === 503 &&
           (errorData.error_code === 'CONNECTION_REFUSED' ||
-            errorData.error_code === 'NETWORK_ERROR')
+            errorData.error_code === 'NETWORK_ERROR' ||
+            errorData.error_code === 'BACKEND_CONNECTION_REFUSED')
         ) {
-          console.log('[SitesService] Network error detected, returning fallback site');
-          const fallbackSite: Site = {
-            id: 999,
-            name: 'Able Electric KC',
-            url: 'https://ableelectrickc.com',
-            is_active: true,
-            page_count: 0,
-            api_key_count: 0,
-            last_synced_at: null,
-            created_at: new Date().toISOString(),
-            gsc_connected: false,
-          };
-          return [fallbackSite];
+          console.log('[SitesService] Backend unavailable, using mock data');
+          return await getMockData(mockSites);
         }
 
         // For authentication errors (401/403), also return fallback site instead of throwing

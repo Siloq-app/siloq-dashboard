@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { useTheme } from '@/lib/hooks/theme-context';
 import { fetchWithAuth } from '@/lib/auth';
@@ -65,7 +65,7 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
     setSlug(slugify(val));
   };
 
-  const acceptedTypes = ['.txt', '.html', '.htm', '.doc', '.docx'];
+  const acceptedTypes = useMemo(() => ['.txt', '.html', '.htm', '.doc', '.docx'], []);
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
@@ -124,7 +124,7 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
     };
     reader.onerror = () => toast.error('Failed to read file');
     reader.readAsText(file);
-  }, []);
+  }, [acceptedTypes]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -166,7 +166,7 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
         if (!pendingFile && content.trim()) formData.append('content', content.trim());
 
         // Append images
-        images.forEach((img, idx) => {
+        images.forEach((img, _idx) => {
           formData.append('images[]', img.file);
           formData.append('image_alts[]', img.alt);
           formData.append('image_captions[]', img.caption);
@@ -269,27 +269,6 @@ export default function ContentUpload({ onBack }: { onBack?: () => void }) {
     } finally {
       setIsApproving(false);
     }
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 14px',
-    borderRadius: 8,
-    border: `1px solid ${t.border}`,
-    background: t.inputBg || t.card,
-    color: t.text,
-    fontSize: 14,
-    outline: 'none',
-    fontFamily: 'inherit',
-    boxSizing: 'border-box',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: 13,
-    fontWeight: 600,
-    color: t.textSecondary || t.text,
-    marginBottom: 6,
-    display: 'block',
   };
 
   return (

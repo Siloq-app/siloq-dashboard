@@ -5,7 +5,6 @@ import {
   X,
   Copy,
   Check,
-  Upload,
   Save,
   Eye,
   Code,
@@ -43,7 +42,7 @@ export default function ContentPreviewModal({
   onClose,
   onPushToWordPress,
   onRegenerate,
-  siteId,
+  siteId: _siteId,
 }: ContentPreviewModalProps) {
   const [isRegenerating, setIsRegenerating] = useState(false);
 
@@ -83,28 +82,36 @@ export default function ContentPreviewModal({
     : 0;
 
   const handleCopyAll = useCallback(async () => {
-    const text = [
-      `Title: ${content.title}`,
-      content.metaTitle ? `Meta Title: ${content.metaTitle}` : '',
-      content.metaDescription ? `Meta Description: ${content.metaDescription}` : '',
-      '',
-      content.body
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim(),
-    ]
-      .filter(Boolean)
-      .join('\n');
+    try {
+      const text = [
+        `Title: ${content.title}`,
+        content.metaTitle ? `Meta Title: ${content.metaTitle}` : '',
+        content.metaDescription ? `Meta Description: ${content.metaDescription}` : '',
+        '',
+        content.body
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim(),
+      ]
+        .filter(Boolean)
+        .join('\n');
 
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Copy failed:', error);
+    }
   }, [content]);
 
   const handleCopyHtml = useCallback(async () => {
-    await navigator.clipboard.writeText(content.body);
-    setCopiedHtml(true);
-    setTimeout(() => setCopiedHtml(false), 2000);
+    try {
+      await navigator.clipboard.writeText(content.body);
+      setCopiedHtml(true);
+      setTimeout(() => setCopiedHtml(false), 2000);
+    } catch (error) {
+      console.error('Copy HTML failed:', error);
+    }
   }, [content]);
 
   const handlePush = useCallback(

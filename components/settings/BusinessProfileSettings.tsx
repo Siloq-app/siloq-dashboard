@@ -49,7 +49,7 @@ export default function BusinessProfileSettings({ siteId }: Props) {
     if (profile?.service_cities) {
       setCitiesRaw(profile.service_cities.join(', '));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [profile?.service_cities]);
 
   const handleSave = async () => {

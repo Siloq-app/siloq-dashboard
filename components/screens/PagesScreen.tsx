@@ -16,7 +16,6 @@ import {
   ChevronUp,
   X,
   Check,
-  Eye,
   Copy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -471,7 +470,7 @@ function RecommendationPanel({
             </div>
           ) : (
             <Button
-              onClick={handleApply}
+              onClick={async () => await handleApply()}
               disabled={selectedRecs.size === 0 || isApplying}
               className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
               size="sm"
@@ -1006,7 +1005,7 @@ export default function PagesScreen({
 
                               {/* Money page star */}
                               <button
-                                onClick={() => toggleMoneyPage(page.id)}
+                                onClick={async () => await toggleMoneyPage(page.id)}
                                 disabled={isToggling === page.id}
                                 className={`rounded-md p-1.5 transition-colors ${
                                   page.is_money_page
@@ -1030,7 +1029,7 @@ export default function PagesScreen({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleAnalyzePage(page)}
+                                onClick={async () => await handleAnalyzePage(page)}
                                 disabled={isAnalyzing}
                                 className="border-purple-200 text-purple-700 hover:border-purple-300 hover:bg-purple-50 disabled:opacity-70"
                               >
@@ -1230,7 +1229,7 @@ export default function PagesScreen({
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => copyToClipboard(rec.after)}
+                                      onClick={async () => await copyToClipboard(rec.after)}
                                       className="text-xs"
                                     >
                                       <Copy size={12} className="mr-1" />

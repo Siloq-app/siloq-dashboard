@@ -7,14 +7,28 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Handle unhandled promise rejections that might cause [object Event] errors
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', event.reason);
+      console.error('Unhandled promise rejection:', {
+        reason: event.reason,
+        reasonType: typeof event.reason,
+        reasonString: String(event.reason),
+        stack: event.reason?.stack,
+        timestamp: new Date().toISOString()
+      });
+      
       // Prevent the default browser error handling
       event.preventDefault();
     };
 
     // Handle unhandled errors
     const handleError = (event: ErrorEvent) => {
-      console.error('Unhandled error:', event.error || event.message);
+      console.error('Unhandled error:', {
+        error: event.error,
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        timestamp: new Date().toISOString()
+      });
       // Prevent the default browser error handling
       event.preventDefault();
     };

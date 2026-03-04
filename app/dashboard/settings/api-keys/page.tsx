@@ -227,11 +227,16 @@ export default function ApiKeysPage() {
     }
   };
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    toast.success('API key copied to clipboard');
-    setTimeout(() => setCopiedId(null), 2000);
+  const copyToClipboard = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      toast.success('API key copied to clipboard');
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      toast.error('Failed to copy API key');
+      console.error('Copy failed:', error);
+    }
   };
 
   return (
@@ -329,9 +334,9 @@ export default function ApiKeysPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
+                            onClick={async () =>
                               newlyCreatedMasterKey.key &&
-                              copyToClipboard(newlyCreatedMasterKey.key, 'new-master')
+                              await copyToClipboard(newlyCreatedMasterKey.key, 'new-master')
                             }
                             className="text-slate-400 hover:text-slate-200"
                           >
@@ -506,8 +511,8 @@ export default function ApiKeysPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
-                              newlyCreatedKey.key && copyToClipboard(newlyCreatedKey.key, 'new')
+                            onClick={async () =>
+                              newlyCreatedKey.key && await copyToClipboard(newlyCreatedKey.key, 'new')
                             }
                             className="text-slate-400 hover:text-slate-200"
                           >

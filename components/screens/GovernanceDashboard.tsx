@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   ExclamationTriangleIcon,
   BoltIcon,
-  ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
   FunnelIcon,
   ArrowPathIcon,
@@ -65,13 +64,13 @@ interface Props {
 }
 
 export default function GovernanceDashboard({
-  healthScore,
+  healthScore: _healthScore,
   cannibalizationIssues: _legacyIssues,
-  silos,
-  pendingChanges,
-  onViewSilo,
-  onViewApprovals,
-  onShowApprovalModal,
+  silos: _silos,
+  pendingChanges: _pendingChanges,
+  onViewSilo: _onViewSilo,
+  onViewApprovals: _onViewApprovals,
+  onShowApprovalModal: _onShowApprovalModal,
 }: Props) {
   const { selectedSite } = useDashboardContext();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
@@ -132,7 +131,6 @@ export default function GovernanceDashboard({
     return true;
   });
 
-  const activeConflicts = filteredConflicts.filter((c) => c.status === 'active');
   const allResolved =
     conflicts.length > 0 &&
     conflicts.every((c) => c.status === 'resolved' || c.status === 'dismissed');

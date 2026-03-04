@@ -66,11 +66,48 @@ async function handleRequest(request: NextRequest, method: string) {
     }
 
     // Make the request to the backend
-    const response = await fetch(fullBackendUrl, {
-      method,
-      headers,
-      body,
-    });
+    let response;
+    try {
+      response = await fetch(fullBackendUrl, {
+        method,
+        headers,
+        body,
+      });
+    } catch (error) {
+      // Handle backend connection errors
+      if (error instanceof Error && error.cause && (error.cause as any).code === 'ECONNREFUSED') {
+        console.error('[API Proxy] Backend connection refused:', {
+          url: fullBackendUrl,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+        
+        return NextResponse.json(
+          { 
+            error: 'Backend server unavailable',
+            message: 'Unable to connect to the backend server. Please ensure the backend is running on port 8000.',
+            code: 'BACKEND_CONNECTION_REFUSED'
+          },
+          { status: 503 }
+        );
+      }
+      
+      // Handle other network errors
+      console.error('[API Proxy] Network error:', {
+        url: fullBackendUrl,
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      });
+      
+      return NextResponse.json(
+        { 
+          error: 'Network error',
+          message: 'Unable to connect to the backend server.',
+          code: 'NETWORK_ERROR'
+        },
+        { status: 503 }
+      );
+    }
 
     // Get the response data
     const responseText = await response.text();

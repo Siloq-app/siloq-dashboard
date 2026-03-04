@@ -12,6 +12,10 @@
     "fix-cache": "./scripts/fix-cache.sh",
     "fix-cache-full": "./scripts/fix-cache.sh --reinstall",
     "check-backend": "./scripts/check-backend.sh",
+    "backend": "./scripts/backend-helper.sh",
+    "backend:start": "./scripts/backend-helper.sh start",
+    "backend:stop": "./scripts/backend-helper.sh stop",
+    "backend:check": "./scripts/backend-helper.sh check",
     "cleanup-production": "./scripts/cleanup-production.sh",
     "final-cleanup": "./scripts/final-production-cleanup.sh"
   },
