@@ -153,23 +153,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
-                <div
-                  className="flex aspect-square size-8 items-center justify-center overflow-hidden"
-                  style={{ backgroundColor: 'transparent' }}
-                >
-                  <Image
-                    src="/symbol.png"
-                    alt="Siloq"
-                    width={32}
-                    height={32}
-                    className="size-8 object-contain"
-                  />
-                </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">Siloq</span>
-                  <span className="text-xs">v1.0.0</span>
-                </div>
+              <Link href="/dashboard" className="flex items-center px-1 py-1">
+                <Image
+                  src="/logo-siloq.svg"
+                  alt="Siloq"
+                  width={100}
+                  height={42}
+                  className="object-contain"
+                  priority
+                />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
