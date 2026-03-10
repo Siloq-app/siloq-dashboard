@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Check,
@@ -18,6 +18,8 @@ import {
   Eye,
   EyeOff,
   Building2,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { AutomationMode } from '@/app/dashboard/types';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
@@ -27,6 +29,7 @@ import { Card } from '@/components/ui/card';
 import { fetchWithAuth } from '@/lib/auth-headers';
 import { toast } from 'sonner';
 import { SubscriptionTier, TIER_CONFIGS } from '@/lib/billing/types';
+import type { EntityProfile } from '@/lib/services/api';
 
 type TeamRole = 'owner' | 'admin' | 'editor' | 'viewer';
 
@@ -99,6 +102,10 @@ export default function Settings({
   const [resolvedTier, setResolvedTier] = useState<SubscriptionTier>(currentTierProp);
   const { selectedSite } = useDashboardContext();
 
+  // Entity profile for completeness bar
+  const [entityProfile, setEntityProfile] = useState<EntityProfile | null>(null);
+  const [entityProfileLoading, setEntityProfileLoading] = useState(false);
+
   useEffect(() => {
     setResolvedTier(currentTierProp);
   }, [currentTierProp]);
@@ -123,6 +130,19 @@ export default function Settings({
         .catch(() => {});
     }
   }, []);
+  // Fetch entity profile for completeness bar
+  useEffect(() => {
+    if (!selectedSite) return;
+    let cancelled = false;
+    setEntityProfileLoading(true);
+    fetchWithAuth(`/api/v1/sites/${selectedSite.id}/entity-profile/`)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(data => { if (!cancelled) setEntityProfile(data); })
+      .catch(() => { if (!cancelled) setEntityProfile(null); })
+      .finally(() => { if (!cancelled) setEntityProfileLoading(false); });
+    return () => { cancelled = true; };
+  }, [selectedSite?.id]);
+
   const router = useRouter();
   const settingsParams = useSearchParams();
   const sectionParam = settingsParams.get('section');
@@ -471,6 +491,150 @@ export default function Settings({
       setIsSaving(false);
     }
   };
+
+  // ─── Completeness bar ────────────────────────────────────────────────────────
+
+  interface CompletenessItem {
+    label: string;
+    done: boolean;
+    tab: TabId;
+  }
+
+  const completenessItems: CompletenessItem[] = useMemo(() => [
+    {
+      label: 'Business name',
+      done: !!(entityProfile?.business_name),
+      tab: 'business-profile',
+    },
+    {
+      label: 'Business type',
+      done: !!(entityProfile?.categories && entityProfile.categories.length > 0),
+      tab: 'business-profile',
+    },
+    {
+      label: 'Main services',
+      done: !!(entityProfile?.description),
+      tab: 'business-profile',
+    },
+    {
+      label: 'Service areas',
+      done: !!(entityProfile?.service_cities && entityProfile.service_cities.length > 0),
+      tab: 'business-profile',
+    },
+    {
+      label: 'Logo / GBP',
+      done: !!(entityProfile?.gbp_url || entityProfile?.google_place_id),
+      tab: 'business-profile',
+    },
+    {
+      label: 'Phone number',
+      done: !!(entityProfile?.phone),
+      tab: 'business-profile',
+    },
+    {
+      label: 'GBP connected',
+      done: !!(selectedSite?.gsc_connected),
+      tab: 'business-profile',
+    },
+    {
+      label: 'API key created',
+      done: !!(selectedSite && selectedSite.api_key_count > 0),
+      tab: 'api-keys',
+    },
+    {
+      label: 'Team member invited',
+      done: teamMembers.filter(m => m.role !== 'owner').length > 0,
+      tab: 'team',
+    },
+    {
+      label: 'Notifications set',
+      done: !notificationPrefsLoading && Object.values(emailNotifPrefs).some(v => v),
+      tab: 'notifications',
+    },
+  ], [entityProfile, selectedSite, teamMembers, notificationPrefsLoading, emailNotifPrefs]);
+
+  const completionPct = entityProfileLoading
+    ? null
+    : Math.round((completenessItems.filter(i => i.done).length / completenessItems.length) * 100);
+
+  const incompleteItems = completenessItems.filter(i => !i.done);
+
+  const barColor =
+    completionPct === null ? 'bg-slate-300 dark:bg-slate-600' :
+    completionPct >= 80 ? 'bg-emerald-500' :
+    completionPct >= 50 ? 'bg-amber-400' :
+    'bg-red-500';
+
+  const textColor =
+    completionPct === null ? 'text-slate-500' :
+    completionPct >= 80 ? 'text-emerald-700 dark:text-emerald-400' :
+    completionPct >= 50 ? 'text-amber-700 dark:text-amber-400' :
+    'text-red-700 dark:text-red-400';
+
+  const renderCompletenessBar = () => {
+    // Don't show if entity profile is still loading
+    if (entityProfileLoading) return null;
+
+    // Show completed badge when 100%
+    if (completionPct === 100) {
+      return (
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-950/20">
+          <CheckCircle2 size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+            Profile complete ✓ — your account is fully set up
+          </span>
+        </div>
+      );
+    }
+
+    const pct = completionPct ?? 0;
+    const message =
+      pct === 0
+        ? 'Complete your profile to get started'
+        : `Your profile is ${pct}% complete — fill in the missing details to get the most out of Siloq`;
+
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/50 space-y-3">
+        {/* Header row */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertCircle size={15} className={`shrink-0 ${textColor}`} />
+            <p className={`text-sm font-medium leading-snug ${textColor}`}>
+              {message}
+            </p>
+          </div>
+          <span className={`shrink-0 text-sm font-semibold tabular-nums ${textColor}`}>
+            {pct}%
+          </span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div
+            className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+
+        {/* Incomplete chips */}
+        {incompleteItems.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
+            {incompleteItems.map(item => (
+              <button
+                key={item.label}
+                onClick={() => setActiveTab(item.tab)}
+                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700"
+              >
+                + {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ─── End completeness bar ─────────────────────────────────────────────────────
 
   const renderProfileTab = () => (
     <div className="space-y-6">
@@ -1185,6 +1349,8 @@ export default function Settings({
       <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
         Settings
       </h3>
+
+      {renderCompletenessBar()}
 
       <div className="border-border border-b">
         <div className="scrollbar-hide flex gap-1 overflow-x-auto lg:overflow-visible">
