@@ -1061,3 +1061,69 @@ export const healthScoresService = new HealthScoresService();
 export const silosV2Service = new SilosV2Service();
 export const redirectsService = new RedirectsService();
 export const analysisService = new AnalysisService();
+
+// ── Intelligence types ────────────────────────────────────────────────────────
+
+export interface IntelligenceHubPage {
+  id: number;
+  title: string;
+  url: string;
+  spoke_count: number;
+  gaps: number;
+}
+
+export interface IntelligenceSpokePage {
+  id: number;
+  title: string;
+  url: string;
+  parent_hub: string;
+  is_connected: boolean;
+}
+
+export interface IntelligenceOrphanPage {
+  id: number;
+  title: string;
+  url: string;
+  recommendation: string;
+}
+
+export interface IntelligenceContentGap {
+  hub_title: string;
+  missing_topics: string[];
+}
+
+export interface IntelligenceCannibalizationRisk {
+  pages: string[];
+  keyword: string;
+  severity: 'high' | 'medium' | 'low';
+}
+
+export interface IntelligenceResult {
+  business_type: string;
+  hub_pages: IntelligenceHubPage[];
+  spoke_pages: IntelligenceSpokePage[];
+  orphan_pages: IntelligenceOrphanPage[];
+  content_gaps: IntelligenceContentGap[];
+  cannibalization_risks: IntelligenceCannibalizationRisk[];
+  generated_at?: string;
+}
+
+class IntelligenceService {
+  async get(siteId: number): Promise<IntelligenceResult | null> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/intelligence/`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Failed to fetch intelligence');
+    return res.json();
+  }
+
+  async generate(siteId: number): Promise<IntelligenceResult> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/intelligence/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error('Failed to generate intelligence');
+    return res.json();
+  }
+}
+
+export const intelligenceService = new IntelligenceService();

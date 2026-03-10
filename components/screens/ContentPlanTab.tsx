@@ -15,6 +15,7 @@ import {
   type SupportingPageDraft,
   type Page,
 } from '@/lib/services/api';
+import SiteIntelligencePanel from '@/components/screens/SiteIntelligencePanel';
 
 // ── Classification ────────────────────────────────────────────────────────────
 
@@ -570,7 +571,7 @@ function AllPagesView({ pages }: AllPagesViewProps) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-type ContentPlanView = 'gaps' | 'pipeline' | 'all-pages' | 'silo-map';
+type ContentPlanView = 'gaps' | 'pipeline' | 'all-pages' | 'silo-map' | 'intelligence';
 
 export default function ContentPlanTab() {
   const { selectedSite } = useDashboardContext();
@@ -683,6 +684,7 @@ export default function ContentPlanTab() {
     { id: 'pipeline', label: '📋 Pipeline', count: pipeline.length || undefined },
     { id: 'all-pages', label: '📄 All Pages', count: pages.length || undefined },
     { id: 'silo-map', label: '🗂 Silo Map' },
+    { id: 'intelligence', label: '🧠 Site Intelligence' },
   ];
 
   return (
@@ -737,6 +739,7 @@ export default function ContentPlanTab() {
         {activeView === 'pipeline' && <PipelineView pipeline={pipeline} />}
         {activeView === 'all-pages' && <AllPagesView pages={pages} />}
         {activeView === 'silo-map' && <SiloMapView siloMap={siloMap} siteId={selectedSite.id} />}
+        {activeView === 'intelligence' && <SiteIntelligencePanel siteId={selectedSite.id} />}
       </div>
     </div>
   );
