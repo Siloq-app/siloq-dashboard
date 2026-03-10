@@ -23,7 +23,7 @@ export function VersionSwitcher({
             style={{ backgroundColor: 'transparent' }}
           >
             <Image
-              src="/symbol.png"
+              src="/symbol-siloq.svg"
               alt="Siloq"
               width={32}
               height={32}

@@ -237,7 +237,7 @@ export default function RegisterPage() {
           className="flex items-center gap-2 self-center font-medium text-white"
         >
           <Image
-            src="/symbol.png"
+            src="/symbol-siloq.svg"
             alt="Siloq"
             width={32}
             height={32}
