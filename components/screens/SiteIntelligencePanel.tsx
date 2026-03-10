@@ -4,12 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import {
   intelligenceService,
+  goalsService,
+  pagesService,
   type IntelligenceResult,
   type IntelligenceHubPage,
   type IntelligenceSpokePage,
   type IntelligenceOrphanPage,
   type IntelligenceCannibalizationRisk,
   type IntelligenceContentGap,
+  type SiteGoals,
+  type Page,
 } from '@/lib/services/api';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -247,15 +251,25 @@ export default function SiteIntelligencePanel({ siteId }: SiteIntelligencePanelP
   const [error, setError] = useState<string | null>(null);
   const [lastGenerated, setLastGenerated] = useState<string | null>(null);
 
+  // GEO Visibility state
+  const [siteGoals, setSiteGoals] = useState<SiteGoals | null>(null);
+  const [pages, setPages] = useState<Page[]>([]);
+
   const loadCached = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await intelligenceService.get(siteId);
+      const [data, goals, sitePages] = await Promise.all([
+        intelligenceService.get(siteId),
+        goalsService.get(siteId).catch(() => null),
+        pagesService.list(siteId).catch(() => [] as Page[]),
+      ]);
       if (data) {
         setIntelligenceData(data);
         setLastGenerated(data.generated_at || null);
       }
+      setSiteGoals(goals);
+      setPages(sitePages);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load intelligence data';
       setError(msg);
@@ -296,10 +310,77 @@ export default function SiteIntelligencePanel({ siteId }: SiteIntelligencePanelP
     );
   }
 
+  // ── GEO Visibility card ───────────────────────────────────────────────────
+
+  const renderGeoVisibilityCard = () => {
+    const hasGeoPages = siteGoals && siteGoals.geo_priority_pages && siteGoals.geo_priority_pages.length > 0;
+    const geoPagesWithTitles = hasGeoPages
+      ? siteGoals!.geo_priority_pages.map(id => pages.find(p => p.id === id)).filter((p): p is Page => p !== undefined)
+      : [];
+
+    return (
+      <div className="rounded-xl border-2 border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-900 p-5">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">
+          🤖 GEO Visibility
+        </h3>
+        <p className="text-xs text-slate-500 mb-3">
+          Pages you've selected to be cited by AI assistants like ChatGPT and Perplexity
+        </p>
+
+        {hasGeoPages ? (
+          <div className="space-y-2 mb-4">
+            {geoPagesWithTitles.length > 0 ? (
+              geoPagesWithTitles.map(pg => (
+                <div
+                  key={pg.id}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 dark:bg-violet-950/20 border border-violet-100 dark:border-violet-900/40"
+                >
+                  <span className="text-violet-500 text-sm">🔗</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                      {pg.title || '(Untitled)'}
+                    </div>
+                    <div className="text-xs text-slate-400 truncate">{pg.url}</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              // IDs saved but pages not loaded yet / IDs no longer in list
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {siteGoals!.geo_priority_pages.length} page{siteGoals!.geo_priority_pages.length !== 1 ? 's' : ''} selected
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            Set your GEO priority pages in Goals settings.
+          </p>
+        )}
+
+        <button
+          onClick={() => {
+            // Navigate to Goals settings — set sessionStorage subtab key
+            if (typeof window !== 'undefined') {
+              sessionStorage.setItem('siloq_settings_subtab', 'goals');
+            }
+            // Try to navigate via browser history (works if Settings mounts from same page)
+            window.dispatchEvent(new CustomEvent('siloq:navigate', { detail: { tab: 'settings' } }));
+          }}
+          className="inline-flex items-center gap-1.5 rounded-md border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-950/30 dark:text-violet-300 dark:hover:bg-violet-900/30"
+        >
+          Go to Goals Settings →
+        </button>
+      </div>
+    );
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
+      {/* GEO Visibility card — always visible at the top */}
+      {renderGeoVisibilityCard()}
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>

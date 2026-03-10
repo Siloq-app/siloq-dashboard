@@ -20,10 +20,12 @@ import {
   Building2,
   CheckCircle2,
   AlertCircle,
+  Target,
 } from 'lucide-react';
 import { AutomationMode } from '@/app/dashboard/types';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 const BusinessProfileSettings = lazy(() => import('@/components/settings/BusinessProfileSettings'));
+const GoalsTab = lazy(() => import('@/components/screens/GoalsTab'));
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { fetchWithAuth } from '@/lib/auth-headers';
@@ -77,7 +79,8 @@ type TabId =
   | 'team'
   | 'agent-permissions'
   | 'notifications'
-  | 'business-profile';
+  | 'business-profile'
+  | 'goals';
 
 const tabs = [
   { id: 'profile' as const, label: 'Profile', icon: User },
@@ -90,6 +93,7 @@ const tabs = [
   },
   { id: 'notifications' as const, label: 'Notifications', icon: Bell },
   { id: 'business-profile' as const, label: 'Business Profile', icon: Building2 },
+  { id: 'goals' as const, label: 'Goals', icon: Target },
 ];
 
 export default function Settings({
@@ -146,7 +150,7 @@ export default function Settings({
   const router = useRouter();
   const settingsParams = useSearchParams();
   const sectionParam = settingsParams.get('section');
-  const initialTab = (sectionParam && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications', 'business-profile'].includes(sectionParam)) 
+  const initialTab = (sectionParam && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications', 'business-profile', 'goals'].includes(sectionParam)) 
     ? sectionParam as TabId 
     : 'profile';
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
@@ -156,7 +160,7 @@ export default function Settings({
   // Pick up subtab navigation from sessionStorage (set by onboarding nudges)
   useEffect(() => {
     const subtab = sessionStorage.getItem('siloq_settings_subtab');
-    if (subtab && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications', 'business-profile'].includes(subtab)) {
+    if (subtab && ['profile', 'api-keys', 'team', 'agent-permissions', 'notifications', 'business-profile', 'goals'].includes(subtab)) {
       sessionStorage.removeItem('siloq_settings_subtab');
       setActiveTab(subtab as TabId);
     }
@@ -1326,6 +1330,19 @@ export default function Settings({
     </Suspense>
   );
 
+  const renderGoalsTab = () => (
+    <Suspense fallback={<div className="p-6 text-slate-500">Loading...</div>}>
+      {selectedSite ? (
+        <GoalsTab
+          siteId={selectedSite.id}
+          onNavigateToSettings={() => setActiveTab('goals')}
+        />
+      ) : (
+        <div className="p-6 text-slate-500">Select a site to manage its goals.</div>
+      )}
+    </Suspense>
+  );
+
   const tabContent = {
     profile: renderProfileTab,
     'api-keys': renderApiKeysTab,
@@ -1333,6 +1350,7 @@ export default function Settings({
     'agent-permissions': renderAgentPermissionsTab,
     notifications: renderNotificationsTab,
     'business-profile': renderBusinessProfileTab,
+    goals: renderGoalsTab,
   };
 
   if (isLoading) {
