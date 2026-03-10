@@ -944,6 +944,109 @@ class EntityProfileService {
 }
 export const entityProfileService = new EntityProfileService();
 
+// ── Supporting Pages Intelligence Types ──────────────────────────────────────
+
+export interface SupportingPageDraft {
+  topic_title: string;
+  page_type: 'sub_page' | 'blog_post';
+  target_keyword: string;
+  hub_page_id: number;
+}
+
+export interface CreateDraftResponse {
+  wp_post_id: number;
+  edit_url: string;
+  status: string;
+}
+
+export interface SiloMapNeededPage {
+  topic: string;
+  keyword: string;
+  type: 'sub_page' | 'blog_post';
+}
+
+export interface SiloMapExistingPage {
+  id: number;
+  title: string;
+  url: string;
+}
+
+export interface SiloMapHub {
+  id: number;
+  title: string;
+  url: string;
+  seo_score: number;
+}
+
+export interface SiloMapEntry {
+  hub: SiloMapHub;
+  existing_supporting: SiloMapExistingPage[];
+  needed_supporting: SiloMapNeededPage[];
+  linking_back: number;
+  total_supporting: number;
+}
+
+export interface ContentPlanGap {
+  hub_page_id: number;
+  hub_title: string;
+  hub_url: string;
+  supporting_count: number;
+  needed_topics: Array<{
+    topic: string;
+    keyword: string;
+    type: 'sub_page' | 'blog_post';
+  }>;
+}
+
+export interface ContentPlanPipelineItem {
+  id: number;
+  title: string;
+  page_type: 'sub_page' | 'blog_post';
+  target_keyword: string;
+  hub_page_id: number;
+  hub_title: string;
+  wp_post_id: number | null;
+  edit_url: string | null;
+  status: 'draft' | 'published';
+  created_at: string;
+}
+
+class ContentPlanService {
+  async getSiloMap(siteId: string | number): Promise<SiloMapEntry[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/silo-map/`);
+    if (!res.ok) throw new Error('Failed to load silo map');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async getGaps(siteId: string | number): Promise<ContentPlanGap[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content-gaps/`);
+    if (!res.ok) throw new Error('Failed to load content gaps');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async getPipeline(siteId: string | number): Promise<ContentPlanPipelineItem[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content-pipeline/`);
+    if (!res.ok) throw new Error('Failed to load pipeline');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async createDraft(siteId: string | number, data: SupportingPageDraft): Promise<CreateDraftResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/pages/create-draft/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || json.detail || 'Failed to create draft');
+    return json;
+  }
+}
+
+export const contentPlanService = new ContentPlanService();
+
 export const sitesService = new SitesService();
 export const pagesService = new PagesService();
 export const apiKeysService = new ApiKeysService();
