@@ -713,7 +713,7 @@ function BattlefieldView({ selectedSite, onReconnect }: { selectedSite: Site; on
       {/* TOP BAR */}
       <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-200 bg-slate-50">
         <div className="flex items-center gap-3.5">
-          <img src="/symbol.png" alt="Siloq" className="w-[34px] h-[34px] rounded-[9px] object-contain" />
+          <img src="/symbol-siloq.svg" alt="Siloq" className="w-[34px] h-[34px] rounded-[9px] object-contain" />
           <div>
             <span className="text-sm font-extrabold -tracking-wide">SILOQ</span>
             <span className="text-[10px] text-slate-500 font-mono ml-2.5 tracking-wider">GSC PERFORMANCE</span>

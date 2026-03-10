@@ -1127,3 +1127,50 @@ class IntelligenceService {
 }
 
 export const intelligenceService = new IntelligenceService();
+
+// ── Goals types ───────────────────────────────────────────────────────────────
+
+export interface GoalPriorityLocation {
+  city: string;
+  state: string;
+  rank: number;
+}
+
+export type PrimaryGoal =
+  | 'local_leads'
+  | 'ecommerce_sales'
+  | 'topic_authority'
+  | 'multi_location'
+  | 'geo_citations'
+  | 'organic_growth';
+
+export interface SiteGoals {
+  primary_goal: PrimaryGoal | '';
+  priority_services: string[];
+  priority_locations: GoalPriorityLocation[];
+  geo_priority_pages: number[];
+}
+
+// ── Goals service ─────────────────────────────────────────────────────────────
+
+class GoalsService {
+  async get(siteId: number): Promise<SiteGoals | null> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/goals/`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Failed to fetch goals');
+    return res.json();
+  }
+
+  async save(siteId: number, data: SiteGoals): Promise<SiteGoals> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/goals/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || json.detail || 'Failed to save goals');
+    return json;
+  }
+}
+
+export const goalsService = new GoalsService();
