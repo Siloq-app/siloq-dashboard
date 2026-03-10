@@ -15,6 +15,7 @@ import {
   CreditCard,
   Shield,
   Activity,
+  BookOpen,
 } from 'lucide-react';
 
 import { NavUser } from '@/components/nav-user';
@@ -50,6 +51,11 @@ const navMain = [
     title: 'Pages',
     url: '/dashboard?tab=pages',
     icon: FileText,
+  },
+  {
+    title: 'Content Plan',
+    url: '/dashboard?tab=content-plan',
+    icon: BookOpen,
   },
   {
     title: 'Performance',
