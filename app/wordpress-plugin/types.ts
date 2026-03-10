@@ -5,6 +5,7 @@ export interface MockPage {
   date: string;
   author: string;
   excerpt: string;
+  url?: string;
   synced: boolean;
   lastSyncedAt?: string;
 }

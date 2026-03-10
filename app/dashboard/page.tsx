@@ -6,6 +6,22 @@ import Dashboard, { TabType, AutomationMode } from './dashboard';
 import Header from './header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { DashboardProvider } from '@/lib/hooks/dashboard-context';
+
+// Map removed tabs to their new homes
+const TAB_REDIRECTS: Record<string, string> = {
+  'overview': 'dashboard',
+  'silos': 'dashboard',
+  'keyword-registry': 'conflicts',
+  'silo-health': 'dashboard',
+  'content-hub': 'pages',
+  'content-upload': 'pages',
+  'content': 'pages',
+  'internal-links': 'pages',
+  'sites': 'settings',
+  'all-sites': 'settings',
+  'performance': 'search-console',
+};
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -19,7 +35,9 @@ function DashboardContent() {
 
   useEffect(() => {
     if (!tabFromUrl) {
-      router.replace('/dashboard?tab=overview');
+      router.replace('/dashboard?tab=dashboard');
+    } else if (TAB_REDIRECTS[tabFromUrl]) {
+      router.replace(`/dashboard?tab=${TAB_REDIRECTS[tabFromUrl]}`);
     } else if (tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
     }
@@ -35,6 +53,7 @@ function DashboardContent() {
       <div className="flex flex-1 flex-col gap-4 p-4">
         <Dashboard
           activeTab={activeTab}
+          onTabChange={(tab: TabType) => { setActiveTab(tab); router.push(`/dashboard?tab=${tab}`); }}
           automationMode={automationMode}
           onAutomationChange={setAutomationMode}
         />
@@ -49,19 +68,21 @@ function SidebarWithSearch() {
 
 export default function DashboardPage() {
   return (
-    <SidebarProvider>
-      <Suspense fallback={null}>
-        <SidebarWithSearch />
-      </Suspense>
-      <SidebarInset>
-        <Suspense
-          fallback={
-            <div className="flex h-16 items-center px-4">Loading...</div>
-          }
-        >
-          <DashboardContent />
+    <DashboardProvider>
+      <SidebarProvider>
+        <Suspense fallback={null}>
+          <SidebarWithSearch />
         </Suspense>
-      </SidebarInset>
-    </SidebarProvider>
+        <SidebarInset>
+          <Suspense
+            fallback={
+              <div className="flex h-16 items-center px-4">Loading...</div>
+            }
+          >
+            <DashboardContent />
+          </Suspense>
+        </SidebarInset>
+      </SidebarProvider>
+    </DashboardProvider>
   );
 }

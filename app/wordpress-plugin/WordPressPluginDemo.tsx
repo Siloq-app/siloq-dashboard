@@ -27,12 +27,19 @@ export function WordPressPluginDemo() {
 
   // Load config from local storage on mount
   useEffect(() => {
-    const savedConfig = localStorage.getItem('wp_plugin_demo_config');
-    if (savedConfig) {
-      try {
-        setConfig(JSON.parse(savedConfig));
-      } catch (e) {
-        console.error("Failed to parse config", e);
+    // Only access localStorage on client side
+    if (typeof window !== 'undefined') {
+      // Clear any auth tokens to avoid conflicts with JWT authentication
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
+      
+      const savedConfig = localStorage.getItem('wp_plugin_demo_config');
+      if (savedConfig) {
+        try {
+          setConfig(JSON.parse(savedConfig));
+        } catch (e) {
+          console.error("Failed to parse config", e);
+        }
       }
     }
     setIsLoading(false);
@@ -40,19 +47,25 @@ export function WordPressPluginDemo() {
 
   const handleSetupComplete = (newConfig: SetupConfig) => {
     setConfig(newConfig);
-    localStorage.setItem('wp_plugin_demo_config', JSON.stringify(newConfig));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('wp_plugin_demo_config', JSON.stringify(newConfig));
+    }
     setCurrentView(AppView.DASHBOARD);
   };
 
   const handleUpdateConfig = (newConfig: SetupConfig) => {
     setConfig(newConfig);
-    localStorage.setItem('wp_plugin_demo_config', JSON.stringify(newConfig));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('wp_plugin_demo_config', JSON.stringify(newConfig));
+    }
   };
 
   const handleDisconnect = () => {
     const newConfig = DEFAULT_CONFIG;
     setConfig(newConfig);
-    localStorage.removeItem('wp_plugin_demo_config');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('wp_plugin_demo_config');
+    }
     setCurrentView(AppView.DASHBOARD);
   };
 

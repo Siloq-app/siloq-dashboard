@@ -6,15 +6,15 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
-  Database,
   CheckSquare,
   FileText,
-  Link2,
   Globe,
   Settings,
   HelpCircle,
   Search,
   CreditCard,
+  Shield,
+  Activity,
 } from 'lucide-react';
 
 import { NavUser } from '@/components/nav-user';
@@ -27,104 +27,93 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
 
-// This is sample data.
+const navMain = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard?tab=overview',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Conflicts',
+    url: '/dashboard?tab=conflicts',
+    icon: Shield,
+  },
+  {
+    title: 'Pages',
+    url: '/dashboard?tab=pages',
+    icon: FileText,
+  },
+  {
+    title: 'Performance',
+    url: '/dashboard?tab=performance',
+    icon: Activity,
+  },
+  {
+    title: 'Approvals',
+    url: '/dashboard?tab=approvals',
+    icon: CheckSquare,
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard?tab=settings',
+    icon: Settings,
+  },
+];
+
+const navSecondary = [
+  {
+    title: 'Subscription',
+    url: '/dashboard/settings/subscription',
+    icon: CreditCard,
+  },
+];
+
 const data = {
   user: {
-    name: 'shadcn',
-    email: 'm@example.com',
+    name: '',
+    email: '',
     avatar: '',
+    subscriptionTier: '',
   },
-  navMain: [
-    {
-      title: 'Dashboard',
-      url: '#',
-      icon: LayoutDashboard,
-      items: [
-        {
-          title: 'Overview',
-          url: '/dashboard?tab=overview',
-        },
-        {
-          title: 'Silos',
-          url: '/dashboard?tab=silos',
-        },
-        {
-          title: 'Approvals',
-          url: '/dashboard?tab=approvals',
-        },
-      ],
-    },
-    {
-      title: 'Content',
-      url: '#',
-      icon: FileText,
-      items: [
-        {
-          title: 'Content Hub',
-          url: '/dashboard?tab=content',
-        },
-        {
-          title: 'Pages',
-          url: '/dashboard?tab=pages',
-        },
-        {
-          title: 'Internal Links',
-          url: '/dashboard?tab=links',
-        },
-      ],
-    },
-    {
-      title: 'Sites',
-      url: '#',
-      icon: Globe,
-      items: [
-        {
-          title: 'All Sites',
-          url: '/dashboard?tab=sites',
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: 'Subscription',
-      url: '/dashboard/settings/subscription',
-      icon: CreditCard,
-    },
-    {
-      title: 'Settings',
-      url: '/dashboard/settings/api-keys',
-      icon: Settings,
-    },
-    {
-      title: 'Get Help',
-      url: '#',
-      icon: HelpCircle,
-    },
-    {
-      title: 'Search',
-      url: '#',
-      icon: Search,
-    },
-  ],
-};
-
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Dashboard: LayoutDashboard,
-  Content: FileText,
-  Sites: Globe,
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get('tab');
+
+  const [userData, setUserData] = React.useState(data.user);
+  React.useEffect(() => {
+    const cachedName = localStorage.getItem('userName') || 'User';
+    const cachedEmail = localStorage.getItem('userEmail') || '';
+    const cachedTier = localStorage.getItem('subscriptionTier') || '';
+    setUserData({ name: cachedName, email: cachedEmail, avatar: '', subscriptionTier: cachedTier });
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch('https://api.siloq.ai/api/v1/auth/me/', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.user) {
+            const name = data.user.name ||
+              [data.user.first_name, data.user.last_name].filter(Boolean).join(' ') ||
+              data.user.email || cachedName;
+            const email = data.user.email || cachedEmail;
+            const subscriptionTier = data.user.subscription_tier || '';
+            localStorage.setItem('userName', name);
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('subscriptionTier', subscriptionTier);
+            setUserData({ name, email, avatar: '', subscriptionTier });
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   return (
     <Sidebar {...props}>
@@ -157,34 +146,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {data.navMain.map((item) => {
-              const Icon = iconMap[item.title] || Database;
+            {navMain.map((item) => {
+              const tabParam = item.url.split('?tab=')[1];
+              const isActive = currentTab === tabParam;
               return (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={isActive}>
                     <Link
                       href={item.url}
                       className="flex items-center gap-2 font-medium"
                     >
-                      <Icon className="size-4" />
+                      <item.icon className="size-4" />
                       {item.title}
                     </Link>
                   </SidebarMenuButton>
-                  {item.items?.length ? (
-                    <SidebarMenuSub>
-                      {item.items.map((subItem) => {
-                        const isActive =
-                          currentTab === subItem.url.split('?tab=')[1];
-                        return (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild isActive={isActive}>
-                              <Link href={subItem.url}>{subItem.title}</Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
-                    </SidebarMenuSub>
-                  ) : null}
                 </SidebarMenuItem>
               );
             })}
@@ -193,7 +168,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          {data.navSecondary.map((item) => {
+          {navSecondary.map((item) => {
             const isTabUrl = item.url.includes('?tab=');
             const isActive = isTabUrl
               ? currentTab === item.url.split('?tab=')[1]
@@ -213,7 +188,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             );
           })}
         </SidebarMenu>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

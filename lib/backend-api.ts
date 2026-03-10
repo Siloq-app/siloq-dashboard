@@ -3,11 +3,15 @@
  * Used by Next.js API routes to proxy auth and other requests.
  */
 export function getBackendApiUrl(): string {
+  const defaultUrl =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:8000'
+      : 'https://api.siloq.ai';
   const url =
     process.env.BACKEND_API_URL ||
     process.env.NEXT_PUBLIC_BACKEND_API_URL ||
     process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') ||
-    'http://127.0.0.1:8000';
+    defaultUrl;
   return url.replace(/\/+$/, '');
 }
 
@@ -40,6 +44,7 @@ export const PAGES_ENDPOINTS = {
     siteId
       ? `${getBackendApiUrl()}/api/v1/pages/?site_id=${siteId}`
       : `${getBackendApiUrl()}/api/v1/pages/`,
+  create: () => `${getBackendApiUrl()}/api/v1/pages/`,
   detail: (id: number | string) => `${getBackendApiUrl()}/api/v1/pages/${id}/`,
   seo: (id: number | string) => `${getBackendApiUrl()}/api/v1/pages/${id}/seo/`,
 };

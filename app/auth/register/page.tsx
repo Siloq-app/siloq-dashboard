@@ -189,7 +189,7 @@ export default function RegisterPage() {
     // Redirect to Google OAuth endpoint
     const backendUrl =
       process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') ||
-      'http://localhost:8000';
+      'https://api.siloq.ai';
     window.location.href = `${backendUrl}/api/v1/auth/google/login/`;
   };
 

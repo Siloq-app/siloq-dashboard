@@ -6,97 +6,69 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
+interface CompetingPage {
+  id: number;
+  title: string;
+  url: string;
+  traffic: number;
+}
+
+interface CompetingIssue {
+  id: number;
+  keyword: string;
+  pages: CompetingPage[];
+  severity: string;
+  recommendation: string;
+}
+
+interface Recommendation {
+  id: number;
+  type: string;
+  title: string;
+  description: string;
+  impact: string;
+  effort: string;
+}
+
+interface AnalysisResults {
+  issuesFound: number;
+  totalKeywords: number;
+  competingPages: CompetingIssue[];
+  recommendations: Recommendation[];
+}
+
 interface CannibalizationModalProps {
   pageIds: number[];
   onClose: () => void;
+  analysisResults?: AnalysisResults | null;
 }
 
-// Mock analysis results
-const mockAnalysisResults = {
-  issuesFound: 3,
-  totalKeywords: 12,
-  competingPages: [
-    {
-      id: 1,
-      keyword: 'kitchen remodeling',
-      pages: [
-        { id: 101, title: 'Kitchen Remodel Guide', url: '/kitchen-remodel-guide', traffic: 450 },
-        { id: 102, title: 'Kitchen Renovation Ideas', url: '/kitchen-renovation-ideas', traffic: 320 },
-        { id: 103, title: 'Modern Kitchen Designs', url: '/modern-kitchen-designs', traffic: 280 },
-      ],
-      severity: 'high',
-      recommendation: 'Consolidate content into main guide page',
-    },
-    {
-      id: 2,
-      keyword: 'bathroom renovation',
-      pages: [
-        { id: 201, title: 'Bathroom Renovation Tips', url: '/bathroom-renovation', traffic: 380 },
-        { id: 202, title: 'Small Bathroom Remodel', url: '/small-bathroom-remodel', traffic: 290 },
-      ],
-      severity: 'medium',
-      recommendation: 'Cross-link and differentiate content focus',
-    },
-    {
-      id: 3,
-      keyword: 'home improvement',
-      pages: [
-        { id: 301, title: 'DIY Home Improvement', url: '/diy-home-improvement', traffic: 520 },
-        { id: 302, title: 'Home Improvement Guide', url: '/home-improvement-guide', traffic: 410 },
-        { id: 303, title: 'Best Home Improvements', url: '/best-home-improvements', traffic: 340 },
-        { id: 304, title: 'Home Renovation Tips', url: '/home-renovation-tips', traffic: 280 },
-      ],
-      severity: 'high',
-      recommendation: 'Create pillar page structure with clear hierarchy',
-    },
-  ],
-  recommendations: [
-    {
-      id: 1,
-      type: 'consolidate',
-      title: 'Consolidate Kitchen Content',
-      description: 'Merge 3 competing pages into one comprehensive guide',
-      impact: 'High',
-      effort: 'Medium',
-    },
-    {
-      id: 2,
-      type: 'differentiate',
-      title: 'Differentiate Bathroom Pages',
-      description: 'Clarify unique focus for each bathroom page',
-      impact: 'Medium',
-      effort: 'Low',
-    },
-    {
-      id: 3,
-      type: 'create',
-      title: 'Create Pillar Page Structure',
-      description: 'Build topic clusters around home improvement theme',
-      impact: 'High',
-      effort: 'High',
-    },
-  ],
-};
-
-export default function CannibalizationModal({ pageIds, onClose }: CannibalizationModalProps) {
-  const [step, setStep] = useState<'analyzing' | 'results' | 'recommendations'>('analyzing');
+export default function CannibalizationModal({ pageIds, onClose, analysisResults }: CannibalizationModalProps) {
+  const [step, setStep] = useState<'analyzing' | 'results' | 'recommendations'>(
+    analysisResults ? 'results' : 'analyzing'
+  );
   const [selectedRecommendation, setSelectedRecommendation] = useState<number | null>(null);
 
-  // Simulate analysis progress
+  // If no results provided and we're "analyzing", stay in that state
+  // In a real implementation, this would trigger an API call
   useState(() => {
-    const timer = setTimeout(() => {
-      setStep('results');
-    }, 2000);
-    return () => clearTimeout(timer);
+    if (!analysisResults) {
+      const timer = setTimeout(() => {
+        // Without real data, just show empty results
+        setStep('results');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
   });
 
   const handleApprove = (recId: number) => {
     setSelectedRecommendation(recId);
-    // Trigger generation or save action
     setTimeout(() => {
       onClose();
     }, 500);
   };
+
+  const hasResults = analysisResults && analysisResults.competingPages.length > 0;
 
   return (
     <div
@@ -140,7 +112,22 @@ export default function CannibalizationModal({ pageIds, onClose }: Cannibalizati
           </div>
         )}
 
-        {step === 'results' && (
+        {step === 'results' && !hasResults && (
+          <div className="py-12 text-center">
+            <CheckCircle className="mx-auto mb-4 h-12 w-12 text-emerald-500" />
+            <p className="text-lg font-medium text-slate-900 dark:text-slate-100">No competing pages detected</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              The selected pages don&apos;t appear to be competing for the same keywords.
+            </p>
+            <div className="mt-6">
+              <Button variant="outline" onClick={onClose}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 'results' && hasResults && (
           <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-3 gap-4">
@@ -148,7 +135,7 @@ export default function CannibalizationModal({ pageIds, onClose }: Cannibalizati
                 <CardContent className="p-4 text-center">
                   <AlertTriangle className="mx-auto mb-2 h-6 w-6 text-red-600" />
                   <p className="text-2xl font-bold text-red-700">
-                    {mockAnalysisResults.issuesFound}
+                    {analysisResults!.issuesFound}
                   </p>
                   <p className="text-xs text-red-600">Issues Found</p>
                 </CardContent>
@@ -157,7 +144,7 @@ export default function CannibalizationModal({ pageIds, onClose }: Cannibalizati
                 <CardContent className="p-4 text-center">
                   <Target className="mx-auto mb-2 h-6 w-6 text-amber-600" />
                   <p className="text-2xl font-bold text-amber-700">
-                    {mockAnalysisResults.totalKeywords}
+                    {analysisResults!.totalKeywords}
                   </p>
                   <p className="text-xs text-amber-600">Competing Keywords</p>
                 </CardContent>
@@ -166,7 +153,7 @@ export default function CannibalizationModal({ pageIds, onClose }: Cannibalizati
                 <CardContent className="p-4 text-center">
                   <CheckCircle className="mx-auto mb-2 h-6 w-6 text-indigo-600" />
                   <p className="text-2xl font-bold text-indigo-700">
-                    {mockAnalysisResults.recommendations.length}
+                    {analysisResults!.recommendations.length}
                   </p>
                   <p className="text-xs text-indigo-600">Recommendations</p>
                 </CardContent>
@@ -179,7 +166,7 @@ export default function CannibalizationModal({ pageIds, onClose }: Cannibalizati
                 Competing Pages by Keyword
               </h3>
               <div className="space-y-3">
-                {mockAnalysisResults.competingPages.map((issue) => (
+                {analysisResults!.competingPages.map((issue) => (
                   <Card key={issue.id} className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="mb-3 flex items-center justify-between">
@@ -225,21 +212,23 @@ export default function CannibalizationModal({ pageIds, onClose }: Cannibalizati
               <Button variant="outline" onClick={onClose}>
                 Close
               </Button>
-              <Button onClick={() => setStep('recommendations')}>
-                View Recommendations
-                <ArrowRight size={16} className="ml-2" />
-              </Button>
+              {analysisResults!.recommendations.length > 0 && (
+                <Button onClick={() => setStep('recommendations')}>
+                  View Recommendations
+                  <ArrowRight size={16} className="ml-2" />
+                </Button>
+              )}
             </div>
           </div>
         )}
 
-        {step === 'recommendations' && (
+        {step === 'recommendations' && hasResults && (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900">
               Recommended Actions
             </h3>
             <div className="space-y-3">
-              {mockAnalysisResults.recommendations.map((rec) => (
+              {analysisResults!.recommendations.map((rec) => (
                 <Card
                   key={rec.id}
                   className={`overflow-hidden transition-colors ${

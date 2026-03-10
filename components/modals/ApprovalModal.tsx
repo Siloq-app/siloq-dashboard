@@ -2,11 +2,48 @@
 
 import { X, Check } from 'lucide-react';
 
-interface Props {
-  onClose: () => void;
+interface ApprovalIssue {
+  keyword: string;
+  pages: string[];
+  impressions: number;
+  recommendations: { action: string; url: string; detail?: string }[];
 }
 
-export default function ApprovalModal({ onClose }: Props) {
+interface Props {
+  onClose: () => void;
+  issue?: ApprovalIssue | null;
+}
+
+export default function ApprovalModal({ onClose, issue }: Props) {
+  if (!issue) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        onClick={onClose}
+      >
+        <div
+          className="w-full max-w-[600px] rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Siloq Recommendation
+            </h2>
+            <button
+              onClick={onClose}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+            No issue data available.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -34,51 +71,35 @@ export default function ApprovalModal({ onClose }: Props) {
             CANNIBALIZATION DETECTED
           </div>
           <div className="mb-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
-            3 pages competing for "kitchen remodeling"
+            {issue.pages.length} pages competing for &ldquo;{issue.keyword}&rdquo;
           </div>
           <div className="text-sm text-slate-600 dark:text-slate-400">
-            Splitting 12,400 monthly impressions across URLs
+            Splitting {issue.impressions.toLocaleString()} monthly impressions across URLs
           </div>
         </div>
 
         {/* Recommended Fix */}
-        <div className="mb-6">
-          <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-            Recommended Fix:
-          </div>
-          <div className="space-y-3 rounded-lg bg-slate-100 p-4 dark:bg-slate-800">
-            <div className="text-sm text-slate-800 dark:text-slate-200">
-              <span className="mr-2 text-emerald-600 dark:text-emerald-400">
-                1.
-              </span>
-              Designate{' '}
-              <code className="rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-                /kitchen-remodel-guide
-              </code>{' '}
-              as Target Page
+        {issue.recommendations.length > 0 && (
+          <div className="mb-6">
+            <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Recommended Fix:
             </div>
-            <div className="text-sm text-slate-800 dark:text-slate-200">
-              <span className="mr-2 text-emerald-600 dark:text-emerald-400">
-                2.
-              </span>
-              Redirect{' '}
-              <code className="rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-                /remodel-your-kitchen
-              </code>{' '}
-              → Target (301)
-            </div>
-            <div className="text-sm text-slate-800 dark:text-slate-200">
-              <span className="mr-2 text-emerald-600 dark:text-emerald-400">
-                3.
-              </span>
-              Differentiate{' '}
-              <code className="rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-                /kitchen-remodel-cost
-              </code>{' '}
-              to target "cost" entities only
+            <div className="space-y-3 rounded-lg bg-slate-100 p-4 dark:bg-slate-800">
+              {issue.recommendations.map((rec, i) => (
+                <div key={i} className="text-sm text-slate-800 dark:text-slate-200">
+                  <span className="mr-2 text-emerald-600 dark:text-emerald-400">
+                    {i + 1}.
+                  </span>
+                  {rec.action}{' '}
+                  <code className="rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                    {rec.url}
+                  </code>
+                  {rec.detail && <span> {rec.detail}</span>}
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
 
         {/* Expected Outcome */}
         <div className="mb-6 rounded-lg bg-emerald-50 p-4 dark:bg-emerald-950/20">
@@ -86,8 +107,8 @@ export default function ApprovalModal({ onClose }: Props) {
             EXPECTED OUTCOME
           </div>
           <div className="text-sm text-slate-700 dark:text-slate-200">
-            Consolidate ranking signals → single Target Page receives full
-            12,400 impression authority
+            Consolidate ranking signals → single Target Page receives full{' '}
+            {issue.impressions.toLocaleString()} impression authority
           </div>
         </div>
 
@@ -100,7 +121,7 @@ export default function ApprovalModal({ onClose }: Props) {
             Modify
           </button>
           <button className="inline-flex h-10 w-[50%] items-center justify-center gap-0 rounded-lg bg-black px-4 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 md:gap-2">
-            <Check size={14} /> Approve All 3 Actions
+            <Check size={14} /> Approve All {issue.recommendations.length} Actions
           </button>
         </div>
       </div>

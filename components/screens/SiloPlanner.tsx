@@ -10,24 +10,49 @@ import {
   FileText,
   ChevronRight,
   GitBranch,
+  RefreshCw,
 } from 'lucide-react';
 import { Silo } from '@/app/dashboard/types';
 import { cn } from '@/lib/utils';
 import { SiloTreeView } from '@/components/modals/SiloTreeView';
+import { PageTypeBadge } from '@/components/ui/page-type-badge';
+import { fetchWithAuth } from '@/lib/auth-headers';
+import { toast } from 'sonner';
+import type { PageClassificationType } from '@/app/dashboard/types';
 
 interface Props {
   silos: Silo[];
   selectedSilo: Silo | null;
   onGenerateClick: () => void;
+  siteId?: string | number;
+  onRefresh?: () => void;
 }
 
 export default function SiloPlanner({
   silos,
   selectedSilo,
   onGenerateClick,
+  siteId,
+  onRefresh,
 }: Props) {
   const [isTreeViewOpen, setIsTreeViewOpen] = useState(false);
+  const [isReclassifying, setIsReclassifying] = useState(false);
   const displaySilos = selectedSilo ? [selectedSilo] : silos;
+
+  const handleReclassify = async () => {
+    if (!siteId) return;
+    setIsReclassifying(true);
+    try {
+      const res = await fetchWithAuth(`/api/v1/sites/${siteId}/classify-all/`, { method: 'POST' });
+      if (res.ok) {
+        onRefresh?.();
+      }
+    } catch (e) {
+      console.error('Reclassify failed', e);
+    } finally {
+      setIsReclassifying(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -42,6 +67,16 @@ export default function SiloPlanner({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {siteId && (
+            <button
+              onClick={handleReclassify}
+              disabled={isReclassifying}
+              className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            >
+              <RefreshCw size={16} className={isReclassifying ? 'animate-spin' : ''} />
+              {isReclassifying ? 'Classifying...' : 'Reclassify Pages'}
+            </button>
+          )}
           <button
             onClick={() => setIsTreeViewOpen(true)}
             className="focus-visible:ring-ring inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
@@ -59,6 +94,18 @@ export default function SiloPlanner({
         </div>
       </div>
 
+      {displaySilos.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-16 dark:border-slate-700 dark:bg-slate-800/50">
+          <GitBranch size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
+          <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            No silos created yet
+          </h3>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm text-center">
+            Silos organize your content into topic clusters. Sync your pages first, then Siloq will automatically detect and suggest silo structures.
+          </p>
+        </div>
+      )}
+
       {displaySilos.map((silo) => (
         <div key={silo.id} className="space-y-4">
           {/* Money Page */}
@@ -73,10 +120,27 @@ export default function SiloPlanner({
 
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                      <Crown size={10} />
-                      Money Page
-                    </span>
+                    <PageTypeBadge
+                      pageType={silo.targetPage.pageType || 'money'}
+                      isOverride={silo.targetPage.pageTypeOverride}
+                      onChangeType={siteId && silo.targetPage.id ? async (newType: PageClassificationType) => {
+                        try {
+                          const res = await fetchWithAuth(
+                            `/api/v1/sites/${siteId}/pages/${silo.targetPage.id}/page-type/`,
+                            {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ page_type: newType }),
+                            }
+                          );
+                          if (!res.ok) throw new Error('Failed to update page type');
+                          toast.success('Page type updated');
+                          onRefresh?.();
+                        } catch {
+                          toast.error('Failed to update page type');
+                        }
+                      } : undefined}
+                    />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                     {silo.targetPage.title}
@@ -209,7 +273,7 @@ export default function SiloPlanner({
         </div>
       ))}
 
-      {/* Silo Architecture Tree View Modal */}
+      {/* Content Structure Modal */}
       <SiloTreeView
         silo={selectedSilo || displaySilos[0]}
         isOpen={isTreeViewOpen}

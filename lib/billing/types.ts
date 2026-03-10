@@ -42,6 +42,7 @@ export interface TierConfig {
   contentGeneration: string;
   automationOptions: AutomationMode[];
   creditCardRequired: boolean;
+  maxTeammates: number;
 }
 
 // Subscription Tier Definitions
@@ -61,6 +62,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     contentGeneration: '10 pages max',
     automationOptions: ['manual'],
     creditCardRequired: false,
+    maxTeammates: 0,
   },
   pro: {
     id: 'pro',
@@ -77,6 +79,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     contentGeneration: 'Unlimited',
     automationOptions: ['manual'],
     creditCardRequired: true,
+    maxTeammates: 1,
   },
   builder_plus: {
     id: 'builder_plus',
@@ -93,6 +96,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     contentGeneration: 'Unlimited',
     automationOptions: ['manual', 'semi_auto', 'full_auto'],
     creditCardRequired: true,
+    maxTeammates: 3,
   },
   architect: {
     id: 'architect',
@@ -109,6 +113,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     contentGeneration: 'Unlimited',
     automationOptions: ['manual', 'semi_auto', 'full_auto'],
     creditCardRequired: true,
+    maxTeammates: 5,
   },
   empire: {
     id: 'empire',
@@ -125,6 +130,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     contentGeneration: 'Unlimited',
     automationOptions: ['manual', 'semi_auto', 'full_auto'],
     creditCardRequired: true,
+    maxTeammates: 10,
   },
 };
 

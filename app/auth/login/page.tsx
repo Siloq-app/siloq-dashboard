@@ -56,7 +56,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/v1/auth/login', {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL || 'https://api.siloq.ai';
+      const res = await fetch(`${apiBase}/api/v1/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -69,6 +70,14 @@ export default function LoginPage() {
       }
 
       localStorage.setItem('token', data.token);
+      // Save user name for sidebar display
+      if (data.user) {
+        const name = data.user.name || 
+          [data.user.first_name, data.user.last_name].filter(Boolean).join(' ') || 
+          data.user.email || '';
+        if (name) localStorage.setItem('userName', name);
+        if (data.user.email) localStorage.setItem('userEmail', data.user.email);
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -136,7 +145,7 @@ export default function LoginPage() {
                       <Label htmlFor="password">Password</Label>
                       <Link
                         href="/auth/forgot-password"
-                        className="ml-auto text-sm underline-offset-4 hover:underline"
+                        className="ml-auto inline-block text-sm underline"
                       >
                         Forgot your password?
                       </Link>
@@ -144,9 +153,10 @@ export default function LoginPage() {
                     <Input
                       id="password"
                       type="password"
-                      required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      placeholder="test123"
+                      required
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>

@@ -1,20 +1,27 @@
 'use client';
 
-import { useState } from 'react';
-import GovernanceDashboard from '@/components/screens/GovernanceDashboard';
-import SiloPlanner from '@/components/screens/SiloPlanner';
-import ApprovalQueue from '@/components/screens/ApprovalQueue';
-import SitesScreen from '@/components/screens/SitesScreen';
-import ContentHub from '@/components/screens/ContentHub';
-import Settings from '@/components/screens/Settings';
-import PagesScreen from '@/components/screens/PagesScreen';
-import GenerateModal from '@/components/modals/GenerateModal';
-import ApprovalModal from '@/components/modals/ApprovalModal';
-import CannibalizationModal from '@/components/modals/CannibalizationModal';
-import { useDashboardData } from '@/lib/hooks/use-dashboard-data';
+import React, { useState, Suspense, useEffect, lazy } from 'react';
+import { useDashboardContext } from '@/lib/hooks/dashboard-context';
+import { fetchWithAuth } from '@/lib/auth-headers';
 import { TabType, AutomationMode } from './types';
-import { cannibalizationIssues, silos, pendingChanges, linkOpportunities } from './data';
-import InternalLinks from '@/components/screens/InternalLinks';
+import { ScreenSkeleton, DashboardSkeleton, TableSkeleton } from '@/components/ui/dashboard-skeleton';
+
+// Lazy-loaded screen components for code splitting
+const GovernanceDashboard = lazy(() => import('@/components/screens/GovernanceDashboard'));
+const KeywordRegistry = lazy(() => import('@/components/screens/KeywordRegistry'));
+const SiloHealth = lazy(() => import('@/components/screens/SiloHealth'));
+const SiloPlanner = lazy(() => import('@/components/screens/SiloPlanner'));
+const ApprovalQueue = lazy(() => import('@/components/screens/ApprovalQueue'));
+const SitesScreen = lazy(() => import('@/components/screens/SitesScreen'));
+const ContentHub = lazy(() => import('@/components/screens/ContentHub'));
+const ContentUpload = lazy(() => import('@/components/screens/ContentUpload'));
+const Settings = lazy(() => import('@/components/screens/Settings'));
+const PagesScreen = lazy(() => import('@/components/screens/PagesScreen'));
+const InternalLinks = lazy(() => import('@/components/screens/InternalLinks'));
+const SearchConsole = lazy(() => import('@/components/screens/SearchConsole'));
+const GenerateModal = lazy(() => import('@/components/modals/GenerateModal'));
+const ApprovalModal = lazy(() => import('@/components/modals/ApprovalModal'));
+const CannibalizationModal = lazy(() => import('@/components/modals/CannibalizationModal'));
 
 interface DashboardProps {
   activeTab?: TabType;
@@ -34,7 +41,58 @@ export default function Dashboard({
   const [showCannibalizationModal, setShowCannibalizationModal] = useState(false);
   const [selectedPageIds, setSelectedPageIds] = useState<number[]>([]);
 
-  const { siteOverview, selectedSite } = useDashboardData();
+  const [userTier, setUserTier] = useState<string>('free_trial');
+
+  // Fetch user tier from /auth/me/
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) return;
+    fetch('/api/v1/auth/me/', { headers: { 'Authorization': `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() : Promise.reject(`Auth/me failed: ${res.status}`))
+      .then(data => {
+        if (data?.user?.subscription_tier) {
+          setUserTier(data.user.subscription_tier);
+        }
+        // Superusers/staff get empire access regardless
+        if (data?.user?.is_superuser || data?.user?.is_staff) {
+          setUserTier('empire');
+        }
+      })
+      .catch((err) => { console.error('[Dashboard] Failed to fetch user tier:', err); });
+  }, []);
+
+  const {
+    siteOverview,
+    selectedSite,
+    cannibalizationIssues,
+    silos,
+    pendingChanges,
+    linkOpportunities,
+    isLoading,
+    loadCannibalization,
+    loadSilos,
+    loadRecommendations,
+    loadLinkOpportunities,
+    cannibalizationLoading,
+    silosLoading,
+    recommendationsLoading,
+    linkOpportunitiesLoading,
+  } = useDashboardContext();
+
+  // Deferred data loading based on active tab
+  useEffect(() => {
+    const tabsNeedingCannibalization: TabType[] = ['dashboard', 'overview', 'conflicts'];
+    const tabsNeedingSilos: TabType[] = ['dashboard', 'overview', 'conflicts', 'silos'];
+    const tabsNeedingRecommendations: TabType[] = ['dashboard', 'overview', 'conflicts', 'approvals'];
+    const tabsNeedingLinks: TabType[] = ['links'];
+
+    if (selectedSite) {
+      if (tabsNeedingCannibalization.includes(activeTab)) loadCannibalization();
+      if (tabsNeedingSilos.includes(activeTab)) loadSilos();
+      if (tabsNeedingRecommendations.includes(activeTab)) loadRecommendations();
+      if (tabsNeedingLinks.includes(activeTab)) loadLinkOpportunities();
+    }
+  }, [activeTab, selectedSite, loadCannibalization, loadSilos, loadRecommendations, loadLinkOpportunities]);
 
   const healthScore =
     (siteOverview?.health_score ?? selectedSite?.page_count)
@@ -45,13 +103,31 @@ export default function Dashboard({
             100
         )
       : 72;
-  const totalIssues = siteOverview?.total_issues ?? 0;
-  const totalPages = siteOverview?.total_pages ?? selectedSite?.page_count ?? 0;
 
   const renderScreen = () => {
+    // Show loading skeleton
+    if (isLoading && !selectedSite) {
+      return <DashboardSkeleton />;
+    }
+
+    // Show empty state if no site selected
+    if (!selectedSite) {
+      return (
+        <div className="flex h-full items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg font-medium mb-2">No site selected</p>
+            <p className="text-sm text-muted-foreground">
+              Select a site from the header to view dashboard data
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'dashboard':
       case 'overview':
+      case 'conflicts':
         return (
           <GovernanceDashboard
             healthScore={healthScore}
@@ -63,6 +139,10 @@ export default function Dashboard({
             onShowApprovalModal={() => setShowApprovalModal(true)}
           />
         );
+      case 'keyword-registry':
+        return <KeywordRegistry />;
+      case 'silo-health':
+        return <SiloHealth />;
       case 'silos':
         return (
           <SiloPlanner
@@ -72,26 +152,29 @@ export default function Dashboard({
           />
         );
       case 'approvals':
-        return <ApprovalQueue pendingChanges={pendingChanges} />;
+        return <ApprovalQueue pendingChanges={pendingChanges} siteId={selectedSite?.id || 0} />;
       case 'sites':
         return <SitesScreen />;
       case 'content':
-        return (
-          <ContentHub onGenerateClick={() => setShowGenerateModal(true)} />
-        );
+        return <ContentHub />;
+      case 'content-upload':
+        return <ContentUpload />;
       case 'links':
         return <InternalLinks opportunities={linkOpportunities} />;
       case 'pages':
         return (
           <PagesScreen
+            siteId={selectedSite?.id}
             onAnalyze={(pageIds) => {
               setSelectedPageIds(pageIds);
               setShowCannibalizationModal(true);
             }}
           />
         );
+      case 'search-console':
+        return <SearchConsole selectedSite={selectedSite} />;
       case 'settings':
-        return <Settings onNavigateToSites={() => onTabChange?.('sites')} />;
+        return <Settings onNavigateToSites={() => onTabChange?.('sites')} currentTier={userTier as any} />;
       default:
         return null;
     }
@@ -99,24 +182,32 @@ export default function Dashboard({
 
   return (
     <div className="flex-1 p-4">
-      {renderScreen()}
+      <Suspense fallback={<ScreenSkeleton />}>
+        {renderScreen()}
+      </Suspense>
 
       {showGenerateModal && (
-        <GenerateModal
-          silos={silos}
-          onClose={() => setShowGenerateModal(false)}
-        />
+        <Suspense fallback={null}>
+          <GenerateModal
+            silos={silos}
+            onClose={() => setShowGenerateModal(false)}
+          />
+        </Suspense>
       )}
 
       {showApprovalModal && (
-        <ApprovalModal onClose={() => setShowApprovalModal(false)} />
+        <Suspense fallback={null}>
+          <ApprovalModal onClose={() => setShowApprovalModal(false)} />
+        </Suspense>
       )}
 
       {showCannibalizationModal && (
-        <CannibalizationModal
-          pageIds={selectedPageIds}
-          onClose={() => setShowCannibalizationModal(false)}
-        />
+        <Suspense fallback={null}>
+          <CannibalizationModal
+            pageIds={selectedPageIds}
+            onClose={() => setShowCannibalizationModal(false)}
+          />
+        </Suspense>
       )}
     </div>
   );

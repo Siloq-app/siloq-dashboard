@@ -11,7 +11,7 @@ interface SetupWizardProps {
 export function SetupWizard({ onComplete }: SetupWizardProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useState('sk_siloq_u6bMMXkobJy7dKU-92gjEpfvxGAlfAwp2cv8i0tTlkE');
   const [error, setError] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['post', 'page']);
 
@@ -19,8 +19,8 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
     if (!apiKey) return;
 
     // API Key Validation
-    if (!apiKey.trim().startsWith('ng_live_')) {
-      setError('Invalid API Key. Key must start with "ng_live_".');
+    if (!apiKey.trim().startsWith('sk_siloq_')) {
+      setError('Invalid API Key. Key must start with "sk_siloq_".');
       return;
     }
 
