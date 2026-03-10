@@ -9,6 +9,7 @@ import FreshnessTab from './freshness-tab';
 import { ScreenSkeleton, DashboardSkeleton, TableSkeleton } from '@/components/ui/dashboard-skeleton';
 
 // Lazy-loaded screen components for code splitting
+const DashboardHome = lazy(() => import('@/components/screens/DashboardHome'));
 const GovernanceDashboard = lazy(() => import('@/components/screens/GovernanceDashboard'));
 const KeywordRegistry = lazy(() => import('@/components/screens/KeywordRegistry'));
 const SiloHealth = lazy(() => import('@/components/screens/SiloHealth'));
@@ -143,33 +144,27 @@ export default function Dashboard({
     }
 
     switch (activeTab) {
-      case 'dashboard':
+      case 'dashboard': {
+        return (
+          <DashboardHome
+            siteId={selectedSite?.id ?? null}
+            onNavigate={(tab) => onTabChange?.(tab)}
+          />
+        );
+      }
       case 'overview':
       case 'conflicts': {
         if (!selectedSite) return null;
         return (
-          <>
-            {activeTab === 'dashboard' && selectedSite && (
-              <Suspense fallback={null}>
-                <GettingStartedCard
-                  siteId={selectedSite.id}
-                  onNavigate={(tab, subtab) => {
-                    if (subtab) sessionStorage.setItem('siloq_settings_subtab', subtab);
-                    onTabChange?.(tab as TabType);
-                  }}
-                />
-              </Suspense>
-            )}
-            <GovernanceDashboard
-              healthScore={healthScore}
-              cannibalizationIssues={cannibalizationIssues}
-              silos={silos}
-              pendingChanges={pendingChanges}
-              onViewSilo={() => onTabChange?.('silos')}
-              onViewApprovals={() => onTabChange?.('approvals')}
-              onShowApprovalModal={() => setShowApprovalModal(true)}
-            />
-          </>
+          <GovernanceDashboard
+            healthScore={healthScore}
+            cannibalizationIssues={cannibalizationIssues}
+            silos={silos}
+            pendingChanges={pendingChanges}
+            onViewSilo={() => onTabChange?.('silos')}
+            onViewApprovals={() => onTabChange?.('approvals')}
+            onShowApprovalModal={() => setShowApprovalModal(true)}
+          />
         );
       }
       case 'keyword-registry':
@@ -197,9 +192,9 @@ export default function Dashboard({
           />
         );
       case 'schema':
-        return <SchemaArchitect siteId={selectedSite?.id || 0} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} wpApiBase={selectedSite?.url || ''} wpApiKey={''} />;
+        return <SchemaArchitect siteId={selectedSite?.id ?? 0} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} wpApiBase={(selectedSite as any)?.url ?? ''} wpApiKey={(selectedSite as any)?.api_key ?? ''} />;
       case 'freshness':
-        return <FreshnessTab siteId={selectedSite?.id || 0} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} />;
+        return <FreshnessTab siteId={selectedSite?.id ?? 0} apiBase={process.env.NEXT_PUBLIC_API_URL || ''} />;
       case 'content':
         return <ContentHub />;
       case 'content-upload':
