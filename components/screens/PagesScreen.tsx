@@ -586,14 +586,6 @@ function RecommendationPanel({
   );
 }
 
-      {/* Status now shown inline in the actions bar above */}
-
-      {/* Cannibalization Intelligence — IG + GG scores */}
-      <CannibalizationIntelligence analysis={analysis as unknown as PageAnalysisWithIntelligence} onReanalyze={() => {}} />
-
-      {/* Supporting Content Section — Hub & Spoke gap detection */}
-      <SupportingContentSection siteId={siteId} pageId={pageId} />
-
 // ─── Apply Sidebar ────────────────────────────────────────────────────────────
 
 interface ApplySidebarProps {
@@ -1559,6 +1551,7 @@ export default function PagesScreen({ onAnalyze, siteId, onNavigateToSettings }:
                             <RecommendationPanel
                               analysis={analysis}
                               siteId={siteId}
+                              pageId={page.id}
                               selectedRecs={selectedRecommendations}
                               onToggleRec={handleToggleRec}
                               onDismiss={handleDismissPanel}
