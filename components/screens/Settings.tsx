@@ -1335,7 +1335,6 @@ export default function Settings({
       {selectedSite ? (
         <GoalsTab
           siteId={selectedSite.id}
-          onNavigateToSettings={() => setActiveTab('goals')}
         />
       ) : (
         <div className="p-6 text-slate-500">Select a site to manage its goals.</div>
