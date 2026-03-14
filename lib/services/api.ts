@@ -756,6 +756,192 @@ class AnalysisService {
   }
 }
 
+// --- Topical Depth & Semantic Closure Engine ---
+
+export interface TopicBoundary {
+  id: number;
+  silo_id: number;
+  core_topic: string;
+  adjacent_topics: string[];
+  out_of_scope_topics: string[];
+  entity_type_override: string | null;
+  defined_at: string;
+  updated_at: string;
+}
+
+export type SubtopicType = 'core' | 'supporting' | 'adjacent' | 'edge_case' | 'comparative' | 'evidence';
+export type CoverageStatus = 'covered' | 'thin' | 'missing' | 'stale';
+
+export interface SubtopicItem {
+  id: number;
+  subtopic_label: string;
+  subtopic_slug: string;
+  subtopic_type: SubtopicType;
+  coverage_status: CoverageStatus;
+  mapped_page_id: number | null;
+  priority_score: number;
+  last_assessed: string | null;
+}
+
+export interface SiloDepthScore {
+  semantic_density_score: number;
+  topical_closure_score: number;
+  coverage_breadth_pct: number;
+  coverage_depth_pct: number;
+  thin_page_count: number;
+  missing_subtopic_count: number;
+  stale_page_count: number;
+  scope_creep_flag: boolean;
+  disconnected_page_count: number;
+  freshness_score: number;
+  depth_mistake_flags: string[];
+  scored_at: string;
+}
+
+export interface GapItem {
+  id: number;
+  subtopic_label: string;
+  subtopic_type: SubtopicType;
+  priority_score: number;
+  coverage_status: CoverageStatus;
+  content_type: 'architecture' | 'evidence';
+  brief_prompt: string;
+}
+
+export interface GapReport {
+  critical_gaps: GapItem[];
+  thin_pages: GapItem[];
+  stale_pages: GapItem[];
+  standard_gaps: GapItem[];
+  total_gap_count: number;
+  estimated_closure_gap: string;
+}
+
+export interface SubtopicMap {
+  subtopics: SubtopicItem[];
+  grouped: {
+    core: SubtopicItem[];
+    supporting: SubtopicItem[];
+    adjacent: SubtopicItem[];
+    edge_case: SubtopicItem[];
+    comparative: SubtopicItem[];
+    evidence: SubtopicItem[];
+  };
+}
+
+export interface LinkRelationship {
+  id: number;
+  source_page_id: number;
+  target_page_id: number;
+  relationship_type: string;
+  anchor_text: string;
+  relationship_confidence: number;
+  assessed_at: string | null;
+}
+
+class DepthEngineService {
+  private base(siteId: number | string, siloId: number | string) {
+    return `/api/v1/sites/${siteId}/silos/${siloId}`;
+  }
+
+  async getTopicBoundary(siteId: number | string, siloId: number | string): Promise<TopicBoundary> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/topic-boundary/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load topic boundary');
+    return data;
+  }
+
+  async saveTopicBoundary(
+    siteId: number | string,
+    siloId: number | string,
+    payload: Partial<Pick<TopicBoundary, 'core_topic' | 'adjacent_topics' | 'out_of_scope_topics' | 'entity_type_override'>>
+  ): Promise<TopicBoundary> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/topic-boundary/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to save topic boundary');
+    return data;
+  }
+
+  async generateSubtopicMap(siteId: number | string, siloId: number | string): Promise<SubtopicMap> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/generate-subtopic-map/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to generate subtopic map');
+    return data;
+  }
+
+  async getSubtopicMap(siteId: number | string, siloId: number | string): Promise<SubtopicMap> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/subtopic-map/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load subtopic map');
+    return data;
+  }
+
+  async getDepthScores(siteId: number | string, siloId: number | string): Promise<SiloDepthScore> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/depth-scores/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load depth scores');
+    return data;
+  }
+
+  async refreshDepthScores(siteId: number | string, siloId: number | string): Promise<SiloDepthScore> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/depth-scores/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to refresh depth scores');
+    return data;
+  }
+
+  async getGapReport(siteId: number | string, siloId: number | string): Promise<GapReport> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/gap-report/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load gap report');
+    return data;
+  }
+
+  async addSubtopicToPlan(
+    siteId: number | string,
+    siloId: number | string,
+    subtopicId: number,
+    contentType: 'architecture' | 'evidence'
+  ): Promise<void> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/subtopics/${subtopicId}/add-to-plan/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content_type: contentType }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || data.detail || 'Failed to add subtopic to plan');
+    }
+  }
+
+  async getLinkRelationships(siteId: number | string, siloId: number | string): Promise<LinkRelationship[]> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/link-relationships/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to load link relationships');
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async assessLinkRelationships(siteId: number | string, siloId: number | string): Promise<LinkRelationship[]> {
+    const res = await fetchWithAuth(`${this.base(siteId, siloId)}/link-relationships/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.detail || 'Failed to assess link relationships');
+    return Array.isArray(data) ? data : data.results || [];
+  }
+}
+
 export const sitesService = new SitesService();
 export const pagesService = new PagesService();
 export const apiKeysService = new ApiKeysService();
@@ -770,3 +956,4 @@ export const healthScoresService = new HealthScoresService();
 export const silosV2Service = new SilosV2Service();
 export const redirectsService = new RedirectsService();
 export const analysisService = new AnalysisService();
+export const depthEngineService = new DepthEngineService();
