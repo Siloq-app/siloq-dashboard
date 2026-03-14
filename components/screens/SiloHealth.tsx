@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 import { silosV2Service, type SiloHealthResponse } from '@/lib/services/api';
+
+const SiloDepthEngine = lazy(() => import('./SiloDepthEngine'));
 
 function getScoreColor(score: number): string {
   if (score >= 80) return '#27AE60';
@@ -31,6 +33,7 @@ export default function SiloHealth() {
   const [silos, setSilos] = useState<SiloHealthResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSilo, setSelectedSilo] = useState<SiloHealthResponse | null>(null);
 
   const load = useCallback(async () => {
     if (!selectedSite) return;
@@ -49,6 +52,26 @@ export default function SiloHealth() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Depth engine drill-down
+  if (selectedSilo) {
+    return (
+      <Suspense
+        fallback={
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+            <p className="text-sm text-muted-foreground">Loading depth analysis...</p>
+          </div>
+        }
+      >
+        <SiloDepthEngine
+          siloId={String(selectedSilo.id)}
+          siloName={selectedSilo.name}
+          onBack={() => setSelectedSilo(null)}
+        />
+      </Suspense>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -141,12 +164,22 @@ export default function SiloHealth() {
                 }}
               />
             </div>
-            <div className="flex gap-4 text-xs text-muted-foreground">
-              <span>{silo.page_count} pages</span>
-              <span>{silo.keyword_count} keywords</span>
-              {silo.conflict_count > 0 && (
-                <span className="text-amber-600 font-medium">{silo.conflict_count} conflicts</span>
-              )}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex gap-4">
+                <span>{silo.page_count} pages</span>
+                <span>{silo.keyword_count} keywords</span>
+                {silo.conflict_count > 0 && (
+                  <span className="text-amber-600 font-medium">{silo.conflict_count} conflicts</span>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-6 px-2"
+                onClick={() => setSelectedSilo(silo)}
+              >
+                View Depth Analysis &rarr;
+              </Button>
             </div>
           </Card>
         ))}

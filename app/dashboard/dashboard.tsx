@@ -28,6 +28,7 @@ const OnboardingWizard = lazy(() => import('@/components/onboarding/OnboardingWi
 const GenerateModal = lazy(() => import('@/components/modals/GenerateModal'));
 const ApprovalModal = lazy(() => import('@/components/modals/ApprovalModal'));
 const CannibalizationModal = lazy(() => import('@/components/modals/CannibalizationModal'));
+const SiloDepthEngine = lazy(() => import('@/components/screens/SiloDepthEngine'));
 
 interface DashboardProps {
   activeTab?: TabType;
