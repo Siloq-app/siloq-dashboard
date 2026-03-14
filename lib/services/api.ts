@@ -13,7 +13,6 @@ export interface Site {
   created_at: string;
   gsc_connected?: boolean;
   onboarding_complete?: boolean;
-  onboarding_complete?: boolean;
   business_type?: string;
 }
 
