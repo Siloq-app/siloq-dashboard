@@ -13,6 +13,8 @@ export interface Site {
   created_at: string;
   gsc_connected?: boolean;
   onboarding_complete?: boolean;
+  onboarding_complete?: boolean;
+  business_type?: string;
 }
 
 export interface SiteOverview {
@@ -170,7 +172,8 @@ class SitesService {
 
 class PagesService {
   async list(siteId?: number | string): Promise<Page[]> {
-    const url = siteId ? `/api/v1/pages?site_id=${siteId}` : '/api/v1/pages';
+    if (!siteId) return [];
+    const url = `/api/v1/pages/?site_id=${siteId}`;
     const res = await fetchWithAuth(url);
     const data = await res.json();
     if (!res.ok)
@@ -463,6 +466,41 @@ class ConflictsService {
     }
   }
 
+  async acknowledge(conflictId: number | string): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/conflicts/${conflictId}/acknowledge/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || data.detail || 'Failed to acknowledge conflict');
+    }
+  }
+
+  async setPrimary(conflictId: number | string, winnerUrl: string): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/conflicts/${conflictId}/set-primary/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ winner_url: winnerUrl }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || data.detail || 'Failed to set primary page');
+    }
+  }
+
+  async resolveWithRedirect(conflictId: number | string, resolutionType = 'redirect'): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/conflicts/${conflictId}/resolve/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resolution_type: resolutionType }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || data.detail || 'Failed to resolve conflict');
+    }
+  }
+
   async differentiate(siteId: number | string, payload: {
     pages: Array<{ url: string; title?: string; page_type?: string }>;
     keyword: string;
@@ -745,20 +783,398 @@ class AnalysisService {
     }
   }
 
-  async applyToWordPress(siteId: number | string, analysisId: number): Promise<void> {
+  async applyToWordPress(siteId: number | string, analysisId: number): Promise<{
+    applied: string[];
+    failed: Array<{rec_id: string; error: string}>;
+    verified: string[];
+    unverified: string[];
+    verification_details: Record<string, {found: boolean; field: string}>;
+    analysis_id: number;
+  }> {
     const res = await fetchWithAuth(
       `/api/v1/sites/${siteId}/pages/analysis/${analysisId}/apply/`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' } }
     );
+    const data = await res.json();
     if (!res.ok) {
-      const data = await res.json();
       throw new Error(data.message || data.detail || data.error || 'Failed to apply to WordPress');
     }
+    return data;
   }
 }
 
-// --- Topical Depth & Semantic Closure Engine ---
 
+export interface GbpReview {
+  text: string;
+  author: string;
+  rating: number;
+  date: string;
+}
+
+export interface EntityProfile {
+  id: number;
+  business_name: string;
+  description: string;
+  phone: string;
+  email: string;
+  founding_year: number | null;
+  founder_name: string;
+  num_employees: string;
+  price_range: string;
+  languages: string[];
+  payment_methods: string[];
+  street_address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+  service_cities: string[];
+  service_zips: string[];
+  service_radius_miles: number | null;
+  hours: Record<string, string>;
+  categories: string[];
+  social_profiles: {
+    facebook: string;
+    instagram: string;
+    linkedin: string;
+    twitter: string;
+    youtube: string;
+    tiktok: string;
+  };
+  gbp_url: string;
+  google_place_id: string;
+  gbp_star_rating: number | null;
+  gbp_review_count: number | null;
+  gbp_reviews: GbpReview[];
+  gbp_last_synced: string | null;
+  updated_at: string;
+}
+
+class EntityProfileService {
+  /** Normalize raw API response → full EntityProfile with safe defaults */
+  private normalize(data: any): EntityProfile {
+    return {
+      id:               data.id                                      ?? 0,
+      // Core identity — API returns "name" but component expects "business_name"
+      business_name:    data.business_name  ?? data.name             ?? '',
+      description:      data.description                             ?? '',
+      phone:            data.phone                                   ?? '',
+      email:            data.email                                   ?? '',
+      founder_name:     data.founder_name                            ?? '',
+      founding_year:    data.founding_year                           ?? null,
+      price_range:      data.price_range                             ?? '',
+      num_employees:    data.num_employees                           ?? '',
+      languages:        Array.isArray(data.languages)     ? data.languages     : [],
+      payment_methods:  Array.isArray(data.payment_methods) ? data.payment_methods : [],
+      categories:       Array.isArray(data.categories)    ? data.categories    : [],
+      hours:            data.hours                                   ?? {},
+      updated_at:       data.updated_at                              ?? '',
+
+      // Address — API returns combined "address" string
+      street_address:   data.street_address ?? data.address          ?? '',
+      city:             data.city                                    ?? '',
+      state:            data.state                                   ?? '',
+      zip_code:         data.zip_code                                ?? '',
+      country:          data.country                                 ?? '',
+
+      // Service area
+      service_cities:       Array.isArray(data.service_cities)  ? data.service_cities  : [],
+      service_zips:         Array.isArray(data.service_zips)    ? data.service_zips    : [],
+
+      service_radius_miles: data.service_radius_miles                ?? null,
+
+      // Social — API may not return this at all
+      social_profiles: {
+        facebook:  data.social_profiles?.facebook  ?? '',
+        instagram: data.social_profiles?.instagram ?? '',
+        linkedin:  data.social_profiles?.linkedin  ?? '',
+        twitter:   data.social_profiles?.twitter   ?? '',
+        youtube:   data.social_profiles?.youtube   ?? '',
+        tiktok:    data.social_profiles?.tiktok    ?? '',
+      },
+
+      // GBP — API uses different field names
+      gbp_url:          data.gbp_url                                 ?? '',
+      google_place_id:  data.place_id       ?? data.google_place_id  ?? '',
+      gbp_last_synced:  data.gbp_last_synced ?? data.last_synced_at  ?? null,
+      gbp_star_rating:  data.gbp_star_rating ?? data.rating           ?? null,
+      gbp_review_count: data.gbp_review_count ?? data.review_count    ?? null,
+
+      gbp_reviews:      Array.isArray(data.gbp_reviews)
+                          ? data.gbp_reviews
+                          : Array.isArray(data.reviews) ? data.reviews : [],
+    };
+  }
+
+  async get(siteId: number | string): Promise<EntityProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/entity-profile/`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to load entity profile');
+    return this.normalize(data);
+  }
+
+  async update(siteId: number | string, updates: Partial<EntityProfile>): Promise<EntityProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/entity-profile/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update entity profile');
+    return this.normalize(data);
+  }
+
+  async syncGbp(siteId: number | string, placeIdOrUrl: string, phone?: string): Promise<EntityProfile> {
+    const isUrl = placeIdOrUrl.startsWith('http');
+    const isPhone = /^\+?[\d\s\-().]{7,}$/.test(placeIdOrUrl);
+    let body: Record<string, string> = {};
+    if (isUrl) body.gbp_url = placeIdOrUrl;
+    else if (isPhone) body.phone = placeIdOrUrl;
+    else body.place_id = placeIdOrUrl;
+    if (phone) body.phone = phone;
+
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/entity-profile/sync-gbp/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to sync from Google');
+    return this.normalize(data.synced ?? data);
+  }
+}
+export const entityProfileService = new EntityProfileService();
+
+// ── Supporting Pages Intelligence Types ──────────────────────────────────────
+
+export interface SupportingPageDraft {
+  topic_title: string;
+  page_type: 'sub_page' | 'blog_post';
+  target_keyword: string;
+  hub_page_id: number;
+}
+
+export interface CreateDraftResponse {
+  wp_post_id: number;
+  edit_url: string;
+  status: string;
+}
+
+export interface SiloMapNeededPage {
+  topic: string;
+  keyword: string;
+  type: 'sub_page' | 'blog_post';
+}
+
+export interface SiloMapExistingPage {
+  id: number;
+  title: string;
+  url: string;
+}
+
+export interface SiloMapHub {
+  id: number;
+  title: string;
+  url: string;
+  seo_score: number;
+}
+
+export interface SiloMapEntry {
+  hub: SiloMapHub;
+  existing_supporting: SiloMapExistingPage[];
+  needed_supporting: SiloMapNeededPage[];
+  linking_back: number;
+  total_supporting: number;
+}
+
+export interface ContentPlanGap {
+  hub_page_id: number;
+  hub_title: string;
+  hub_url: string;
+  supporting_count: number;
+  needed_topics: Array<{
+    topic: string;
+    keyword: string;
+    type: 'sub_page' | 'blog_post';
+  }>;
+}
+
+export interface ContentPlanPipelineItem {
+  id: number;
+  title: string;
+  page_type: 'sub_page' | 'blog_post';
+  target_keyword: string;
+  hub_page_id: number;
+  hub_title: string;
+  wp_post_id: number | null;
+  edit_url: string | null;
+  status: 'draft' | 'published';
+  created_at: string;
+}
+
+class ContentPlanService {
+  async getSiloMap(siteId: string | number): Promise<SiloMapEntry[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/silo-map/`);
+    if (!res.ok) throw new Error('Failed to load silo map');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async getGaps(siteId: string | number): Promise<ContentPlanGap[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content-gaps/`);
+    if (!res.ok) throw new Error('Failed to load content gaps');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async getPipeline(siteId: string | number): Promise<ContentPlanPipelineItem[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content-pipeline/`);
+    if (!res.ok) throw new Error('Failed to load pipeline');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async createDraft(siteId: string | number, data: SupportingPageDraft): Promise<CreateDraftResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/pages/create-draft/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || json.detail || 'Failed to create draft');
+    return json;
+  }
+}
+
+export const contentPlanService = new ContentPlanService();
+
+export const sitesService = new SitesService();
+export const pagesService = new PagesService();
+export const apiKeysService = new ApiKeysService();
+export const scansService = new ScansService();
+export const cannibalizationService = new CannibalizationService();
+export const silosService = new SilosService();
+export const recommendationsService = new RecommendationsService();
+export const gscService = new GscService();
+export const conflictsService = new ConflictsService();
+export const keywordsService = new KeywordsService();
+export const healthScoresService = new HealthScoresService();
+export const silosV2Service = new SilosV2Service();
+export const redirectsService = new RedirectsService();
+export const analysisService = new AnalysisService();
+
+// ── Intelligence types ────────────────────────────────────────────────────────
+
+export interface IntelligenceHubPage {
+  id: number;
+  title: string;
+  url: string;
+  spoke_count: number;
+  gaps: number;
+}
+
+export interface IntelligenceSpokePage {
+  id: number;
+  title: string;
+  url: string;
+  parent_hub: string;
+  is_connected: boolean;
+}
+
+export interface IntelligenceOrphanPage {
+  id: number;
+  title: string;
+  url: string;
+  recommendation: string;
+}
+
+export interface IntelligenceContentGap {
+  hub_title: string;
+  missing_topics: string[];
+}
+
+export interface IntelligenceCannibalizationRisk {
+  pages: string[];
+  keyword: string;
+  severity: 'high' | 'medium' | 'low';
+}
+
+export interface IntelligenceResult {
+  business_type: string;
+  hub_pages: IntelligenceHubPage[];
+  spoke_pages: IntelligenceSpokePage[];
+  orphan_pages: IntelligenceOrphanPage[];
+  content_gaps: IntelligenceContentGap[];
+  cannibalization_risks: IntelligenceCannibalizationRisk[];
+  generated_at?: string;
+}
+
+class IntelligenceService {
+  async get(siteId: number): Promise<IntelligenceResult | null> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/intelligence/`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Failed to fetch intelligence');
+    return res.json();
+  }
+
+  async generate(siteId: number): Promise<IntelligenceResult> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/intelligence/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error('Failed to generate intelligence');
+    return res.json();
+  }
+}
+
+export const intelligenceService = new IntelligenceService();
+
+// ── Goals types ───────────────────────────────────────────────────────────────
+
+export interface GoalPriorityLocation {
+  city: string;
+  state: string;
+  rank: number;
+}
+
+export type PrimaryGoal =
+  | 'local_leads'
+  | 'ecommerce_sales'
+  | 'topic_authority'
+  | 'multi_location'
+  | 'geo_citations'
+  | 'organic_growth';
+
+export interface SiteGoals {
+  primary_goal: PrimaryGoal | '';
+  priority_services: string[];
+  priority_locations: GoalPriorityLocation[];
+  geo_priority_pages: number[];
+}
+
+// ── Goals service ─────────────────────────────────────────────────────────────
+
+class GoalsService {
+  async get(siteId: number): Promise<SiteGoals | null> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/goals/`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Failed to fetch goals');
+    return res.json();
+  }
+
+  async save(siteId: number, data: SiteGoals): Promise<SiteGoals> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/goals/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || json.detail || 'Failed to save goals');
+    return json;
+  }
+}
+
+export const goalsService = new GoalsService();
 export interface TopicBoundary {
   id: number;
   silo_id: number;
@@ -943,18 +1359,4 @@ class DepthEngineService {
   }
 }
 
-export const sitesService = new SitesService();
-export const pagesService = new PagesService();
-export const apiKeysService = new ApiKeysService();
-export const scansService = new ScansService();
-export const cannibalizationService = new CannibalizationService();
-export const silosService = new SilosService();
-export const recommendationsService = new RecommendationsService();
-export const gscService = new GscService();
-export const conflictsService = new ConflictsService();
-export const keywordsService = new KeywordsService();
-export const healthScoresService = new HealthScoresService();
-export const silosV2Service = new SilosV2Service();
-export const redirectsService = new RedirectsService();
-export const analysisService = new AnalysisService();
 export const depthEngineService = new DepthEngineService();
