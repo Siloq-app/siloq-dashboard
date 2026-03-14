@@ -292,7 +292,7 @@ export default function SiloDepthEngine({ siloId, siloName, onBack }: Props) {
         depthEngineService.getGapReport(siteId, siloId),
         depthEngineService.getTopicBoundary(siteId, siloId),
         depthEngineService.getLinkRelationships(siteId, siloId),
-        pagesService.fetchPages(siteId),
+        pagesService.list(siteId),
       ]);
 
       if (scoresData.status === 'fulfilled') setScores(scoresData.value);
