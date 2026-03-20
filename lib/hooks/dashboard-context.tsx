@@ -15,6 +15,7 @@ import {
   mapCannibalizationIssues,
   mapSilos,
   mapRecommendationsToPendingChanges,
+  mapAgentActionToPendingChange,
   mapLinkOpportunities,
 } from '@/lib/services/mappers';
 import type {
@@ -208,10 +209,28 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
     setRecommendationsLoading(true);
     try {
-      const response = await recommendationsService.fetchRecommendations(selectedSite.id);
-      const mapped = mapRecommendationsToPendingChanges(response);
-      setCache(key, mapped);
-      setPendingChanges(mapped);
+      const [recResponse, agentResponse] = await Promise.allSettled([
+        recommendationsService.fetchRecommendations(selectedSite.id).catch(() => null),
+        sitesService.fetchPendingActions(selectedSite.id).catch(() => null),
+      ]);
+
+      const changes: PendingChange[] = [];
+
+      // Agent pending actions first (higher priority)
+      if (agentResponse.status === 'fulfilled' && agentResponse.value) {
+        const agentChanges = agentResponse.value.results
+          .filter(a => a.status === 'pending')
+          .map(mapAgentActionToPendingChange);
+        changes.push(...agentChanges);
+      }
+
+      // Then existing recommendations
+      if (recResponse.status === 'fulfilled' && recResponse.value) {
+        changes.push(...mapRecommendationsToPendingChanges(recResponse.value));
+      }
+
+      setCache(key, changes);
+      setPendingChanges(changes);
     } catch (e: unknown) {
       console.error('Recommendations load error:', e);
       setPendingChanges([]);

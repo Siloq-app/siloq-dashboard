@@ -2,6 +2,7 @@ import type {
   CannibalizationIssueResponse,
   SiloResponse,
   RecommendationResponse,
+  AgentPendingAction,
 } from './api';
 import type {
   CannibalizationIssue,
@@ -128,6 +129,35 @@ function mapRiskLevel(
     default:
       return apiRisk === 'destructive' ? 'destructive' : 'safe';
   }
+}
+
+/**
+ * Map an agent pending action to a dashboard PendingChange.
+ */
+export function mapAgentActionToPendingChange(action: AgentPendingAction): PendingChange {
+  const typeMap: Record<string, string> = {
+    add_canonical: 'canonical_fix',
+    add_internal_link: 'internal_link',
+    update_meta: 'meta_update',
+    restructure_silo: 'content_refresh',
+    review_content: 'content_refresh',
+    no_action: 'canonical_fix',
+  };
+
+  const riskMap: Record<string, PendingChange['risk']> = {
+    low: 'safe',
+    medium: 'meta_update',
+    high: 'destructive',
+  };
+
+  return {
+    id: action.id,
+    type: typeMap[action.action_type] || 'canonical_fix',
+    description: action.description,
+    risk: riskMap[action.risk] || 'safe',
+    impact: action.impact,
+    doctrine: action.doctrine,
+  };
 }
 
 /**
