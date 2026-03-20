@@ -156,6 +156,14 @@ class SitesService {
     return data;
   }
 
+  async fetchPendingActions(siteId: number | string): Promise<AgentPendingActionsResponse> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/pending-actions/?status=pending&page_size=50`);
+    const data = await res.json();
+    if (!res.ok)
+      throw new Error(data.error || data.message || 'Failed to load pending actions');
+    return data;
+  }
+
   async denyAction(siteId: number | string, actionId: number | string, reason?: string): Promise<any> {
     const res = await fetchWithAuth(`/api/v1/sites/${siteId}/approvals/${actionId}/deny/`, {
       method: 'POST',
@@ -595,6 +603,26 @@ class SilosV2Service {
       throw new Error(data.message || data.detail || 'Failed to load silos');
     return Array.isArray(data) ? data : data.results || [];
   }
+}
+
+// --- Agent Pending Actions ---
+
+export interface AgentPendingAction {
+  id: number;
+  action_type: string;
+  description: string;
+  risk: string;
+  impact: string;
+  doctrine: string;
+  status: string;
+  created_at: string;
+}
+
+export interface AgentPendingActionsResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  results: AgentPendingAction[];
 }
 
 class RecommendationsService {
