@@ -219,8 +219,6 @@ export default function Dashboard({
             }}
           />
         );
-      case 'content-plan':
-        return <ContentPlanTab />;
       case 'search-console':
         return <SearchConsole selectedSite={selectedSite} />;
       case 'settings':

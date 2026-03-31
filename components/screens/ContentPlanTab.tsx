@@ -6,741 +6,706 @@ import { useToast } from '@/components/ui/use-toast';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { NoSiteSelected } from '@/components/ui/no-site-selected';
-import {
-  contentPlanService,
-  pagesService,
-  type SiloMapEntry,
-  type ContentPlanGap,
-  type ContentPlanPipelineItem,
-  type SupportingPageDraft,
-  type Page,
-} from '@/lib/services/api';
-import SiteIntelligencePanel from '@/components/screens/SiteIntelligencePanel';
+import { contentPlanService, type ContentJob } from '@/lib/services/api';
 
-// ── Classification ────────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────────────
 
-export function classifyPageType(keyword: string): 'sub_page' | 'blog_post' {
-  const kw = keyword.toLowerCase();
-  const informational = [
-    'how to', 'how do', 'what is', 'what are', 'why', 'guide', 'tips',
-    'vs', 'versus', 'difference', 'when', 'should i', 'diy', 'average',
-    'signs', 'benefits',
-  ];
-  const transactional = [
-    'pricing', 'cost', 'price', 'hire', 'near me', 'service', 'services',
-    'installation', 'install', 'repair', 'replacement', 'replace', 'contractor',
-    'company', 'quote', 'estimate', 'affordable', 'cheap', 'best', 'top',
-    'licensed', 'certified',
-  ];
-  if (informational.some(t => kw.includes(t))) return 'blog_post';
-  if (transactional.some(t => kw.includes(t))) return 'sub_page';
-  return 'blog_post';
+interface ContentJobLocal {
+  id: number;
+  blogTitle: string;
+  primaryKeyword: string;
+  tier: 1 | 2 | 3;
+  searchVolume: number;
+  status: 'pending_approval' | 'approved' | 'writing' | 'draft_ready' | 'published';
+  angle: string;
+  internalLinks: string[];
+  blogContent: string | null;
+  metaDescription: string | null;
+  wordCount: number | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// ── Mock Data ─────────────────────────────────────────────────────────────────
+function mapJobToLocal(job: ContentJob): ContentJobLocal {
+  return {
+    id: job.id,
+    blogTitle: job.blog_title,
+    primaryKeyword: job.primary_keyword,
+    tier: job.tier,
+    searchVolume: job.search_volume,
+    status: job.status,
+    angle: job.angle,
+    internalLinks: job.internal_links ?? [],
+    blogContent: job.blog_content,
+    metaDescription: job.meta_description,
+    wordCount: job.word_count,
+    createdAt: job.created_at,
+    updatedAt: job.updated_at,
+  };
+}
 
-const mockSiloMap: SiloMapEntry[] = [
-  {
-    hub: { id: 1, title: 'Electrical Services', url: '/services/', seo_score: 72 },
-    existing_supporting: [
-      { id: 2, title: 'Residential Wiring', url: '/services/residential-wiring/' },
-    ],
-    needed_supporting: [
-      { topic: 'Panel Upgrade Cost Kansas City', keyword: 'panel upgrade cost near me', type: 'sub_page' },
-      { topic: 'How to Know If You Need an Electrical Panel Upgrade', keyword: 'how to know if you need panel upgrade', type: 'blog_post' },
-      { topic: 'EV Charger Installation', keyword: 'ev charger installation service', type: 'sub_page' },
-    ],
-    linking_back: 1,
-    total_supporting: 4,
-  },
+// ── Step Indicators ──────────────────────────────────────────────────────────
+
+const STEPS = [
+  { num: 1, label: 'Keyword Discovery' },
+  { num: 2, label: 'Generate Topics' },
+  { num: 3, label: 'Review & Approve' },
+  { num: 4, label: 'Write' },
+  { num: 5, label: 'Publish' },
 ];
 
-const mockGaps: ContentPlanGap[] = [
-  {
-    hub_page_id: 1,
-    hub_title: 'Electrical Services',
-    hub_url: '/services/',
-    supporting_count: 1,
-    needed_topics: [
-      { topic: 'Panel Upgrade Cost Kansas City', keyword: 'panel upgrade cost near me', type: 'sub_page' },
-      { topic: 'How to Know If You Need an Electrical Panel Upgrade', keyword: 'how to know if you need panel upgrade', type: 'blog_post' },
-    ],
-  },
-];
-
-// ── Shared Type Badge ─────────────────────────────────────────────────────────
-
-function TypeBadge({ type }: { type: 'sub_page' | 'blog_post' }) {
-  if (type === 'sub_page') {
-    return (
-      <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
-        Service Sub-Page
-      </span>
-    );
-  }
+function StepIndicators({ activeStep }: { activeStep: number }) {
   return (
-    <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">
-      Blog Post
+    <div className="flex items-center gap-1 overflow-x-auto pb-2">
+      {STEPS.map((step, i) => {
+        const isActive = step.num === activeStep;
+        const isPast = step.num < activeStep;
+        return (
+          <div key={step.num} className="flex items-center">
+            {i > 0 && (
+              <div
+                className={`w-6 sm:w-10 h-0.5 ${
+                  isPast ? 'bg-green-400' : 'bg-slate-200 dark:bg-slate-700'
+                }`}
+              />
+            )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <div
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                  isActive
+                    ? 'bg-blue-600 text-white'
+                    : isPast
+                    ? 'bg-green-500 text-white'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                }`}
+              >
+                {isPast ? '\u2713' : step.num}
+              </div>
+              <span
+                className={`text-xs font-medium whitespace-nowrap ${
+                  isActive ? 'text-blue-600' : isPast ? 'text-green-600' : 'text-slate-400'
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Tier Badge ───────────────────────────────────────────────────────────────
+
+function TierBadge({ tier }: { tier: 1 | 2 | 3 }) {
+  const styles: Record<number, string> = {
+    1: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    2: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    3: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  };
+  const labels: Record<number, string> = {
+    1: 'Tier 1',
+    2: 'Tier 2',
+    3: 'Tier 3',
+  };
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${styles[tier]}`}>
+      {labels[tier]}
     </span>
   );
 }
 
-// ── Create Draft Button ───────────────────────────────────────────────────────
+// ── Status Badge ─────────────────────────────────────────────────────────────
 
-interface CreateDraftButtonProps {
-  siteId: number;
-  topic: string;
-  keyword: string;
-  type: 'sub_page' | 'blog_post';
-  hubPageId: number;
-  onSuccess?: () => void;
-}
-
-function CreateDraftButton({ siteId, topic, keyword, type, hubPageId, onSuccess }: CreateDraftButtonProps) {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [created, setCreated] = useState(false);
-
-  const handleCreate = async () => {
-    if (created || loading) return;
-    setLoading(true);
-    try {
-      const payload: SupportingPageDraft = {
-        topic_title: topic,
-        page_type: type,
-        target_keyword: keyword,
-        hub_page_id: hubPageId,
-      };
-      await contentPlanService.createDraft(siteId, payload);
-      setCreated(true);
-      toast({ title: '✅ Draft created in WordPress' });
-      onSuccess?.();
-    } catch (err: any) {
-      toast({
-        title: 'Failed to create draft',
-        description: err?.message || 'Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+function StatusBadge({ status }: { status: ContentJobLocal['status'] }) {
+  const config: Record<string, { label: string; classes: string; spinner?: boolean }> = {
+    pending_approval: { label: 'Pending Approval', classes: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' },
+    approved: { label: 'Approved', classes: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
+    writing: { label: 'Writing...', classes: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', spinner: true },
+    draft_ready: { label: 'Draft Ready', classes: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300' },
+    published: { label: 'Published', classes: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
   };
-
-  if (created) {
-    return (
-      <button
-        disabled
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-green-700 border border-green-200 cursor-not-allowed"
-      >
-        ✅ Draft Created
-      </button>
-    );
-  }
-
+  const c = config[status] ?? config.pending_approval;
   return (
-    <button
-      onClick={handleCreate}
-      disabled={loading}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-700 text-white border border-slate-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-    >
-      {loading ? (
-        <>
-          <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          Creating…
-        </>
-      ) : (
-        '+ Create Draft'
+    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${c.classes}`}>
+      {c.spinner && (
+        <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
       )}
-    </button>
+      {c.label}
+    </span>
   );
 }
 
-// ── Stats Row ─────────────────────────────────────────────────────────────────
+// ── Topic Card ───────────────────────────────────────────────────────────────
 
-interface StatsRowProps {
-  subPagesNeeded: number;
-  blogPostsNeeded: number;
-  createdThisWeek: number;
-  gapsCount: number;
+interface TopicCardProps {
+  job: ContentJobLocal;
+  selected: boolean;
+  onToggle: () => void;
+  onApprove: () => void;
+  onWrite: () => void;
+  onPreview: () => void;
+  onPublish: () => void;
+  onDelete: () => void;
+  actionLoading: number | null;
 }
 
-function StatsRow({ subPagesNeeded, blogPostsNeeded, createdThisWeek, gapsCount }: StatsRowProps) {
-  const stats = [
-    { label: 'Content Gaps', value: gapsCount, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
-    { label: 'Sub-pages needed', value: subPagesNeeded, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
-    { label: 'Blog posts needed', value: blogPostsNeeded, color: 'text-purple-600', bg: 'bg-purple-50 border-purple-200' },
-    { label: 'Created this week', value: createdThisWeek, color: 'text-green-600', bg: 'bg-green-50 border-green-200' },
-  ];
+function TopicCard({
+  job,
+  selected,
+  onToggle,
+  onApprove,
+  onWrite,
+  onPreview,
+  onPublish,
+  onDelete,
+  actionLoading,
+}: TopicCardProps) {
+  const isLoading = actionLoading === job.id;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-      {stats.map(s => (
-        <div key={s.label} className={`rounded-xl border p-4 ${s.bg}`}>
-          <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-          <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── View: Silo Map ────────────────────────────────────────────────────────────
-
-interface SiloMapViewProps {
-  siloMap: SiloMapEntry[];
-  siteId: number;
-}
-
-function SiloMapView({ siloMap, siteId }: SiloMapViewProps) {
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
-
-  const toggleHub = (id: number) => {
-    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  if (siloMap.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[30vh] text-slate-400 gap-2">
-        <span className="text-4xl">🗂</span>
-        <p className="text-sm">No silo map data yet. Sync your site to populate this view.</p>
+    <div className="flex gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+      {/* Checkbox */}
+      <div className="pt-0.5">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggle}
+          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+        />
       </div>
-    );
-  }
 
-  return (
-    <div className="space-y-4">
-      {siloMap.map(entry => {
-        const isOpen = expanded[entry.hub.id] ?? true;
-        const linkPercent = entry.total_supporting > 0
-          ? Math.round((entry.linking_back / entry.total_supporting) * 100)
-          : 0;
+      {/* Content */}
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+            {job.blogTitle}
+          </span>
+          <TierBadge tier={job.tier} />
+          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium">
+            {job.searchVolume.toLocaleString()}/mo
+          </span>
+          <StatusBadge status={job.status} />
+        </div>
 
-        return (
-          <div
-            key={entry.hub.id}
-            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden"
-          >
-            {/* Hub Header */}
+        <div className="text-xs text-slate-400">{job.primaryKeyword}</div>
+
+        {job.angle && (
+          <div className="text-sm text-slate-600 dark:text-slate-400 truncate">{job.angle}</div>
+        )}
+
+        {job.internalLinks.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {job.internalLinks.map((link, i) => (
+              <span key={i} className="text-xs text-slate-400 bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                {link}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {job.status === 'pending_approval' && (
             <button
-              onClick={() => toggleHub(entry.hub.id)}
-              className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+              onClick={onApprove}
+              disabled={isLoading}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors disabled:opacity-50"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-lg">🏠</span>
-                <div>
-                  <div className="font-semibold text-slate-900 dark:text-slate-100">{entry.hub.title}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">{entry.hub.url}</div>
-                </div>
-                <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
-                  SEO: {entry.hub.seo_score}
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right hidden sm:block">
-                  <div className="text-xs text-slate-500 mb-1">
-                    {entry.linking_back}/{entry.total_supporting} linking back
-                  </div>
-                  <div className="w-28 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 rounded-full transition-all"
-                      style={{ width: `${linkPercent}%` }}
-                    />
-                  </div>
-                </div>
-                <span className="text-slate-400 text-sm">{isOpen ? '▲' : '▼'}</span>
-              </div>
+              {isLoading ? 'Approving...' : 'Approve'}
             </button>
-
-            {/* Expanded Content */}
-            {isOpen && (
-              <div className="border-t border-slate-100 dark:border-slate-800 px-5 py-4 space-y-4">
-                {/* Existing Supporting Pages */}
-                {entry.existing_supporting.length > 0 && (
-                  <div>
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                      ✅ Existing Supporting Pages ({entry.existing_supporting.length})
-                    </div>
-                    <div className="space-y-1.5">
-                      {entry.existing_supporting.map(page => (
-                        <div
-                          key={page.id}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 border border-green-100 dark:bg-green-950/20 dark:border-green-900/40"
-                        >
-                          <span className="text-green-500 text-xs">✓</span>
-                          <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{page.title}</span>
-                          <a
-                            href={page.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ml-auto text-xs text-green-600 hover:underline"
-                          >
-                            {page.url}
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Needed Supporting Pages */}
-                {entry.needed_supporting.length > 0 && (
-                  <div>
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                      ⚠️ Needed Supporting Pages ({entry.needed_supporting.length})
-                    </div>
-                    <div className="space-y-2">
-                      {entry.needed_supporting.map((needed, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-100 dark:bg-amber-950/20 dark:border-amber-900/40"
-                        >
-                          <span className="text-amber-500 text-xs">⚠</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
-                              {needed.topic}
-                            </div>
-                            <div className="text-xs text-slate-400 mt-0.5">{needed.keyword}</div>
-                          </div>
-                          <TypeBadge type={needed.type} />
-                          <CreateDraftButton
-                            siteId={siteId}
-                            topic={needed.topic}
-                            keyword={needed.keyword}
-                            type={needed.type}
-                            hubPageId={entry.hub.id}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {entry.existing_supporting.length === 0 && entry.needed_supporting.length === 0 && (
-                  <p className="text-sm text-slate-400 text-center py-4">
-                    No supporting pages data available for this hub.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+          )}
+          {job.status === 'approved' && (
+            <button
+              onClick={onWrite}
+              disabled={isLoading}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50"
+            >
+              {isLoading ? 'Starting...' : 'Write Now'}
+            </button>
+          )}
+          {job.status === 'draft_ready' && (
+            <>
+              <button
+                onClick={onPreview}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+              >
+                Preview
+              </button>
+              <button
+                onClick={onPublish}
+                disabled={isLoading}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition-colors disabled:opacity-50"
+              >
+                {isLoading ? 'Publishing...' : 'Publish to WP'}
+              </button>
+            </>
+          )}
+          <button
+            onClick={onDelete}
+            disabled={isLoading}
+            className="px-2 py-1.5 text-xs font-medium rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
+            title="Delete"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ── View: Gaps ────────────────────────────────────────────────────────────────
+// ── Preview Modal ────────────────────────────────────────────────────────────
 
-interface GapsViewProps {
-  gaps: ContentPlanGap[];
-  siteId: number;
+interface PreviewModalProps {
+  job: ContentJobLocal;
+  onClose: () => void;
+  onPublish: () => void;
+  publishing: boolean;
 }
 
-function GapsView({ gaps, siteId }: GapsViewProps) {
-  const [createdCount, setCreatedCount] = useState<Record<number, number>>({});
-
-  const handleDraftCreated = (hubId: number) => {
-    setCreatedCount(prev => ({ ...prev, [hubId]: (prev[hubId] || 0) + 1 }));
+function PreviewModal({ job, onClose, onPublish, publishing }: PreviewModalProps) {
+  // Render blog content as plain text to avoid XSS from untrusted HTML
+  const renderContent = (content: string) => {
+    return content.split('\n').map((line, i) => (
+      <p key={i} className={line.trim() === '' ? 'h-4' : 'text-sm text-slate-700 dark:text-slate-300 leading-relaxed'}>
+        {line}
+      </p>
+    ));
   };
 
-  if (gaps.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[30vh] text-slate-400 gap-2">
-        <span className="text-4xl">✅</span>
-        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No content gaps detected!</p>
-        <p className="text-xs">Every money page has at least 2 supporting articles.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {gaps.map(gap => {
-        const drafted = createdCount[gap.hub_page_id] || 0;
-        const total = gap.needed_topics.length;
-
-        return (
-          <div
-            key={gap.hub_page_id}
-            className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-white dark:bg-slate-900 overflow-hidden"
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-w-3xl w-full max-h-[85vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate pr-4">Preview: {job.blogTitle}</h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
           >
-            <div className="flex items-center justify-between px-5 py-4 bg-amber-50 dark:bg-amber-950/20 border-b border-amber-100 dark:border-amber-900/40">
-              <div>
-                <div className="font-semibold text-slate-900 dark:text-slate-100">{gap.hub_title}</div>
-                <div className="text-xs text-slate-400 mt-0.5">
-                  {gap.supporting_count} supporting {gap.supporting_count === 1 ? 'page' : 'pages'} — needs more content
-                </div>
-              </div>
-              {drafted > 0 && (
-                <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
-                  {drafted}/{total} drafted
-                </span>
-              )}
-            </div>
-            <div className="px-5 py-3 space-y-2">
-              {gap.needed_topics.map((topic, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-slate-800 dark:text-slate-200">{topic.topic}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">{topic.keyword}</div>
-                  </div>
-                  <TypeBadge type={topic.type} />
-                  <CreateDraftButton
-                    siteId={siteId}
-                    topic={topic.topic}
-                    keyword={topic.keyword}
-                    type={topic.type}
-                    hubPageId={gap.hub_page_id}
-                    onSuccess={() => handleDraftCreated(gap.hub_page_id)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── View: Pipeline ────────────────────────────────────────────────────────────
-
-interface PipelineViewProps {
-  pipeline: ContentPlanPipelineItem[];
-}
-
-function PipelineView({ pipeline }: PipelineViewProps) {
-  if (pipeline.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[30vh] text-slate-400 gap-2">
-        <span className="text-4xl">📋</span>
-        <p className="text-sm">No drafts in pipeline yet. Use the Gaps or Silo Map views to create drafts.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-slate-50 dark:bg-slate-800 text-xs text-slate-500 uppercase tracking-wide">
-            <th className="text-left px-4 py-3 font-semibold">Title</th>
-            <th className="text-left px-4 py-3 font-semibold">Type</th>
-            <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Hub Page</th>
-            <th className="text-left px-4 py-3 font-semibold">Status</th>
-            <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Created</th>
-            <th className="text-left px-4 py-3 font-semibold">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pipeline.map((item, i) => (
-            <tr
-              key={item.id}
-              className={`border-t border-slate-100 dark:border-slate-800 ${
-                i % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-slate-800/30'
-              }`}
-            >
-              <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{item.title}</td>
-              <td className="px-4 py-3">
-                <TypeBadge type={item.page_type} />
-              </td>
-              <td className="px-4 py-3 text-slate-500 hidden md:table-cell">{item.hub_title}</td>
-              <td className="px-4 py-3">
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    item.status === 'published'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-slate-100 text-slate-600'
-                  }`}
-                >
-                  {item.status === 'published' ? 'Published' : 'Draft'}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-slate-400 hidden md:table-cell">
-                {new Date(item.created_at).toLocaleDateString()}
-              </td>
-              <td className="px-4 py-3">
-                {item.edit_url ? (
-                  <a
-                    href={item.edit_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:underline font-medium"
-                  >
-                    Edit in WP →
-                  </a>
-                ) : (
-                  <span className="text-xs text-slate-400">—</span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// ── View: All Pages ───────────────────────────────────────────────────────────
-
-interface AllPagesViewProps {
-  pages: Page[];
-}
-
-function AllPagesView({ pages }: AllPagesViewProps) {
-  const [search, setSearch] = useState('');
-
-  const filtered = pages.filter(
-    p =>
-      p.title?.toLowerCase().includes(search.toLowerCase()) ||
-      p.url?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  return (
-    <div className="space-y-4">
-      <input
-        type="text"
-        placeholder="Search pages..."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/30"
-      />
-      {filtered.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 text-sm">No pages match your search.</div>
-      ) : (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800 text-xs text-slate-500 uppercase tracking-wide">
-                <th className="text-left px-4 py-3 font-semibold">Title</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">URL</th>
-                <th className="text-left px-4 py-3 font-semibold">SEO Score</th>
-                <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((page, i) => (
-                <tr
-                  key={page.id}
-                  className={`border-t border-slate-100 dark:border-slate-800 ${
-                    i % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-slate-800/30'
-                  }`}
-                >
-                  <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">
-                    {page.title || '(no title)'}
-                  </td>
-                  <td className="px-4 py-3 text-slate-400 hidden md:table-cell text-xs truncate max-w-[200px]">
-                    {page.url}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`text-xs font-semibold ${
-                        page.seo_score >= 70
-                          ? 'text-green-600'
-                          : page.seo_score >= 40
-                          ? 'text-amber-500'
-                          : 'text-red-500'
-                      }`}
-                    >
-                      {page.seo_score ?? '—'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 hidden sm:table-cell">
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        page.status === 'published'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-slate-100 text-slate-500'
-                      }`}
-                    >
-                      {page.status || 'unknown'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-      )}
+
+        {/* Meta info */}
+        <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 flex flex-wrap gap-4 text-xs text-slate-500">
+          <span>Primary keyword: <strong className="text-slate-700 dark:text-slate-300">{job.primaryKeyword}</strong></span>
+          {job.wordCount && <span>Word count: <strong className="text-slate-700 dark:text-slate-300">{job.wordCount.toLocaleString()}</strong></span>}
+          <TierBadge tier={job.tier} />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+          {job.blogContent ? (
+            renderContent(job.blogContent)
+          ) : (
+            <p className="text-slate-400 text-sm">No content available yet.</p>
+          )}
+
+          {job.metaDescription && (
+            <div className="mt-6 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Meta Description</div>
+              <p className="text-sm text-slate-700 dark:text-slate-300">{job.metaDescription}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+          >
+            Close
+          </button>
+          {job.status === 'draft_ready' && (
+            <button
+              onClick={onPublish}
+              disabled={publishing}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition-colors disabled:opacity-50"
+            >
+              {publishing ? 'Publishing...' : 'Publish to WP'}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// ── Bulk Action Bar ──────────────────────────────────────────────────────────
 
-type ContentPlanView = 'gaps' | 'pipeline' | 'all-pages' | 'silo-map' | 'intelligence';
+interface BulkActionBarProps {
+  count: number;
+  onApproveAll: () => void;
+  onDeleteSelected: () => void;
+  loading: boolean;
+}
+
+function BulkActionBar({ count, onApproveAll, onDeleteSelected, loading }: BulkActionBarProps) {
+  if (count === 0) return null;
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+        {count} topic{count !== 1 ? 's' : ''} selected
+      </span>
+      <button
+        onClick={onApproveAll}
+        disabled={loading}
+        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors disabled:opacity-50"
+      >
+        Approve All
+      </button>
+      <button
+        onClick={onDeleteSelected}
+        disabled={loading}
+        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50"
+      >
+        Delete Selected
+      </button>
+    </div>
+  );
+}
+
+// ── Tier Section ─────────────────────────────────────────────────────────────
+
+const TIER_HEADERS: Record<number, string> = {
+  1: 'Tier 1 \u2014 Pillar Pages',
+  2: 'Tier 2 \u2014 Cluster Content',
+  3: 'Tier 3 \u2014 Long-tail Posts',
+};
+
+// ── Main Component ───────────────────────────────────────────────────────────
 
 export default function ContentPlanTab() {
   const { selectedSite } = useDashboardContext();
   const { toast } = useToast();
 
-  const [activeView, setActiveView] = useState<ContentPlanView>('gaps');
+  const [jobs, setJobs] = useState<ContentJobLocal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateStatus, setGenerateStatus] = useState('');
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [previewJob, setPreviewJob] = useState<ContentJobLocal | null>(null);
+  const [publishingPreview, setPublishingPreview] = useState(false);
 
-  const [siloMap, setSiloMap] = useState<SiloMapEntry[]>([]);
-  const [gaps, setGaps] = useState<ContentPlanGap[]>([]);
-  const [pipeline, setPipeline] = useState<ContentPlanPipelineItem[]>([]);
-  const [pages, setPages] = useState<Page[]>([]);
+  // ── Computed ────────────────────────────────────────────────────────────────
 
-  // ── Computed stats ─────────────────────────────────────────────────────────
+  const activeStep = (() => {
+    if (jobs.length === 0) return 1;
+    const hasPublished = jobs.some(j => j.status === 'published');
+    const hasDraftReady = jobs.some(j => j.status === 'draft_ready');
+    const hasWriting = jobs.some(j => j.status === 'writing');
+    const hasApproved = jobs.some(j => j.status === 'approved');
+    if (hasPublished) return 5;
+    if (hasDraftReady) return 5;
+    if (hasWriting) return 4;
+    if (hasApproved) return 4;
+    return 3;
+  })();
 
-  const allNeededTopics = gaps.flatMap(g => g.needed_topics);
-  const subPagesNeeded = allNeededTopics.filter(t => t.type === 'sub_page').length;
-  const blogPostsNeeded = allNeededTopics.filter(t => t.type === 'blog_post').length;
+  const jobsByTier = (tier: 1 | 2 | 3) => jobs.filter(j => j.tier === tier);
 
-  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const createdThisWeek = pipeline.filter(
-    item => new Date(item.created_at).getTime() > oneWeekAgo
-  ).length;
+  // ── Load jobs ───────────────────────────────────────────────────────────────
 
-  // ── Load data ──────────────────────────────────────────────────────────────
-
-  const loadData = useCallback(async () => {
+  const loadJobs = useCallback(async () => {
     if (!selectedSite) return;
     setLoading(true);
     setError(null);
-
     try {
-      const [siloMapData, gapsData, pipelineData, pagesData] = await Promise.allSettled([
-        contentPlanService.getSiloMap(selectedSite.id),
-        contentPlanService.getGaps(selectedSite.id),
-        contentPlanService.getPipeline(selectedSite.id),
-        pagesService.list(selectedSite.id),
-      ]);
-
-      // Silo map — fall back to mock if API not available
-      if (siloMapData.status === 'fulfilled') {
-        const data = siloMapData.value;
-        // Ensure page types are classified if missing
-        const enriched = data.map(entry => ({
-          ...entry,
-          needed_supporting: entry.needed_supporting.map(n => ({
-            ...n,
-            type: n.type || classifyPageType(n.keyword),
-          })),
-        }));
-        setSiloMap(enriched.length > 0 ? enriched : mockSiloMap);
-      } else {
-        setSiloMap(mockSiloMap);
-      }
-
-      // Gaps — fall back to mock
-      if (gapsData.status === 'fulfilled') {
-        const data = gapsData.value;
-        const enriched = data.map(g => ({
-          ...g,
-          needed_topics: g.needed_topics.map(t => ({
-            ...t,
-            type: t.type || classifyPageType(t.keyword),
-          })),
-        }));
-        setGaps(enriched.length > 0 ? enriched : mockGaps);
-      } else {
-        setGaps(mockGaps);
-      }
-
-      if (pipelineData.status === 'fulfilled') {
-        setPipeline(pipelineData.value);
-      }
-
-      if (pagesData.status === 'fulfilled') {
-        setPages(pagesData.value);
-      }
+      const data = await contentPlanService.listContentJobs(selectedSite.id);
+      setJobs(data.map(mapJobToLocal));
     } catch (err: any) {
-      setError(err?.message || 'Failed to load content plan data.');
+      setError(err?.message || 'Failed to load content jobs');
     } finally {
       setLoading(false);
     }
   }, [selectedSite]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadJobs();
+  }, [loadJobs]);
 
-  // ── Guards ─────────────────────────────────────────────────────────────────
+  // ── Generate Topics flow ────────────────────────────────────────────────────
+
+  const handleGenerateTopics = async () => {
+    if (!selectedSite || generating) return;
+    setGenerating(true);
+    setGenerateStatus('Running keyword discovery...');
+    try {
+      await contentPlanService.keywordDiscovery(selectedSite.id);
+      setGenerateStatus('Keywords discovered, generating topics...');
+      const result = await contentPlanService.generateTopics(selectedSite.id, 10);
+      await loadJobs();
+      toast({ title: `${result.count ?? 'New'} topics generated` });
+    } catch (err: any) {
+      toast({
+        title: 'Generation failed',
+        description: err?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setGenerating(false);
+      setGenerateStatus('');
+    }
+  };
+
+  // ── Single actions ──────────────────────────────────────────────────────────
+
+  const handleApprove = async (job: ContentJobLocal) => {
+    if (!selectedSite) return;
+    setActionLoading(job.id);
+    try {
+      await contentPlanService.updateContentJob(selectedSite.id, job.id, { status: 'approved' } as any);
+      await contentPlanService.writeContentJob(selectedSite.id, job.id);
+      await loadJobs();
+      toast({ title: `"${job.blogTitle}" approved and writing started` });
+    } catch (err: any) {
+      toast({ title: 'Approve failed', description: err?.message, variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleWrite = async (job: ContentJobLocal) => {
+    if (!selectedSite) return;
+    setActionLoading(job.id);
+    try {
+      await contentPlanService.writeContentJob(selectedSite.id, job.id);
+      await loadJobs();
+      toast({ title: `Writing started for "${job.blogTitle}"` });
+    } catch (err: any) {
+      toast({ title: 'Write failed', description: err?.message, variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handlePublish = async (job: ContentJobLocal) => {
+    if (!selectedSite) return;
+    setActionLoading(job.id);
+    try {
+      await contentPlanService.publishContentJob(selectedSite.id, job.id);
+      await loadJobs();
+      toast({ title: `"${job.blogTitle}" published to WordPress` });
+    } catch (err: any) {
+      toast({ title: 'Publish failed', description: err?.message, variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (job: ContentJobLocal) => {
+    if (!selectedSite) return;
+    setActionLoading(job.id);
+    try {
+      await contentPlanService.deleteContentJob(selectedSite.id, job.id);
+      setJobs(prev => prev.filter(j => j.id !== job.id));
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        next.delete(job.id);
+        return next;
+      });
+      toast({ title: `"${job.blogTitle}" deleted` });
+    } catch (err: any) {
+      toast({ title: 'Delete failed', description: err?.message, variant: 'destructive' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // ── Preview publish ─────────────────────────────────────────────────────────
+
+  const handlePublishFromPreview = async () => {
+    if (!previewJob || !selectedSite) return;
+    setPublishingPreview(true);
+    try {
+      await contentPlanService.publishContentJob(selectedSite.id, previewJob.id);
+      await loadJobs();
+      toast({ title: `"${previewJob.blogTitle}" published to WordPress` });
+      setPreviewJob(null);
+    } catch (err: any) {
+      toast({ title: 'Publish failed', description: err?.message, variant: 'destructive' });
+    } finally {
+      setPublishingPreview(false);
+    }
+  };
+
+  // ── Bulk actions ────────────────────────────────────────────────────────────
+
+  const handleBulkApprove = async () => {
+    if (!selectedSite) return;
+    setBulkLoading(true);
+    const pending = jobs.filter(j => selectedIds.has(j.id) && j.status === 'pending_approval');
+    try {
+      for (const job of pending) {
+        await contentPlanService.updateContentJob(selectedSite.id, job.id, { status: 'approved' } as any);
+        await contentPlanService.writeContentJob(selectedSite.id, job.id);
+      }
+      await loadJobs();
+      setSelectedIds(new Set());
+      toast({ title: `${pending.length} topic${pending.length !== 1 ? 's' : ''} approved` });
+    } catch (err: any) {
+      toast({ title: 'Bulk approve failed', description: err?.message, variant: 'destructive' });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedSite) return;
+    setBulkLoading(true);
+    const toDelete = jobs.filter(j => selectedIds.has(j.id));
+    try {
+      for (const job of toDelete) {
+        await contentPlanService.deleteContentJob(selectedSite.id, job.id);
+      }
+      setJobs(prev => prev.filter(j => !selectedIds.has(j.id)));
+      setSelectedIds(new Set());
+      toast({ title: `${toDelete.length} topic${toDelete.length !== 1 ? 's' : ''} deleted` });
+    } catch (err: any) {
+      toast({ title: 'Bulk delete failed', description: err?.message, variant: 'destructive' });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const toggleSelection = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // ── Guards ──────────────────────────────────────────────────────────────────
 
   if (!selectedSite) {
-    return (
-      <NoSiteSelected message="Select a site to view its content plan and silo structure." />
-    );
+    return <NoSiteSelected message="Select a site to view its content plan." />;
   }
 
-  if (loading) {
+  if (loading && jobs.length === 0) {
     return <LoadingState message="Loading content plan..." />;
   }
 
-  if (error) {
-    return <ErrorState message={error} onRetry={loadData} />;
+  if (error && jobs.length === 0) {
+    return <ErrorState message={error} onRetry={loadJobs} />;
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────────────────
 
-  const tabs: { id: ContentPlanView; label: string; count?: number }[] = [
-    { id: 'gaps', label: '⚠️ Gaps', count: gaps.length },
-    { id: 'pipeline', label: '📋 Pipeline', count: pipeline.length || undefined },
-    { id: 'all-pages', label: '📄 All Pages', count: pages.length || undefined },
-    { id: 'silo-map', label: '🗂 Silo Map' },
-    { id: 'intelligence', label: '🧠 Site Intelligence' },
-  ];
+  const renderTierGroup = (tier: 1 | 2 | 3) => {
+    const tierJobs = jobsByTier(tier);
+    if (tierJobs.length === 0) return null;
+    return (
+      <div key={tier}>
+        <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
+          {TIER_HEADERS[tier]}
+        </h3>
+        <div className="space-y-3">
+          {tierJobs.map(job => (
+            <TopicCard
+              key={job.id}
+              job={job}
+              selected={selectedIds.has(job.id)}
+              onToggle={() => toggleSelection(job.id)}
+              onApprove={() => handleApprove(job)}
+              onWrite={() => handleWrite(job)}
+              onPreview={() => setPreviewJob(job)}
+              onPublish={() => handlePublish(job)}
+              onDelete={() => handleDelete(job)}
+              actionLoading={actionLoading}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Content Plan</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          See your Reverse Silo structure — identify content gaps, classify page types, and create WP drafts in one click.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Content Plan</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            DataForSEO-powered content pipeline &mdash; discover keywords, generate topics, write, and publish.
+          </p>
+        </div>
+        <button
+          onClick={handleGenerateTopics}
+          disabled={generating}
+          className="px-4 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 shrink-0"
+        >
+          {generating ? (
+            <>
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              {generateStatus || 'Generating...'}
+            </>
+          ) : (
+            'Generate Topics'
+          )}
+        </button>
       </div>
 
-      {/* Stats Row */}
-      <StatsRow
-        subPagesNeeded={subPagesNeeded}
-        blogPostsNeeded={blogPostsNeeded}
-        createdThisWeek={createdThisWeek}
-        gapsCount={gaps.length}
+      {/* Step Indicators */}
+      <StepIndicators activeStep={jobs.length === 0 ? 1 : activeStep} />
+
+      {/* Bulk Action Bar */}
+      <BulkActionBar
+        count={selectedIds.size}
+        onApproveAll={handleBulkApprove}
+        onDeleteSelected={handleBulkDelete}
+        loading={bulkLoading}
       />
 
-      {/* Tab Nav */}
-      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
-        {tabs.map(tab => (
+      {/* Content */}
+      {jobs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center min-h-[40vh] text-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center">
+            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">No topics yet</h3>
+            <p className="text-sm text-slate-500 mt-1 max-w-md">
+              Click &quot;Generate Topics&quot; to run keyword discovery and create a content plan for your site.
+            </p>
+          </div>
           <button
-            key={tab.id}
-            onClick={() => setActiveView(tab.id)}
-            className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border-b-2 -mb-px ${
-              activeView === tab.id
-                ? 'border-slate-900 dark:border-slate-100 text-slate-900 dark:text-slate-100'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-            }`}
+            onClick={handleGenerateTopics}
+            disabled={generating}
+            className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-60"
           >
-            {tab.label}
-            {tab.count != null && tab.count > 0 && (
-              <span
-                className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
-                  tab.id === 'gaps'
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {tab.count}
-              </span>
-            )}
+            {generating ? 'Generating...' : 'Generate Topics'}
           </button>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {([1, 2, 3] as const).map(tier => renderTierGroup(tier))}
+        </div>
+      )}
 
-      {/* Tab Content */}
-      <div>
-        {activeView === 'gaps' && <GapsView gaps={gaps} siteId={selectedSite.id} />}
-        {activeView === 'pipeline' && <PipelineView pipeline={pipeline} />}
-        {activeView === 'all-pages' && <AllPagesView pages={pages} />}
-        {activeView === 'silo-map' && <SiloMapView siloMap={siloMap} siteId={selectedSite.id} />}
-        {activeView === 'intelligence' && <SiteIntelligencePanel siteId={selectedSite.id} />}
-      </div>
+      {/* Preview Modal */}
+      {previewJob && (
+        <PreviewModal
+          job={previewJob}
+          onClose={() => setPreviewJob(null)}
+          onPublish={handlePublishFromPreview}
+          publishing={publishingPreview}
+        />
+      )}
     </div>
   );
 }
