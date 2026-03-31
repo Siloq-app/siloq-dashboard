@@ -1039,6 +1039,22 @@ export interface ContentPlanPipelineItem {
   created_at: string;
 }
 
+export interface ContentJob {
+  id: number;
+  blog_title: string;
+  primary_keyword: string;
+  tier: 1 | 2 | 3;
+  search_volume: number;
+  status: 'pending_approval' | 'approved' | 'writing' | 'draft_ready' | 'published';
+  angle: string;
+  internal_links: string[];
+  blog_content: string | null;
+  meta_description: string | null;
+  word_count: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 class ContentPlanService {
   async getSiloMap(siteId: string | number): Promise<SiloMapEntry[]> {
     const res = await fetchWithAuth(`/api/v1/sites/${siteId}/silo-map/`);
@@ -1070,6 +1086,77 @@ class ContentPlanService {
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || json.detail || 'Failed to create draft');
     return json;
+  }
+
+  // ── DataForSEO Content Engine ──────────────────────────────────────────────
+
+  async listContentJobs(siteId: string | number): Promise<ContentJob[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content/jobs/`);
+    if (!res.ok) throw new Error('Failed to load content jobs');
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async keywordDiscovery(siteId: string | number): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content/keyword-discovery/`, {
+      method: 'POST',
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || json.detail || 'Keyword discovery failed');
+    }
+  }
+
+  async generateTopics(siteId: string | number, blogCount = 10): Promise<{ count: number }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content/generate-topics/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ blog_count: blogCount }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || json.detail || 'Failed to generate topics');
+    return json;
+  }
+
+  async updateContentJob(siteId: string | number, jobId: number, data: Partial<ContentJob>): Promise<ContentJob> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content/jobs/${jobId}/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || json.detail || 'Failed to update content job');
+    return json;
+  }
+
+  async writeContentJob(siteId: string | number, jobId: number): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content/jobs/${jobId}/write/`, {
+      method: 'POST',
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || json.detail || 'Failed to start writing');
+    }
+  }
+
+  async publishContentJob(siteId: string | number, jobId: number): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content/jobs/${jobId}/publish/`, {
+      method: 'POST',
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || json.detail || 'Failed to publish');
+    }
+  }
+
+  async deleteContentJob(siteId: string | number, jobId: number): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/content/jobs/${jobId}/`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || json.detail || 'Failed to delete content job');
+    }
   }
 }
 

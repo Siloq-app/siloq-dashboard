@@ -64,11 +64,6 @@ const navMain = [
     icon: Activity,
   },
   {
-    title: 'Content Plan',
-    url: '/dashboard?tab=content-plan',
-    icon: Map,
-  },
-  {
     title: 'Approvals',
     url: '/dashboard?tab=approvals',
     icon: CheckSquare,
