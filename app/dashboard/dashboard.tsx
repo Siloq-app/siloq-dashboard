@@ -30,6 +30,7 @@ const ApprovalModal = lazy(() => import('@/components/modals/ApprovalModal'));
 const CannibalizationModal = lazy(() => import('@/components/modals/CannibalizationModal'));
 const SiloDepthEngine = lazy(() => import('@/components/screens/SiloDepthEngine'));
 const TeamAuthorsTab = lazy(() => import('@/components/screens/TeamAuthorsTab'));
+const SiteIntelligencePanel = lazy(() => import('@/components/screens/SiteIntelligencePanel'));
 
 interface DashboardProps {
   activeTab?: TabType;
@@ -226,6 +227,12 @@ export default function Dashboard({
         return <Settings onNavigateToSites={() => onTabChange?.('sites')} currentTier={userTier as any} />;
       case 'team-authors':
         return <TeamAuthorsTab />;
+      case 'intelligence':
+        return selectedSite ? <SiteIntelligencePanel siteId={selectedSite.id} /> : null;
+      case 'silo-health':
+        return <SiloHealth />;
+      case 'performance':
+        return <SearchConsole selectedSite={selectedSite} />;
       default:
         return null;
     }

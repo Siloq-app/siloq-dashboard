@@ -96,9 +96,9 @@ export default function SiloHealth() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <span className="text-4xl mb-4">📊</span>
-        <h3 className="text-lg font-semibold mb-2">No silos configured yet</h3>
+        <h3 className="text-lg font-semibold mb-2">No content silos found</h3>
         <p className="text-sm text-muted-foreground max-w-md">
-          Silo health scores will appear once your site structure is analyzed.
+          Make sure your pages are synced and classified, then your service pages will appear here as separate silos with depth analysis.
         </p>
       </div>
     );

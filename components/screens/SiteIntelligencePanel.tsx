@@ -430,14 +430,15 @@ export default function SiteIntelligencePanel({ siteId }: SiteIntelligencePanelP
       {!intelligenceData && !isGenerating && !error && (
         <div className="flex flex-col items-center justify-center min-h-[30vh] text-slate-400 gap-3">
           <span className="text-4xl">🧠</span>
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">No analysis yet</h3>
           <p className="text-sm text-center max-w-md">
-            No intelligence data yet. Click &quot;Generate SEO Plan&quot; to analyze your site with Claude AI.
+            Click &quot;Generate SEO Plan&quot; to get your prioritized action list — Claude AI will analyze your full site architecture.
           </p>
           <button
             onClick={handleGenerate}
             className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg bg-slate-900 hover:bg-slate-700 text-white border border-slate-800 transition-colors"
           >
-            Generate SEO Plan
+            Generate SEO Plan &rarr;
           </button>
         </div>
       )}
