@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { NoSiteSelected } from '@/components/ui/no-site-selected';
-import { contentPlanService, type ContentJob } from '@/lib/services/api';
+import { contentPlanService, authorService, type ContentJob, type AuthorProfile } from '@/lib/services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +22,7 @@ interface ContentJobLocal {
   blogContent: string | null;
   metaDescription: string | null;
   wordCount: number | null;
+  authorId: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +40,7 @@ function mapJobToLocal(job: ContentJob): ContentJobLocal {
     blogContent: job.blog_content,
     metaDescription: job.meta_description,
     wordCount: job.word_count,
+    authorId: (job as any).author_id ?? null,
     createdAt: job.created_at,
     updatedAt: job.updated_at,
   };
@@ -139,6 +141,44 @@ function StatusBadge({ status }: { status: ContentJobLocal['status'] }) {
 
 // ── Topic Card ───────────────────────────────────────────────────────────────
 
+// ── Author Mini-Avatar ──────────────────────────────────────────────────────
+
+interface AuthorLocal {
+  id: number;
+  fullName: string;
+  firstName: string;
+  lastName: string;
+  headshotUrl: string;
+  isPrimary: boolean;
+}
+
+function mapAuthorBrief(a: AuthorProfile): AuthorLocal {
+  return {
+    id: a.id,
+    fullName: a.full_name,
+    firstName: a.first_name,
+    lastName: a.last_name,
+    headshotUrl: a.headshot_url,
+    isPrimary: a.is_primary,
+  };
+}
+
+function AuthorBadge({ author }: { author: AuthorLocal }) {
+  const initials = `${author.firstName.charAt(0)}${author.lastName.charAt(0)}`.toUpperCase();
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+      {author.headshotUrl ? (
+        <img src={author.headshotUrl} alt="" className="w-4 h-4 rounded-full object-cover" />
+      ) : (
+        <span className="w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 text-[9px] font-bold flex items-center justify-center">
+          {initials}
+        </span>
+      )}
+      <span className="text-slate-600 dark:text-slate-400">{author.fullName}</span>
+    </span>
+  );
+}
+
 interface TopicCardProps {
   job: ContentJobLocal;
   selected: boolean;
@@ -149,6 +189,9 @@ interface TopicCardProps {
   onPublish: () => void;
   onDelete: () => void;
   actionLoading: number | null;
+  authors: AuthorLocal[];
+  assignedAuthorId: number | null;
+  onAuthorChange: (jobId: number, authorId: number | null) => void;
 }
 
 function TopicCard({
@@ -161,6 +204,9 @@ function TopicCard({
   onPublish,
   onDelete,
   actionLoading,
+  authors,
+  assignedAuthorId,
+  onAuthorChange,
 }: TopicCardProps) {
   const isLoading = actionLoading === job.id;
 
@@ -202,6 +248,26 @@ function TopicCard({
                 {link}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Author assignment */}
+        {authors.length > 0 && (
+          <div className="flex items-center gap-2">
+            <select
+              value={assignedAuthorId ?? ''}
+              onChange={e => onAuthorChange(job.id, e.target.value ? Number(e.target.value) : null)}
+              className="text-xs px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            >
+              <option value="">No author</option>
+              {authors.map(a => (
+                <option key={a.id} value={a.id}>{a.fullName}{a.isPrimary ? ' (Primary)' : ''}</option>
+              ))}
+            </select>
+            {assignedAuthorId && (() => {
+              const assigned = authors.find(a => a.id === assignedAuthorId);
+              return assigned ? <AuthorBadge author={assigned} /> : null;
+            })()}
           </div>
         )}
 
@@ -397,6 +463,7 @@ export default function ContentPlanTab() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [previewJob, setPreviewJob] = useState<ContentJobLocal | null>(null);
   const [publishingPreview, setPublishingPreview] = useState(false);
+  const [authors, setAuthors] = useState<AuthorLocal[]>([]);
 
   // ── Computed ────────────────────────────────────────────────────────────────
 
@@ -434,6 +501,25 @@ export default function ContentPlanTab() {
   useEffect(() => {
     loadJobs();
   }, [loadJobs]);
+
+  // ── Load authors for dropdown ─────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!selectedSite) return;
+    authorService.listAuthors(selectedSite.id)
+      .then(data => setAuthors(data.map(mapAuthorBrief)))
+      .catch(() => {});
+  }, [selectedSite]);
+
+  const handleAuthorChange = async (jobId: number, authorId: number | null) => {
+    if (!selectedSite) return;
+    try {
+      await contentPlanService.updateContentJob(selectedSite.id, jobId, { author_id: authorId } as any);
+      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, authorId } : j));
+    } catch (err: any) {
+      toast({ title: 'Failed to assign author', description: err?.message, variant: 'destructive' });
+    }
+  };
 
   // ── Generate Topics flow ────────────────────────────────────────────────────
 
@@ -625,6 +711,9 @@ export default function ContentPlanTab() {
               onPublish={() => handlePublish(job)}
               onDelete={() => handleDelete(job)}
               actionLoading={actionLoading}
+              authors={authors}
+              assignedAuthorId={job.authorId}
+              onAuthorChange={handleAuthorChange}
             />
           ))}
         </div>
