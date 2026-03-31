@@ -16,7 +16,8 @@ export type TabType =
   | 'content-upload'
   | 'content-plan'
   | 'schema'
-  | 'freshness';
+  | 'freshness'
+  | 'team-authors';
 export type AutomationMode = 'manual' | 'semi' | 'full';
 
 export interface ConflictPage {

@@ -17,6 +17,7 @@ import {
   Activity,
   BookOpen,
   Map,
+  Users,
 } from 'lucide-react';
 
 import { NavUser } from '@/components/nav-user';
@@ -57,6 +58,11 @@ const navMain = [
     title: 'Content Plan',
     url: '/dashboard?tab=content-plan',
     icon: BookOpen,
+  },
+  {
+    title: 'Team & Authors',
+    url: '/dashboard?tab=team-authors',
+    icon: Users,
   },
   {
     title: 'Performance',

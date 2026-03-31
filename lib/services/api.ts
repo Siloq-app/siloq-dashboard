@@ -1474,3 +1474,104 @@ class DepthEngineService {
 }
 
 export const depthEngineService = new DepthEngineService();
+
+// ── Author E-E-A-T Types ─────────────────────────────────────────────────────
+
+export interface Credential {
+  type: 'certification' | 'license' | 'experience' | 'award';
+  name: string;
+  issuer?: string;
+  issuer_url?: string;
+  year?: string;
+}
+
+export interface AuthorProfile {
+  id: number;
+  full_name: string;
+  first_name: string;
+  last_name: string;
+  job_title: string;
+  credentials: Credential[];
+  short_bio: string;
+  long_bio: string;
+  linkedin_url: string;
+  twitter_url: string;
+  author_page_url: string;
+  headshot_url: string;
+  wp_user_id: number | null;
+  wp_username: string;
+  is_primary: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateAuthorData {
+  first_name: string;
+  last_name: string;
+  job_title?: string;
+  headshot_url?: string;
+  linkedin_url?: string;
+  twitter_url?: string;
+  wp_user_id?: number | null;
+  is_primary?: boolean;
+  credentials?: Credential[];
+  short_bio?: string;
+  long_bio?: string;
+}
+
+class AuthorService {
+  async listAuthors(siteId: number | string): Promise<AuthorProfile[]> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/authors/`);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.detail || 'Failed to load authors');
+    }
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.results || [];
+  }
+
+  async createAuthor(siteId: number | string, data: CreateAuthorData): Promise<AuthorProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/authors/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.detail || json.error || 'Failed to create author');
+    return json;
+  }
+
+  async updateAuthor(siteId: number | string, authorId: number, data: Partial<AuthorProfile>): Promise<AuthorProfile> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/authors/${authorId}/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.detail || json.error || 'Failed to update author');
+    return json;
+  }
+
+  async deleteAuthor(siteId: number | string, authorId: number): Promise<void> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/authors/${authorId}/`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.detail || 'Failed to delete author');
+    }
+  }
+
+  async generateTeamPage(siteId: number | string, authorId: number): Promise<{ wp_page_id: number; edit_url: string }> {
+    const res = await fetchWithAuth(`/api/v1/sites/${siteId}/authors/${authorId}/generate-team-page/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.detail || json.error || 'Failed to generate team page');
+    return json;
+  }
+}
+
+export const authorService = new AuthorService();
