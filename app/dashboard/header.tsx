@@ -162,7 +162,17 @@ export default function Header({
             onClick={() => setShowSiteDropdown(!showSiteDropdown)}
             className="flex items-center gap-2 rounded-lg border bg-background px-3 py-1.5 text-sm transition-colors hover:bg-muted"
           >
-            <Globe className="h-3.5 w-3.5 text-gray-700 dark:text-gray-300" />
+            {selectedSite ? (
+              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                (selectedSite.page_count ?? 0) > 0 && selectedSite.gsc_connected
+                  ? 'bg-green-500'
+                  : (selectedSite.page_count ?? 0) > 0
+                  ? 'bg-yellow-500'
+                  : 'bg-red-500'
+              }`} />
+            ) : (
+              <Globe className="h-3.5 w-3.5 text-gray-700 dark:text-gray-300" />
+            )}
             <span className="max-w-[150px] truncate text-gray-700 dark:text-gray-300 sm:max-w-[200px]">
               {selectedSite?.name || 'Select a site'}
             </span>
@@ -170,39 +180,55 @@ export default function Header({
           </button>
 
           {showSiteDropdown && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border bg-white p-2 shadow-2xl dark:bg-slate-900">
+            <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border bg-white p-2 shadow-2xl dark:bg-slate-900">
               {sites.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-muted-foreground">
                   No sites available
                 </div>
               ) : (
-                sites.map((site) => (
-                  <button
-                    key={site.id}
-                    onClick={() => {
-                      selectSite(site);
-                      setShowSiteDropdown(false);
-                    }}
-                    className={cn(
-                      'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition-colors',
-                      selectedSite?.id === site.id
-                        ? 'bg-primary/10'
-                        : 'hover:bg-muted'
-                    )}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
-                        {site.name}
+                sites.map((site) => {
+                  const hasPages = (site.page_count ?? 0) > 0;
+                  const hasGsc = !!site.gsc_connected;
+                  const statusColor = hasPages && hasGsc
+                    ? 'bg-green-500'
+                    : hasPages
+                    ? 'bg-yellow-500'
+                    : 'bg-red-500';
+                  const statusLabel = hasPages && hasGsc
+                    ? 'Fully set up'
+                    : hasPages
+                    ? 'Partially set up'
+                    : 'Needs attention';
+
+                  return (
+                    <button
+                      key={site.id}
+                      onClick={() => {
+                        selectSite(site);
+                        setShowSiteDropdown(false);
+                      }}
+                      className={cn(
+                        'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors',
+                        selectedSite?.id === site.id
+                          ? 'bg-primary/10'
+                          : 'hover:bg-muted'
+                      )}
+                    >
+                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${statusColor}`} title={statusLabel} />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate">
+                          {site.name}
+                        </div>
+                        <div className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                          {site.url}
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                        {site.url}
-                      </div>
-                    </div>
-                    {selectedSite?.id === site.id && (
-                      <Check className="ml-2 h-4 w-4 flex-shrink-0 text-primary" />
-                    )}
-                  </button>
-                ))
+                      {selectedSite?.id === site.id && (
+                        <Check className="ml-2 h-4 w-4 flex-shrink-0 text-primary" />
+                      )}
+                    </button>
+                  );
+                })
               )}
             </div>
           )}

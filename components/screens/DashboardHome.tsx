@@ -20,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { TabType } from '@/app/dashboard/types';
+import { useDashboardContext } from '@/lib/hooks/dashboard-context';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -240,6 +241,92 @@ function EmptyColumn({ icon, message }: { icon: React.ReactNode; message: string
   );
 }
 
+// ─── Onboarding Checklist ─────────────────────────────────────────────────────
+
+interface OnboardingStep {
+  id: string;
+  label: string;
+  done: boolean;
+  tab: TabType;
+}
+
+function OnboardingChecklist({ steps, onNavigate }: { steps: OnboardingStep[]; onNavigate: (tab: TabType) => void }) {
+  const completedCount = steps.filter(s => s.done).length;
+  const totalCount = steps.length;
+  const allDone = completedCount === totalCount;
+  if (allDone) return null;
+
+  const progressPct = Math.round((completedCount / totalCount) * 100);
+  const nextStep = steps.find(s => !s.done);
+
+  return (
+    <Card className="border border-blue-200 bg-gradient-to-r from-blue-50 to-white rounded-xl overflow-hidden">
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Get started with Siloq</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{completedCount} of {totalCount} steps complete</p>
+          </div>
+          <span className="text-sm font-bold text-blue-600">{progressPct}%</span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-blue-500 transition-all"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+
+        {/* Steps */}
+        <div className="space-y-2">
+          {steps.map(step => (
+            <button
+              key={step.id}
+              onClick={() => !step.done && onNavigate(step.tab)}
+              className={`flex items-center gap-3 w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                step.done
+                  ? 'bg-green-50 cursor-default'
+                  : 'hover:bg-blue-50 cursor-pointer'
+              }`}
+            >
+              <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                step.done
+                  ? 'bg-green-500 text-white'
+                  : 'border-2 border-slate-300 text-transparent'
+              }`}>
+                {step.done && (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </span>
+              <span className={`text-sm ${step.done ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>
+                {step.label}
+              </span>
+              {!step.done && (
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400 ml-auto" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Next step CTA */}
+        {nextStep && (
+          <Button
+            size="sm"
+            className="w-full gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => onNavigate(nextStep.tab)}
+          >
+            Next step: {nextStep.label}
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 interface DashboardHomeProps {
@@ -248,6 +335,7 @@ interface DashboardHomeProps {
 }
 
 export default function DashboardHome({ siteId, onNavigate }: DashboardHomeProps) {
+  const { selectedSite } = useDashboardContext();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [usingMock, setUsingMock] = useState(false);
@@ -294,8 +382,24 @@ export default function DashboardHome({ siteId, onNavigate }: DashboardHomeProps
 
   const { stats, fix_now, in_progress, done_this_month } = data;
 
+  // Onboarding checklist steps
+  const hasServices = !!(selectedSite as any)?.primary_services?.length;
+  const hasRunAnalysis = stats.pages_optimized > 0 || fix_now.length > 0;
+  const onboardingSteps: OnboardingStep[] = selectedSite ? [
+    { id: 'pages', label: 'Sync your pages', done: (selectedSite.page_count ?? 0) > 0, tab: 'sites' },
+    { id: 'services', label: 'Add your services', done: hasServices, tab: 'settings' },
+    { id: 'gsc', label: 'Connect Google Search Console', done: !!selectedSite.gsc_connected, tab: 'search-console' },
+    { id: 'analysis', label: 'Run your first SEO analysis', done: hasRunAnalysis, tab: 'intelligence' },
+  ] : [];
+  const showChecklist = selectedSite && onboardingSteps.some(s => !s.done);
+
   return (
     <div className="space-y-6">
+      {/* ── Onboarding Checklist ── */}
+      {showChecklist && (
+        <OnboardingChecklist steps={onboardingSteps} onNavigate={onNavigate} />
+      )}
+
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>

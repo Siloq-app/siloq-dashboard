@@ -726,16 +726,16 @@ export default function TeamAuthorsTab() {
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">No authors yet</h3>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">No team members added yet</h3>
             <p className="text-sm text-slate-500 mt-1 max-w-md">
-              Add your first author to start building E-E-A-T entity signals for your content.
+              Add your first author to start attributing content and building E-E-A-T signals.
             </p>
           </div>
           <button
             onClick={() => { setEditingAuthor(null); setFormOpen(true); }}
             className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors"
           >
-            Add Author
+            Add Author &rarr;
           </button>
         </div>
       ) : (

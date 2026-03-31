@@ -18,6 +18,8 @@ import {
   BookOpen,
   Map,
   Users,
+  Brain,
+  Layers,
 } from 'lucide-react';
 
 import { NavUser } from '@/components/nav-user';
@@ -36,48 +38,69 @@ import {
 const navMain = [
   {
     title: 'Dashboard',
-    url: '/dashboard?tab=overview',
+    url: '/dashboard?tab=dashboard',
     icon: LayoutDashboard,
+    description: 'Overview & priorities',
   },
   {
     title: 'Sites',
     url: '/dashboard?tab=sites',
     icon: Globe,
+    description: 'Manage your websites',
+  },
+  {
+    title: 'SEO Plan',
+    url: '/dashboard?tab=intelligence',
+    icon: Brain,
+    description: 'Prioritized action list',
   },
   {
     title: 'Conflicts',
     url: '/dashboard?tab=conflicts',
     icon: Shield,
+    description: 'Keyword cannibalization',
   },
   {
     title: 'Pages',
     url: '/dashboard?tab=pages',
     icon: FileText,
+    description: 'Page management',
+  },
+  {
+    title: 'Content Depth',
+    url: '/dashboard?tab=silo-health',
+    icon: Layers,
+    description: 'Find topic gaps',
   },
   {
     title: 'Content Plan',
     url: '/dashboard?tab=content-plan',
     icon: BookOpen,
+    description: 'AI blog generation',
   },
   {
     title: 'Team & Authors',
     url: '/dashboard?tab=team-authors',
     icon: Users,
+    description: 'E-E-A-T signals',
   },
   {
-    title: 'Performance',
-    url: '/dashboard?tab=performance',
+    title: 'Search Console',
+    url: '/dashboard?tab=search-console',
     icon: Activity,
+    description: 'GSC performance data',
   },
   {
     title: 'Approvals',
     url: '/dashboard?tab=approvals',
     icon: CheckSquare,
+    description: 'Review pending changes',
   },
   {
     title: 'Settings',
     url: '/dashboard?tab=settings',
     icon: Settings,
+    description: 'Site configuration',
   },
 ];
 
@@ -182,13 +205,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       href={item.url}
                       className="flex items-center gap-2 font-medium"
                     >
-                      <item.icon className="size-4" />
-                      {item.title}
-                      {isContentPlan && gapsCount > 0 && (
-                        <span className="ml-auto bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full">
-                          {gapsCount}
-                        </span>
-                      )}
+                      <item.icon className="size-4 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate">{item.title}</span>
+                          {isContentPlan && gapsCount > 0 && (
+                            <span className="ml-auto bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full shrink-0">
+                              {gapsCount}
+                            </span>
+                          )}
+                        </div>
+                        {item.description && (
+                          <span className="text-[10px] text-muted-foreground leading-none truncate block">
+                            {item.description}
+                          </span>
+                        )}
+                      </div>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

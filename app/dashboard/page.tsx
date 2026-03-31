@@ -13,13 +13,11 @@ const TAB_REDIRECTS: Record<string, string> = {
   'overview': 'dashboard',
   'silos': 'dashboard',
   'keyword-registry': 'conflicts',
-  'silo-health': 'dashboard',
   'content-hub': 'pages',
   'content-upload': 'pages',
   'content': 'pages',
   'internal-links': 'pages',
   'all-sites': 'sites',
-  'performance': 'search-console',
 };
 
 function DashboardContent() {

@@ -17,7 +17,9 @@ export type TabType =
   | 'content-plan'
   | 'schema'
   | 'freshness'
-  | 'team-authors';
+  | 'team-authors'
+  | 'intelligence'
+  | 'performance';
 export type AutomationMode = 'manual' | 'semi' | 'full';
 
 export interface ConflictPage {

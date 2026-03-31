@@ -767,9 +767,9 @@ export default function ContentPlanTab() {
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">No topics yet</h3>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">No content topics yet</h3>
             <p className="text-sm text-slate-500 mt-1 max-w-md">
-              Click &quot;Generate Topics&quot; to run keyword discovery and create a content plan for your site.
+              Click &quot;Generate Topics&quot; to create your content plan based on keyword research.
             </p>
           </div>
           <button
