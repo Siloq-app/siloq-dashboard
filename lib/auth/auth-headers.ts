@@ -45,6 +45,12 @@ const BACKEND_URL = (
       'http://localhost:8000'
 ).replace(/\/+$/, '');
 
+function logDebug(message: string, ...args: unknown[]): void {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(message, ...args);
+  }
+}
+
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {},
@@ -69,52 +75,10 @@ export async function fetchWithAuth(
     fullUrl = `${path}/?${query}`;
   }
 
-  // Add debugging for URL construction
-  console.log(`[fetchWithAuth] Original URL: ${url}`);
-  console.log(`[fetchWithAuth] Backend URL: ${BACKEND_URL}`);
-  console.log(`[fetchWithAuth] Full URL: ${fullUrl}`);
-  console.log(`[fetchWithAuth] Has auth: ${!!auth.Authorization}`);
-
-  // Early check for obvious backend unavailability
-  if (fullUrl.includes('/api/proxy')) {
-    // For proxy URLs, do a quick connectivity check first
-    let testTimeoutId: NodeJS.Timeout | undefined;
-    try {
-      // Just try to fetch with a very short timeout to check connectivity
-      const testController = new AbortController();
-      testTimeoutId = setTimeout(() => testController.abort(), 500); // Reduced timeout for faster feedback
-
-      await fetch(fullUrl, {
-        method: 'HEAD',
-        signal: testController.signal,
-      });
-      clearTimeout(testTimeoutId);
-    } catch {
-      // If the quick test fails, we know the backend is not available
-      console.log(
-        `[fetchWithAuth] Backend connectivity check failed, returning mock error response`
-      );
-      if (testTimeoutId) {
-        clearTimeout(testTimeoutId);
-      }
-
-      const errorResponse = new Response(
-        JSON.stringify({
-          error: 'Network error',
-          message: 'Backend server is not running or not accessible',
-          error_code: 'CONNECTION_REFUSED',
-          details: `The backend server at ${BACKEND_URL} could not be reached. Please ensure the backend server is running on port 8000.`,
-        }),
-        {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-
-      return errorResponse;
-    }
-  }
+  logDebug(`[fetchWithAuth] Original URL: ${url}`);
+  logDebug(`[fetchWithAuth] Backend URL: ${BACKEND_URL}`);
+  logDebug(`[fetchWithAuth] Full URL: ${fullUrl}`);
+  logDebug(`[fetchWithAuth] Has auth: ${!!auth.Authorization}`);
 
   // Retry logic for network errors only
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -125,7 +89,7 @@ export async function fetchWithAuth(
     let response: Response;
     try {
       // Add additional debugging for network issues
-      console.log(`[fetchWithAuth] Attempt ${attempt + 1}/${retries + 1}: Fetching ${fullUrl}`);
+      logDebug(`[fetchWithAuth] Attempt ${attempt + 1}/${retries + 1}: Fetching ${fullUrl}`);
 
       response = await fetch(fullUrl, {
         ...options,
@@ -134,7 +98,7 @@ export async function fetchWithAuth(
       });
       clearTimeout(timeoutId);
 
-      console.log(`[fetchWithAuth] Response received: ${response.status} ${response.statusText}`);
+      logDebug(`[fetchWithAuth] Response received: ${response.status} ${response.statusText}`);
 
       // JWT expired or forbidden: clear auth and send user to login (avoids "No sites available")
       if (
@@ -142,7 +106,7 @@ export async function fetchWithAuth(
         (response.status === 401 || response.status === 403) &&
         !isAuthPage()
       ) {
-        console.log(
+        logDebug(
           `[fetchWithAuth] Auth error (${response.status}), clearing auth and redirecting to login`
         );
         clearAuthAndRedirectToLogin();
@@ -195,12 +159,12 @@ export async function fetchWithAuth(
           }
         );
 
-        console.log(`[fetchWithAuth] Returning error response: ${errorCode}`);
+        logDebug(`[fetchWithAuth] Returning error response: ${errorCode}`);
         return errorResponse;
       } else {
         // Wait before retrying (shorter delay)
         const delay = 500;
-        console.log(`[fetchWithAuth] Retrying in ${delay}ms...`);
+        logDebug(`[fetchWithAuth] Retrying in ${delay}ms...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
