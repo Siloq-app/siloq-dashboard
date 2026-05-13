@@ -27,7 +27,6 @@ safe_remove ".git"
 safe_remove ".github"
 
 # Development documentation (keep essential ones)
-safe_remove "CLAUDE.md"
 safe_remove "CONTENT_HUB_COMPLETE.md"
 safe_remove "SUMMARY.md"
 safe_remove "WORDPRESS_INTEGRATION.md"

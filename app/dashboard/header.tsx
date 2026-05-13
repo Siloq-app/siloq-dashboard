@@ -44,7 +44,7 @@ export default function Header({ automationMode, onAutomationChange, activeTab }
   const { mode, setMode } = useTheme();
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-2 sm:px-4">
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
       <SidebarTrigger className="-ml-1 inline-flex h-7 w-7 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium text-slate-900 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 dark:text-slate-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0" />
 
       <Separator
@@ -75,7 +75,7 @@ export default function Header({ automationMode, onAutomationChange, activeTab }
         {/* Theme Toggle - Smaller on mobile */}
         <button
           onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
-          className="relative flex h-6 w-12 items-center rounded-full border bg-muted transition-all duration-300 hover:bg-muted/80 sm:h-7 sm:w-14"
+          className="relative flex h-6 w-12 items-center rounded-full border bg-muted transition-all duration-150 hover:bg-muted/80 sm:h-7 sm:w-14"
           style={{
             backgroundColor: mode === 'light' ? '#e2e4eb' : '#212026',
             borderColor: mode === 'light' ? '#e2e4eb' : 'transparent',
@@ -127,7 +127,7 @@ export default function Header({ automationMode, onAutomationChange, activeTab }
         <div className="relative">
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="flex h-9 items-center gap-1 rounded-lg border bg-muted px-1.5 text-sm transition-colors hover:bg-muted/80 sm:h-9 sm:gap-2 sm:px-2"
+            className="flex h-9 items-center gap-1 rounded-md border bg-background px-2 text-sm shadow-sm transition-colors hover:bg-muted sm:gap-2"
             style={{
               backgroundColor: mode === 'light' ? '' : '#1A1D27',
               borderColor: mode === 'light' ? '' : '#2C3050',
@@ -143,7 +143,7 @@ export default function Header({ automationMode, onAutomationChange, activeTab }
                 'rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase sm:px-2 sm:text-[10px]',
                 automationMode === 'manual' &&
                   (mode === 'light'
-                    ? 'bg-amber-100 text-amber-700'
+                    ? 'bg-[#FEF3C7] text-[#78350E]'
                     : 'bg-amber-900/30 text-amber-300'),
                 automationMode === 'semi' &&
                   (mode === 'light' ? 'bg-blue-100 text-blue-700' : 'bg-blue-900/30 text-blue-300'),
@@ -204,7 +204,7 @@ export default function Header({ automationMode, onAutomationChange, activeTab }
                   {automationMode === modeOption.id && (
                     <Check
                       className="h-4 w-4"
-                      style={{ color: mode === 'light' ? '#006ff9' : '#006ff9' }}
+                      style={{ color: mode === 'light' ? '#78350E' : '#FBBF23' }}
                     />
                   )}
                 </button>
@@ -217,7 +217,7 @@ export default function Header({ automationMode, onAutomationChange, activeTab }
         <div className="relative">
           <button
             onClick={() => setShowSiteDropdown(!showSiteDropdown)}
-            className="flex h-9 items-center gap-1 rounded-lg border bg-muted px-1.5 text-sm transition-colors hover:bg-muted/80 sm:h-9 sm:gap-2 sm:px-2"
+            className="flex h-9 items-center gap-1 rounded-md border bg-background px-2 text-sm shadow-sm transition-colors hover:bg-muted sm:gap-2"
             style={{
               backgroundColor: mode === 'light' ? '' : '#1A1D27',
               borderColor: mode === 'light' ? '' : '#2C3050',
@@ -291,7 +291,7 @@ export default function Header({ automationMode, onAutomationChange, activeTab }
                     {selectedSite?.id === site.id && (
                       <Check
                         className="ml-2 h-4 w-4 flex-shrink-0"
-                        style={{ color: mode === 'light' ? '#006ff9' : '#006ff9' }}
+                        style={{ color: mode === 'light' ? '#78350E' : '#FBBF23' }}
                       />
                     )}
                   </button>

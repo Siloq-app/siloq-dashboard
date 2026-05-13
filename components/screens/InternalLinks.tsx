@@ -293,7 +293,7 @@ export default function InternalLinks({ opportunities }: InternalLinksProps) {
                           'inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm font-medium transition-colors',
                           isInserting
                             ? 'cursor-not-allowed bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
-                            : 'bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700'
+                            : 'border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] text-[#78350E]'
                         )}
                       >
                         {isInserting ? (

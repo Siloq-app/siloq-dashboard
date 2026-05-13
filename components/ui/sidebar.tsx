@@ -22,7 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = '20rem'; // 320px - optimal for modern content
+const SIDEBAR_WIDTH = '16rem'; // 256px - shadcn admin default density
 const SIDEBAR_WIDTH_MOBILE = '16rem'; // 256px - compact for mobile
 const SIDEBAR_WIDTH_ICON = '4rem'; // 64px - better touch targets
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
@@ -137,7 +137,7 @@ const SidebarProvider = React.forwardRef<
               } as React.CSSProperties
             }
             className={cn(
-              'group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar',
+              'group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-background',
               className
             )}
             ref={ref}
@@ -483,7 +483,7 @@ const SidebarMenu = React.forwardRef<HTMLUListElement, React.ComponentProps<'ul'
     <ul
       ref={ref}
       data-sidebar="menu"
-      className={cn('flex w-full min-w-0 flex-col gap-3', className)}
+      className={cn('flex w-full min-w-0 flex-col gap-1', className)}
       {...props}
     />
   )
@@ -503,14 +503,14 @@ const SidebarMenuItem = React.forwardRef<HTMLLIElement, React.ComponentProps<'li
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-lg py-2.5 px-3 text-left text-sm font-medium outline-none ring-sidebar-ring transition-[width,height,padding,color,background-color,border-color,box-shadow] duration-150 ease-in-out hover:bg-[#fdf5e5] hover:text-gray-800 focus-visible:ring-2 focus-visible:ring-[#fdf5e5] active:bg-[#f5e6d3] active:text-gray-900 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[#fdf5e5] data-[active=true]:font-semibold data-[active=true]:text-gray-800 data-[state=open]:hover:bg-[#fdf5e5] data-[state=open]:hover:text-gray-800 group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md py-2 px-2 text-left text-sm font-medium outline-none ring-sidebar-ring transition-[width,height,padding,color,background-color,border-color,box-shadow] duration-150 ease-in-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-primary/20 data-[active=true]:font-semibold data-[active=true]:text-[#78350E] data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
   {
     variants: {
       variant: {
         default:
-          'transition-colors duration-150 ease-in-out hover:bg-[#fdf5e5] hover:text-gray-800',
+          'transition-colors duration-150 ease-in-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
         outline:
-          'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] transition-[color,background-color,border-color,box-shadow] duration-150 ease-in-out hover:bg-[#fdf5e5] hover:text-gray-800 hover:shadow-[0_0_0_1px_#fdf5e5]',
+          'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] transition-[color,background-color,border-color,box-shadow] duration-150 ease-in-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-border))]',
       },
       size: {
         default: 'h-10 text-sm',

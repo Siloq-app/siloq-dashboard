@@ -13,7 +13,9 @@
     "fix-cache-full": "./scripts/fix-cache.sh --reinstall",
     "check-backend": "./scripts/check-backend.sh",
     "cleanup-production": "./scripts/cleanup-production.sh",
-    "final-cleanup": "./scripts/final-production-cleanup.sh"
+    "final-cleanup": "./scripts/final-production-cleanup.sh",
+    "mcp:check": "./scripts/check-mcp-prereqs.sh",
+    "mcp:init": "test -f .cursor/mcp.json || cp .cursor/mcp.json.example .cursor/mcp.json"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

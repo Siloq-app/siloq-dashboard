@@ -473,7 +473,7 @@ function RecommendationPanel({
             <Button
               onClick={handleApply}
               disabled={selectedRecs.size === 0 || isApplying}
-              className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+              className="disabled:opacity-50"
               size="sm"
             >
               {isApplying ? (

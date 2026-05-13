@@ -6,7 +6,12 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('rounded-xl border bg-card text-card-foreground shadow', className)}
+      className={cn(
+        'rounded-xl border bg-card text-card-foreground shadow-sm',
+        'data-[slot=card]:bg-gradient-to-t data-[slot=card]:from-primary/5 data-[slot=card]:to-card',
+        className
+      )}
+      data-slot="card"
       {...props}
     />
   )
@@ -15,7 +20,7 @@ Card.displayName = 'Card';
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex flex-col space-y-1.5 p-6', className)} {...props} />
+    <div ref={ref} className={cn('grid gap-1.5 p-6', className)} {...props} />
   )
 );
 CardHeader.displayName = 'CardHeader';
@@ -25,6 +30,7 @@ const CardTitle = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivE
     <div
       ref={ref}
       className={cn('font-semibold leading-none tracking-tight', className)}
+      data-slot="card-title"
       {...props}
     />
   )
@@ -33,7 +39,12 @@ CardTitle.displayName = 'CardTitle';
 
 const CardDescription = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
+    <div
+      ref={ref}
+      className={cn('text-sm text-muted-foreground', className)}
+      data-slot="card-description"
+      {...props}
+    />
   )
 );
 CardDescription.displayName = 'CardDescription';

@@ -568,7 +568,7 @@ export default function Settings({
       <button
         onClick={handleSaveProfile}
         disabled={isSaving}
-        className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+        className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 py-2 text-sm font-medium text-[#78350E] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
       >
         {isSaving ? (
           <>
@@ -610,7 +610,7 @@ export default function Settings({
             {onNavigateToSites ? (
               <button
                 onClick={onNavigateToSites}
-                className="inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white shadow transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-3 py-2 text-xs font-medium text-[#78350E] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <LinkIcon size={16} />
                 <span className="truncate">Manage sites & API keys</span>
@@ -640,7 +640,7 @@ export default function Settings({
             </p>
             <button
               onClick={() => router.push('/dashboard/settings/api-keys')}
-              className="inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-amber-600 px-3 py-2 text-xs font-medium text-white shadow transition-colors hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-3 py-2 text-xs font-medium text-[#78350E] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
             >
               <Key size={16} />
               <span className="truncate">Manage API Keys &amp; Master Key</span>
@@ -658,7 +658,7 @@ export default function Settings({
           <a
             href="https://github.com/Siloq-app/siloq-wordpress/releases/download/v1.5.10/siloq-connector-v1.5.10.zip"
             download
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 text-sm font-medium text-[#78350E] shadow-sm transition-colors"
           >
             <Key size={16} />
             Download Siloq Plugin (.zip)
@@ -707,7 +707,7 @@ export default function Settings({
             <button
               onClick={() => setShowInviteForm(true)}
               disabled={atLimit}
-              className="inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 py-2 text-sm font-medium text-[#78350E] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
             >
               Invite Member <Plus size={16} />
             </button>
@@ -773,7 +773,7 @@ export default function Settings({
               <button
                 onClick={handleInvite}
                 disabled={isInviting || !inviteEmail.trim()}
-                className="inline-flex h-9 items-center justify-center rounded-md bg-black px-4 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                className="inline-flex h-9 items-center justify-center rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 text-sm font-medium text-[#78350E] disabled:opacity-50"
               >
                 {isInviting ? 'Sending...' : 'Send Invite'}
               </button>
@@ -834,7 +834,7 @@ export default function Settings({
                     <button
                       onClick={() => handleUpdateRole(member.id, editingRole)}
                       disabled={isUpdatingRole}
-                      className="h-8 rounded bg-indigo-600 px-3 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                      className="h-8 rounded border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-3 text-xs font-medium text-[#78350E] disabled:opacity-50"
                     >
                       {isUpdatingRole ? '...' : 'Save'}
                     </button>
