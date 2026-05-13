@@ -38,34 +38,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(data);
     }
 
-    // Backend not available — return success stub for V1
-    return NextResponse.json({
-      success: true,
-      message: `Invitation sent to ${email}`,
-      invite: {
-        email,
-        role: role || 'viewer',
-        status: 'pending',
-        invitedAt: new Date().toISOString(),
-      },
-    });
+    const data = await backendRes.json().catch(() => ({}));
+    return NextResponse.json(
+      { error: data.error || data.message || 'Unable to send invitation' },
+      { status: backendRes.status }
+    );
   } catch (error) {
     console.error('Team invite error:', error);
-    // Graceful fallback
-    const body = await request
-      .clone()
-      .json()
-      .catch(() => ({}));
-    return NextResponse.json({
-      success: true,
-      message: `Invitation sent to ${(body as Record<string, string>).email || 'user'}`,
-      invite: {
-        email: (body as Record<string, string>).email,
-        role: (body as Record<string, string>).role || 'viewer',
-        status: 'pending',
-        invitedAt: new Date().toISOString(),
-      },
-    });
+    return NextResponse.json({ error: 'Unable to reach backend' }, { status: 502 });
   }
 }
 
