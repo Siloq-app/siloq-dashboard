@@ -85,6 +85,16 @@ interface PublishedItem {
   date: string;
 }
 
+interface ContentJob {
+  id: number;
+  topic: string;
+  recommendation: string;
+  actual_word_count: number;
+  priority: 'high' | 'medium' | 'low';
+  created_at: string;
+  preview: string;
+}
+
 interface PreviewModalData {
   title: string;
   metaTitle?: string;
@@ -483,6 +493,13 @@ export default function ContentHub() {
   const [published, setPublished] = useState<PublishedItem[]>([]);
   const [previewModal, setPreviewModal] = useState<{ open: boolean; content: PreviewModalData | null; isGenerating: boolean; generatingStep?: string; sourceRecId?: string }>({ open: false, content: null, isGenerating: false });
 
+  // AI Agent Queue
+  const [pendingJobs, setPendingJobs] = useState<ContentJob[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState(true);
+  const [publishingJobId, setPublishingJobId] = useState<number | null>(null);
+  const [jobErrors, setJobErrors] = useState<Record<number, string>>({});
+  const [jobPreview, setJobPreview] = useState<{ open: boolean; job: ContentJob | null }>({ open: false, job: null });
+
   const [successBanners, setSuccessBanners] = useState<Array<{ id: number; title: string }>>([]);
   const [activeView, setActiveView] = useState<'hub' | 'upload'>('hub');
   const [isLoading, setIsLoading] = useState(true);
@@ -507,6 +524,43 @@ export default function ContentHub() {
       .catch(() => setPages([]))
       .finally(() => setLoadingPages(false));
   }, [selectedSite]);
+
+  // ── Load AI Agent Queue jobs ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!selectedSite) { setLoadingJobs(false); return; }
+    setLoadingJobs(true);
+    fetchWithAuth(`/api/v1/sites/${selectedSite.id}/content-jobs/`)
+      .then(r => r.json())
+      .then(data => setPendingJobs(Array.isArray(data) ? data : data.results || []))
+      .catch(() => setPendingJobs([]))
+      .finally(() => setLoadingJobs(false));
+  }, [selectedSite]);
+
+  const parseEntropy = (recommendation: string) => {
+    const match = recommendation.match(/Entropy:\s*(\d+)\s*\(([^)]+)\)/);
+    if (!match) return null;
+    return { score: Number(match[1]), grade: match[2] };
+  };
+
+  const handlePublishJob = async (job: ContentJob) => {
+    if (!selectedSite) return;
+    setPublishingJobId(job.id);
+    setJobErrors(prev => { const n = { ...prev }; delete n[job.id]; return n; });
+    try {
+      const res = await fetchWithAuth(`/api/v1/sites/${selectedSite.id}/content-jobs/${job.id}/publish/`, { method: 'POST' });
+      if (res.ok) {
+        setPendingJobs(prev => prev.filter(j => j.id !== job.id));
+        setSuccessBanners(prev => [...prev, { id: Date.now(), title: job.topic }]);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setJobErrors(prev => ({ ...prev, [job.id]: data.error || 'Publish failed. Try again.' }));
+      }
+    } catch {
+      setJobErrors(prev => ({ ...prev, [job.id]: 'Publish failed. Try again.' }));
+    } finally {
+      setPublishingJobId(null);
+    }
+  };
 
   // ── Load legacy recommendations + published content ───────────────────────
   const loadLegacyData = useCallback(async () => {
