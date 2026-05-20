@@ -92,6 +92,11 @@ npm run format       # Prettier formatting
 - **Code Organization** - Modular architecture with clear separation of concerns
 - **Developer Experience** - Consistent patterns and comprehensive utilities
 
+## Siloq platform repositories
+
+- **[siloq-wordpress](https://github.com/Siloq-app/siloq-wordpress)** — WordPress plugin. For **Taskify** (hour estimates on task breakdowns) and connector-side engineering standards (AJAX shape, releases, JS safety), use that repo’s [`CLAUDE.md`](https://github.com/Siloq-app/siloq-wordpress/blob/main/CLAUDE.md).
+- **[siloq-api](https://github.com/Siloq-app/siloq-api)** — Django backend; see its README and `DEPLOYMENT_DIGITALOCEAN.md` for API setup and deployment.
+
 ## License
 
 Proprietary - All rights reserved.

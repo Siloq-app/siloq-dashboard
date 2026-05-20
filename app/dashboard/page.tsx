@@ -61,7 +61,7 @@ function DashboardContent() {
         onAutomationChange={setAutomationMode}
         activeTab={activeTab}
       />
-      <div className="flex flex-1 flex-col gap-3 p-2 sm:gap-4 sm:p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <Dashboard
           activeTab={activeTab}
           onTabChange={(tab: TabType) => {
@@ -82,27 +82,21 @@ function SidebarWithSearch() {
 
 export default function DashboardPage() {
   return (
-    <div className="relative min-h-screen">
-      {/* Background layer */}
-      <div className="absolute inset-0 z-10 bg-background"></div>
-
-      {/* Main content */}
-      <div className="relative z-20">
-        <DashboardGuard>
-          <DashboardProvider>
-            <SidebarProvider>
-              <Suspense fallback={null}>
-                <SidebarWithSearch />
+    <div className="min-h-screen bg-background">
+      <DashboardGuard>
+        <DashboardProvider>
+          <SidebarProvider>
+            <Suspense fallback={null}>
+              <SidebarWithSearch />
+            </Suspense>
+            <SidebarInset>
+              <Suspense fallback={<div className="flex h-16 items-center px-4">Loading...</div>}>
+                <DashboardContent />
               </Suspense>
-              <SidebarInset>
-                <Suspense fallback={<div className="flex h-16 items-center px-4">Loading...</div>}>
-                  <DashboardContent />
-                </Suspense>
-              </SidebarInset>
-            </SidebarProvider>
-          </DashboardProvider>
-        </DashboardGuard>
-      </div>
+            </SidebarInset>
+          </SidebarProvider>
+        </DashboardProvider>
+      </DashboardGuard>
     </div>
   );
 }

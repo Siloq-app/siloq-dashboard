@@ -406,7 +406,7 @@ export default function Dashboard({
   };
 
   return (
-    <div className="flex-1 p-2 sm:p-4">
+    <div className="flex-1">
       <Suspense fallback={<ScreenSkeleton />}>{renderScreen()}</Suspense>
 
       {showGenerateModal && (

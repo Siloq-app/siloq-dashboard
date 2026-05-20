@@ -147,13 +147,13 @@ export default function BusinessProfileSettings({ siteId }: Props) {
         <div className="flex gap-2">
           <button
             onClick={() => setSyncMode('url')}
-            className={`rounded px-3 py-1.5 text-xs font-medium ${syncMode === 'url' ? 'bg-blue-600 text-white' : 'border border-blue-200 bg-white text-blue-600'}`}
+            className={`rounded px-3 py-1.5 text-xs font-medium ${syncMode === 'url' ? 'border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] text-[#78350E]' : 'border border-blue-200 bg-white text-blue-600'}`}
           >
             Place ID / URL
           </button>
           <button
             onClick={() => setSyncMode('phone')}
-            className={`rounded px-3 py-1.5 text-xs font-medium ${syncMode === 'phone' ? 'bg-blue-600 text-white' : 'border border-blue-200 bg-white text-blue-600'}`}
+            className={`rounded px-3 py-1.5 text-xs font-medium ${syncMode === 'phone' ? 'border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] text-[#78350E]' : 'border border-blue-200 bg-white text-blue-600'}`}
           >
             Find by phone
           </button>

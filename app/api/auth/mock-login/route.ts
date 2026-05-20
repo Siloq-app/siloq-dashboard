@@ -13,11 +13,13 @@ const MOCK_USERS = [
 ];
 
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ message: 'Mock authentication is disabled' }, { status: 404 });
+  }
+
   try {
     const body = await request.json();
     const { email, password, name } = body;
-
-    console.log('[Mock Auth] Request:', { email, hasPassword: !!password, name });
 
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));

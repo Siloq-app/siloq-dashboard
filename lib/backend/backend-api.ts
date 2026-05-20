@@ -24,6 +24,7 @@ export const SITES_ENDPOINTS = {
   list: () => `${getBackendApiUrl()}/api/v1/sites/`,
   detail: (id: number | string) => `${getBackendApiUrl()}/api/v1/sites/${id}/`,
   overview: (id: number | string) => `${getBackendApiUrl()}/api/v1/sites/${id}/overview/`,
+  dashboard: (id: number | string) => `${getBackendApiUrl()}/api/v1/sites/${id}/dashboard/`,
   pagesAnalyze: (id: number | string) => `${getBackendApiUrl()}/api/v1/sites/${id}/pages/analyze/`,
   pagesAnalysis: (id: number | string) =>
     `${getBackendApiUrl()}/api/v1/sites/${id}/pages/analysis/`,

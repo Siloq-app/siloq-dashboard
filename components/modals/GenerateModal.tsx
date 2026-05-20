@@ -97,7 +97,7 @@ export default function GenerateModal({ silos, onClose }: Props) {
               Close
             </button>
             <button
-              className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-indigo-700"
+              className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 py-2 text-sm font-medium text-[#78350E] shadow-sm transition-colors"
               onClick={() => {
                 setIsComplete(false);
                 setGeneratedContent(null);
@@ -250,7 +250,7 @@ export default function GenerateModal({ silos, onClose }: Props) {
               'inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow transition-colors',
               !selectedSilo || !entityCluster || isGenerating
                 ? 'cursor-not-allowed bg-slate-300 text-slate-500'
-                : 'bg-black text-white hover:bg-gray-800'
+                : 'border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] text-[#78350E]'
             )}
           >
             {isGenerating ? (

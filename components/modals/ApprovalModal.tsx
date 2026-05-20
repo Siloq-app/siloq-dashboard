@@ -118,7 +118,7 @@ export default function ApprovalModal({ onClose, issue }: Props) {
           <button className="inline-flex h-10 w-[25%] items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
             Modify
           </button>
-          <button className="inline-flex h-10 w-[50%] items-center justify-center gap-0 rounded-lg bg-black px-4 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 md:gap-2">
+          <button className="inline-flex h-10 w-[50%] items-center justify-center gap-0 rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 text-sm font-medium text-[#78350E] shadow-sm transition-colors md:gap-2">
             <Check size={14} /> Approve All {issue.recommendations.length} Actions
           </button>
         </div>

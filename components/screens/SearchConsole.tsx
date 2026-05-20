@@ -1822,7 +1822,7 @@ function BattlefieldView({
               <button
                 onClick={handleConfirmRedirect}
                 disabled={redirectConfirmLoading}
-                className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 py-2 text-sm font-semibold text-[#78350E] shadow-sm disabled:opacity-50"
               >
                 {redirectConfirmLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                 Confirm 301 Redirect

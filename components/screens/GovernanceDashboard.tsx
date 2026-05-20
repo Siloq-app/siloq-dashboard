@@ -628,7 +628,7 @@ export default function GovernanceDashboard({
                   <Button
                     onClick={handleCreateRedirects}
                     disabled={selectedLosers.size === 0 || !winnerUrl || isCreatingRedirects}
-                    className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
+                    className="flex-1"
                   >
                     {isCreatingRedirects ? (
                       <>
@@ -1061,7 +1061,7 @@ function ConflictCard({
               <>
                 <Button
                   size="sm"
-                  className="bg-blue-600 text-xs text-white hover:bg-blue-700 sm:text-sm"
+                  className="text-xs sm:text-sm"
                   onClick={() => onRedirect(conflict)}
                 >
                   <span className="hidden sm:inline">Redirect Loser → Winner</span>

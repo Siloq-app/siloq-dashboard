@@ -54,10 +54,11 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Check if backend is unavailable
-        if (res.status === 503 && data.error === 'Backend unavailable') {
-          // Try mock authentication as fallback
-          console.log('Backend unavailable, trying mock authentication...');
+        if (
+          process.env.NODE_ENV === 'development' &&
+          res.status === 503 &&
+          data.error === 'Backend unavailable'
+        ) {
           const mockRes = await fetch('/api/auth/mock-login/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -77,8 +78,7 @@ export default function LoginPage() {
             if (mockData.user.email) localStorage.setItem('userEmail', mockData.user.email);
           }
 
-          // Show success message for mock login
-          setError('✅ Logged in with mock authentication (backend unavailable)');
+          setError('Logged in with mock authentication because the backend is unavailable.');
           setTimeout(() => {
             const inviteToken =
               typeof window !== 'undefined'

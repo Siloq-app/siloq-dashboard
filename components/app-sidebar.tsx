@@ -34,7 +34,7 @@ import {
 const navMain = [
   {
     title: 'Dashboard',
-    url: '/dashboard?tab=overview',
+    url: '/dashboard?tab=dashboard',
     icon: LayoutDashboard,
   },
   {
@@ -54,7 +54,7 @@ const navMain = [
   },
   {
     title: 'Performance',
-    url: '/dashboard?tab=performance',
+    url: '/dashboard?tab=search-console',
     icon: Activity,
   },
   {
@@ -122,7 +122,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, []);
 
   return (
-    <Sidebar {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -139,7 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">Siloq</span>
-                  <span className="text-xs">v1.0.0</span>
+                  <span className="text-xs text-muted-foreground">SEO workspace</span>
                 </div>
               </Link>
             </SidebarMenuButton>

@@ -379,7 +379,7 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
                   <button
                     onClick={() => handleApprove(change)}
                     disabled={isLoading}
-                    className="inline-flex h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:flex-initial [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                    className="inline-flex h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 py-2 text-sm font-medium text-[#78350E] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 sm:flex-initial [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                   >
                     {isLoading ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -436,7 +436,7 @@ export default function ApprovalQueue({ pendingChanges, siteId }: Props) {
               </button>
               <button
                 onClick={handleConfirmApproveAll}
-                className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 py-2 text-sm font-medium text-[#78350E] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Check size={14} /> Confirm Approve All
               </button>

@@ -58,3 +58,6 @@ tmp/
 
 # windsurf
 .windsurf
+
+# Cursor — local MCP config may contain PATs; keep example in .cursor/mcp.json.example
+.cursor/mcp.json

@@ -474,7 +474,7 @@ export default function SitesScreen({ onSiteCreated }: SitesScreenProps = {}) {
                   <a
                     href={PLUGIN_DOWNLOAD_URL}
                     download
-                    className="mt-2 inline-flex h-9 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700"
+                    className="mt-2 inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 text-sm font-medium text-[#78350E] shadow-sm transition-colors"
                   >
                     <Download className="h-4 w-4" />
                     Download Plugin (.zip)
@@ -608,7 +608,7 @@ export default function SitesScreen({ onSiteCreated }: SitesScreenProps = {}) {
                 <button
                   type="submit"
                   disabled={isGeneratingToken}
-                  className="ml-auto flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="ml-auto flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 text-sm font-medium text-[#78350E] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   {isGeneratingToken ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Generate'}
                 </button>
@@ -701,7 +701,7 @@ export default function SitesScreen({ onSiteCreated }: SitesScreenProps = {}) {
         </div>
         <button
           onClick={() => setShowAddSite(true)}
-          className="inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 py-2 text-sm font-medium text-[#78350E] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
         >
           Add site
           <Plus className="h-4 w-4" />
@@ -759,7 +759,7 @@ export default function SitesScreen({ onSiteCreated }: SitesScreenProps = {}) {
                 <button
                   type="submit"
                   disabled={isCreatingSite}
-                  className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                  className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[#FBBF23] bg-[linear-gradient(135deg,#FCD34E_0%,#FBBF23_100%)] px-4 py-2 text-sm font-medium text-[#78350E] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                 >
                   {isCreatingSite ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add site'}
                 </button>

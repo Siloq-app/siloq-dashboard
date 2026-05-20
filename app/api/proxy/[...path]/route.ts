@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.BACKEND_API_URL || 'http://localhost:8000';
 
+function logDebug(message: string): void {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(message);
+  }
+}
+
 export async function GET(request: NextRequest) {
   return handleRequest(request, 'GET');
 }
@@ -47,7 +53,7 @@ async function handleRequest(request: NextRequest, method: string) {
 
     const fullBackendUrl = `${BACKEND_URL}${backendPath}${url.search}`;
 
-    console.log(`[API Proxy] ${method} ${backendPath} -> ${fullBackendUrl}`);
+    logDebug(`[API Proxy] ${method} ${backendPath} -> ${fullBackendUrl}`);
 
     // Get headers from the request
     const headers = new Headers();
@@ -88,7 +94,7 @@ async function handleRequest(request: NextRequest, method: string) {
     responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    console.log(`[API Proxy] Response: ${response.status} ${response.statusText}`);
+    logDebug(`[API Proxy] Response: ${response.status} ${response.statusText}`);
 
     return new NextResponse(responseText, {
       status: response.status,

@@ -11,10 +11,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No authorization header provided' }, { status: 401 });
     }
 
-    console.log('[API Route] Logout request');
-
     // Forward the request to the backend with the auth header
-    const response = await fetch(`${BACKEND_URL}/api/v1/auth/logout`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/auth/logout/`, {
       method: 'POST',
       headers: {
         Authorization: authHeader,
@@ -23,8 +21,6 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
-
-    console.log('[API Route] Logout response:', { status: response.status, ok: response.ok });
 
     // Return the response with the same status and data
     return NextResponse.json(data, {

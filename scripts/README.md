@@ -55,22 +55,19 @@ Removes:
 
 **Documentation Removed:**
 
-- `CLAUDE.md` - AI assistant documentation
 - `CONTENT_HUB_COMPLETE.md` - Feature documentation
 - `SUMMARY.md` - Project summary
 - `WORDPRESS_INTEGRATION.md` - Integration documentation
 
 **Files Preserved:**
 
-- `manage.py` - Django management
-- `requirements.txt` - Dependencies
-- `siloq_backend/` - Core application
-- `README.md` - Essential documentation
-- `API_REFERENCE.md` - API documentation
-- `ARCHITECTURE.md` - Architecture documentation
-- `DEPLOYMENT_DIGITALOCEAN.md` - Deployment guide
-- `Procfile` - Heroku deployment
-- `.env.example` - Environment template
+- `manage.py` — Django management
+- `requirements.txt` — Dependencies
+- `siloq_backend/` — Django project settings package
+- Application packages: `accounts/`, `billing/`, `integrations/`, `seo/`, `sites/`
+- `README.md`, `DEPLOYMENT_DIGITALOCEAN.md` — Documentation
+- `Procfile`, `runtime.txt` — Platform metadata
+- `.env.example` — Environment template (when tracked in your clone)
 
 ### siloq-wordpress
 
@@ -84,6 +81,7 @@ Removes:
 **Files Preserved:**
 
 - `README.md` - Essential documentation
+- `CLAUDE.md` - Maintainer / engineering standards (this cleanup script does not remove it)
 - `.gitignore` - Git ignore rules
 - `siloq-connector/` - WordPress plugin
 
@@ -98,14 +96,16 @@ After running cleanup, ensure:
 
 ## Usage
 
+Edit `scripts/cleanup-production.sh` and set the `cd` paths at the top of each section to your local clones of **siloq-api** and **siloq-wordpress** (the defaults are placeholders).
+
 ```bash
 # Run both cleanup scripts
 npm run cleanup-production
 npm run final-cleanup
 
-# Check the results
-ls -la /Users/jumar.juaton/Downloads/Developer/siloq-api
-ls -la /Users/jumar.juaton/Downloads/Developer/siloq-wordpress
+# Check the results (use your configured paths)
+ls -la /path/to/siloq-api
+ls -la /path/to/siloq-wordpress
 ```
 
 ## Safety
